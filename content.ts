@@ -9,8 +9,6 @@ function ReadMode() {
     console.log(article.dir)
     console.log(article.content)
     console.log(article.textContent)
-
-
 }
 
 export default ReadMode
