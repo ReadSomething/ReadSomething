@@ -1,7 +1,7 @@
 // @ts-ignore
-import ReadMode from "~content";
+import ReadMode from "~contents";
 
-chrome.action.onClicked.addListener(() => {
-    console.log("Click")
+chrome.action.onClicked.addListener(async(tab) => {
+   await chrome.tabs.sendMessage(tab.id, {greeting: "hello"});
 })
 
