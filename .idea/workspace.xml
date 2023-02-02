@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="e5669ab9-1171-4621-838e-4a87aa23074d" name="Changes" comment="" />
+    <list default="true" id="e5669ab9-1171-4621-838e-4a87aa23074d" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/content.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pnpm-lock.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pnpm-lock.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/popup.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/popup.tsx" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -14,6 +20,9 @@
     <option name="stateVersion" value="1" />
   </component>
   <component name="ProjectId" id="2L8K1mredMOETc36Z8aY7cfNRvC" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -55,6 +64,7 @@
       <updated>1675247057598</updated>
       <workItem from="1675247061338" duration="1673000" />
       <workItem from="1675318590278" duration="739000" />
+      <workItem from="1675323461668" duration="2954000" />
     </task>
     <servers />
   </component>

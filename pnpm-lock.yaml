@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@mozilla/readability': ^0.4.2
   '@plasmohq/prettier-plugin-sort-imports': 3.6.1
   '@types/chrome': 0.0.210
   '@types/node': 18.11.18
@@ -13,6 +14,7 @@ specifiers:
   typescript: 4.9.4
 
 dependencies:
+  '@mozilla/readability': 0.4.2
   plasmo: 0.64.2_biqbaboplfbrettd7655fr4n2y
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
@@ -625,6 +627,11 @@ packages:
       '@lezer/common': 0.15.12
       '@lezer/lr': 0.15.8
       json5: 2.2.3
+    dev: false
+
+  /@mozilla/readability/0.4.2:
+    resolution: {integrity: sha512-48MJXzi4Dhy2fJ3lGjmwdEJKoMmn3oiYew9n/1OW6cZy78hAzRIyDJDBCGrg4PBFDyY4xos+H4LCFn5QVRDcfw==}
+    engines: {node: '>=10.0.0'}
     dev: false
 
   /@msgpackr-extract/msgpackr-extract-darwin-arm64/3.0.0:
