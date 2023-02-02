@@ -1,13 +1,13 @@
 import {Readability} from "@mozilla/readability";
 import $ from "jquery";
 
-function ReadMode() {
-    launch()
-}
+// function ReadMode() {
+//     launch()
+// }
 
 var latest_url;
 
-function launch() {
+export function launch() {
     if (document.getElementById("cr-iframe") == null) {
         // Create iframe and append to body
         var iframe: HTMLElement = createIframe();
@@ -69,5 +69,15 @@ function createIframe() {
     return iframe;
 }
 
+chrome.runtime.onMessage.addListener(
+    function (request) {
+        console.log('received')
+        // chrome.tabs.query({currentWindow: true, active: true}, function (tabs) {
+            launch()
+        // })
+    }
+)
 
-export default ReadMode
+
+// launch()
+// export default ReadMode
