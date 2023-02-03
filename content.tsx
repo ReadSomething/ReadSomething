@@ -1,11 +1,10 @@
 import {Readability} from "@mozilla/readability";
-import $ from "jquery";
 import {useEffect, useState} from "react";
 import styleText from "data-text:./content.scss"
 import type {PlasmoGetStyle} from "plasmo"
 import readingTime from 'reading-time/lib/reading-time'
 
-// plasmo 会调用这个方法
+// a plasmo hook
 export const getStyle: PlasmoGetStyle = () => {
     const style = document.createElement("style")
     style.textContent = styleText
