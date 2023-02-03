@@ -2,7 +2,7 @@
   "name": "readsomething",
   "displayName": "Readsomething",
   "version": "0.0.1",
-  "description": "Read something.",
+  "description": "A browser plugin to assist reading, using AI capabilities to enhance reading efficiency.",
   "author": "zhongyiio",
   "scripts": {
     "dev": "plasmo dev",
@@ -29,8 +29,6 @@
     "host_permissions": [
       "https://*/*"
     ],
-    "permissions": [
-      "scripting"
-    ]
+    "permissions": []
   }
 }

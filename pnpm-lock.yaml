@@ -7,7 +7,6 @@ specifiers:
   '@types/node': 18.11.18
   '@types/react': 18.0.27
   '@types/react-dom': 18.0.10
-  jquery: ^3.6.3
   plasmo: 0.64.2
   prettier: 2.8.3
   react: 18.2.0
@@ -17,7 +16,6 @@ specifiers:
 
 dependencies:
   '@mozilla/readability': 0.4.2
-  jquery: 3.6.3
   plasmo: 0.64.2_biqbaboplfbrettd7655fr4n2y
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
@@ -3575,10 +3573,6 @@ packages:
   /joycon/3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
     engines: {node: '>=10'}
-    dev: false
-
-  /jquery/3.6.3:
-    resolution: {integrity: sha512-bZ5Sy3YzKo9Fyc8wH2iIQK4JImJ6R0GWI9kL1/k7Z91ZBNgkRXE6U0JfHIizZbort8ZunhSI3jw9I6253ahKfg==}
     dev: false
 
   /js-tokens/4.0.0:
