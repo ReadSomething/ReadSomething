@@ -12,6 +12,7 @@ specifiers:
   prettier: 2.8.3
   react: 18.2.0
   react-dom: 18.2.0
+  reading-time: ^1.5.0
   typescript: 4.9.4
 
 dependencies:
@@ -20,6 +21,7 @@ dependencies:
   plasmo: 0.64.2_biqbaboplfbrettd7655fr4n2y
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
+  reading-time: 1.5.0
 
 devDependencies:
   '@plasmohq/prettier-plugin-sort-imports': 3.6.1_prettier@2.8.3
@@ -4504,6 +4506,10 @@ packages:
     engines: {node: '>=8.10.0'}
     dependencies:
       picomatch: 2.3.1
+    dev: false
+
+  /reading-time/1.5.0:
+    resolution: {integrity: sha512-onYyVhBNr4CmAxFsKS7bz+uTLRakypIe4R+5A824vBSkQy/hB3fZepoVEf8OVAxzLvK+H/jm9TzpI3ETSm64Kg==}
     dev: false
 
   /regenerator-runtime/0.13.11:

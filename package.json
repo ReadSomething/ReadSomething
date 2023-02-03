@@ -14,7 +14,8 @@
     "jquery": "^3.6.3",
     "plasmo": "0.64.2",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "reading-time": "^1.5.0"
   },
   "devDependencies": {
     "@plasmohq/prettier-plugin-sort-imports": "3.6.1",
@@ -29,6 +30,8 @@
     "host_permissions": [
       "https://*/*"
     ],
-    "permissions": ["scripting"]
+    "permissions": [
+      "scripting"
+    ]
   }
 }
