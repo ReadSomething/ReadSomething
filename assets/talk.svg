@@ -1,0 +1,29 @@
+<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-3 h-6 w-6 shrink-0">
+    <rect width="24" height="24" rx="6" fill="url(#popover-_mobile-nav__paint0_linear)"></rect>
+    <g filter="url(#popover-_mobile-nav__filter0_dd)">
+        <path d="M5 9a2 2 0 012-2h10a2 2 0 012 2v6a2 2 0 01-2 2h-2.586a1 1 0 00-.707.293L12 19l-1.707-1.707A1 1 0 009.586 17H7a2 2 0 01-2-2V9z"
+              fill="#FFF7ED"></path>
+    </g>
+    <defs>
+        <linearGradient id="popover-_mobile-nav__paint0_linear" x1="0" y1="0" x2="24.053" y2="0.053"
+                        gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FB923C"></stop>
+            <stop offset="1" stop-color="#DB2777"></stop>
+        </linearGradient>
+        <filter id="popover-_mobile-nav__filter0_dd" x="2" y="5" width="20" height="18" filterUnits="userSpaceOnUse"
+                color-interpolation-filters="sRGB">
+            <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+            <feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"></feColorMatrix>
+            <feOffset dy="1"></feOffset>
+            <feGaussianBlur stdDeviation="1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0"></feColorMatrix>
+            <feBlend in2="BackgroundImageFix" result="effect1_dropShadow"></feBlend>
+            <feColorMatrix in="SourceAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"></feColorMatrix>
+            <feOffset dy="1"></feOffset>
+            <feGaussianBlur stdDeviation="1.5"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0"></feColorMatrix>
+            <feBlend in2="effect1_dropShadow" result="effect2_dropShadow"></feBlend>
+            <feBlend in="SourceGraphic" in2="effect2_dropShadow" result="shape"></feBlend>
+        </filter>
+    </defs>
+</svg>
