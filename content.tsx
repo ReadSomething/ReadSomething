@@ -7,6 +7,7 @@ import hljs from 'highlight.js';
 import {sendToBackground} from "@plasmohq/messaging"
 import type {GptRes} from "~bean/GptRes";
 import HelperIcon from "data-base64:~assets/talk.svg"
+import CloseIcon from "data-base64:~assets/close.svg"
 import {Transition} from "@headlessui/react";
 
 // a plasmo hook
@@ -76,30 +77,79 @@ function Author({link, author}: { link: string, author: string }) {
 function HelpIcon() {
     const {helperStatus, setHelperStatus} = useContext(HelperContext);
 
-    return <img src={HelperIcon}  onClick={() => setHelperStatus(!helperStatus)} className='icon w-[40px] h-[40px] cursor-pointer transition-all duration-300' alt=""/>
+    return <div className='w-[40px] h-[40px]' onClick={() => setHelperStatus(!helperStatus)}>
+        <div className={`
+            w-[40px] 
+            h-[80px] 
+            absolute 
+            ${helperStatus ? 'grayscale-0' : 'grayscale'} 
+            hover:grayscale-0
+        `}>
+            <img src={helperStatus ? CloseIcon : HelperIcon} className='icon w-[40px] h-[40px] cursor-pointer ' alt=""/>
+        </div>
+    </div>
 }
 
-function ChatBox () {
+function MessageBox() {
+    return <div className={'bg-white rounded-r-[20px] text-black w-[60%] p-[10px] border-box'}> I will fade in and out I will fade in and out I will fade in and out</div>
+}
+
+function ChatBox() {
     const {helperStatus} = useContext(HelperContext);
 
     return <div className={'absolute right-0 bottom-[60px] rounded-[10px] overflow-hidden'}>
         <Transition
             show={helperStatus}
-            enter="transition-all ease-in-out duration-300 "
+            enter="transition-all ease-in-out duration-300"
             enterFrom="opacity-0 w-[0] h-[0]"
-            enterTo="opacity-100 w-[200px] h-[200px]"
+            enterTo={`opacity-100 w-[300px] h-[300px]`}
             leave="transition-all ease-in-out duration-300"
-            leaveFrom="opacity-0 w-[200px] h-[200px]"
+            leaveFrom="opacity-0 w-[300px] h-[300px]"
             leaveTo="opacity-0 w-[0] h-[0]"
         >
-            <div className='bg-amber-500 w-[200px] h-[200px] rounded-[10px]'>
-                I will fade in and out
-            </div>
+           <div>
+               <div className='bg-amber-500 w-[300px] h-[300px] rounded-[10px]'>
+                   <MessageBox/>
+                   <input type="text" />
+               </div>
+           </div>
         </Transition>
     </div>
 }
 
-function HelperProvider ({ children }: { children: ReactNode }) {
+function SelectionTip() {
+    const plasmoRoot = document.querySelectorAll('plasmo-csui')[0].shadowRoot
+    const plasmoContainer = plasmoRoot.querySelector('#plasmo-shadow-container')
+
+    const onContainerClick = function (e) {
+        const selection = window.getSelection()
+
+
+        const range = selection.getRangeAt(0).cloneRange();
+        range.collapse(false);
+
+        // Create the marker element containing a single invisible character using DOM methods and insert it
+        const   markerEl = document.createElement("span");
+        markerEl.id = 'hello';
+        plasmoContainer.appendChild(document.createTextNode('good day') );
+        range.insertNode(markerEl);
+
+
+        console.log('hello')
+    }
+
+    useEffect(() => {
+        plasmoContainer.addEventListener('mouseup', onContainerClick)
+
+        return () => {
+            plasmoContainer.removeEventListener('mouseup', onContainerClick)
+        }
+    }, []);
+
+    return <div></div>
+}
+
+function HelperProvider({children}: { children: ReactNode }) {
     const [helperStatus, setHelperStatus] = useState(false);
 
     return <HelperContext.Provider value={{
@@ -224,6 +274,7 @@ const Reader = () => {
                 </div>
             </div>
             <SettingHelper/>
+            <SelectionTip/>
         </div>
     </div>
 }

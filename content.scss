@@ -912,12 +912,12 @@
     }
 
     .helper {
-        img {
-            filter: grayscale(1);
-            &:hover {
-                filter: grayscale(0);
-            }
-        }
+        //img {
+        //    filter: grayscale(1);
+        //    &:hover {
+        //        filter: grayscale(0);
+        //    }
+        //}
     }
 }
 
