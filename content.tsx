@@ -4,7 +4,6 @@ import styleText from "data-text:./content.scss"
 import type {PlasmoGetStyle} from "plasmo"
 import readingTime from 'reading-time/lib/reading-time'
 import hljs from 'highlight.js';
-import {sendToBackground} from "@plasmohq/messaging"
 import type {GptRes} from "~bean/GptRes";
 import HelperIcon from "data-base64:~assets/talk.svg"
 import CloseIcon from "data-base64:~assets/close.svg"
@@ -66,6 +65,8 @@ interface TypeHelperContextValue {
 const HelperContext = createContext({} as TypeHelperContextValue)
 
 function Author({link, author}: { link: string, author: string }) {
+    if (!author) return null
+
     let authorNode = <span>{author}</span>
 
     if (isValidUrl(link)) authorNode =
@@ -91,7 +92,8 @@ function HelpIcon() {
 }
 
 function MessageBox() {
-    return <div className={'bg-white rounded-r-[20px] text-black w-[60%] p-[10px] border-box'}> I will fade in and out I will fade in and out I will fade in and out</div>
+    return <div className={'bg-white rounded-r-[20px] text-black w-[60%] p-[10px] border-box'}> I will fade in and out I
+        will fade in and out I will fade in and out</div>
 }
 
 function ChatBox() {
@@ -107,12 +109,12 @@ function ChatBox() {
             leaveFrom="opacity-0 w-[300px] h-[300px]"
             leaveTo="opacity-0 w-[0] h-[0]"
         >
-           <div>
-               <div className='bg-amber-500 w-[300px] h-[300px] rounded-[10px]'>
-                   <MessageBox/>
-                   <input type="text" />
-               </div>
-           </div>
+            <div>
+                <div className='bg-amber-500 w-[300px] h-[300px] rounded-[10px]'>
+                    <MessageBox/>
+                    <input type="text"/>
+                </div>
+            </div>
         </Transition>
     </div>
 }
@@ -129,9 +131,9 @@ function SelectionTip() {
         range.collapse(false);
 
         // Create the marker element containing a single invisible character using DOM methods and insert it
-        const   markerEl = document.createElement("span");
+        const markerEl = document.createElement("span");
         markerEl.id = 'hello';
-        plasmoContainer.appendChild(document.createTextNode('good day') );
+        plasmoContainer.appendChild(document.createTextNode('good day'));
         range.insertNode(markerEl);
 
 
@@ -239,7 +241,7 @@ const Reader = () => {
         keepClasses: true
     }).parse();
     const articleUrl = window.location.href;
-    const author = article.byline ?? "Unknown author"
+    const author = article.byline ?? ""
     const authorLink = getMetaContentByProperty('article:author')
     const domain = window.location.hostname
     const timeToReadStr = readingTime(article.textContent).text
@@ -247,8 +249,8 @@ const Reader = () => {
     console.log(article)
 
     // @ts-ignore
-    return <div style={{"--font-size": "20px", "--content-width": "30em"}}
-                className={'ReadSomething dark sans-serif loaded'}>
+    return <div style={{"--font-size": "20px", "--content-width": "50em"}}
+                className={'ReadSomething sans-serif loaded'}>
         <div className={'fixed h-full w-full overflow-scroll left-0 top-0'} style={{
             backgroundColor: "var(--main-background)"
         }}>
