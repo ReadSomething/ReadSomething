@@ -275,8 +275,8 @@ const Reader = () => {
                     </div>
                 </div>
             </div>
-            <SettingHelper/>
-            <SelectionTip/>
+            {/*<SettingHelper/>*/}
+            {/*<SelectionTip/>*/}
         </div>
     </div>
 }
