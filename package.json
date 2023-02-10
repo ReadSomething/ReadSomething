@@ -13,6 +13,7 @@
     "@headlessui/react": "^1.7.9",
     "@mozilla/readability": "^0.4.2",
     "@plasmohq/messaging": "^0.0.4",
+    "@plasmohq/storage": "^1.0.5",
     "highlight.js": "^11.7.0",
     "plasmo": "0.64.2",
     "react": "18.2.0",
