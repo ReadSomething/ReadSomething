@@ -256,8 +256,22 @@
         text-decoration: underline var(--main-foreground) !important;
         color: var(--link-foreground);
     }
+
+
 }
 
 .ReadSomething {
     @include meta.load-css("./heti.css");
 }
+
+.ReadSomething {
+    .setting {
+        font-family: Helvetica, Arial, sans-serif!important;
+    }
+}
+
+//@media print {
+//    .ReadSomething {
+//        background-color: white;
+//    }
+//}
