@@ -7,7 +7,10 @@ import hljs from 'highlight.js';
 import type {GptRes} from "~bean/GptRes";
 import HelperIcon from "data-base64:~assets/talk.svg"
 import CloseIcon from "data-base64:~assets/close.svg"
-import {Transition} from "@headlessui/react";
+import {Popover} from "@headlessui/react";
+import { Storage } from "@plasmohq/storage"
+
+const theStorage = new Storage()
 
 // a plasmo hook
 export const getStyle: PlasmoGetStyle = () => {
@@ -57,12 +60,47 @@ function parseGptData(str: string): string | null {
     }
 }
 
-interface TypeHelperContextValue {
-    helperStatus: boolean
-    setHelperStatus: (value: boolean) => void
+class Settings {
+    #key: string
+    #storage: Storage
+    fontSize: string
+    setFontSize() {
+
+    }
+
+    async #getStorage() {
+        return await this.#storage.get(this.#key)
+    }
+
+    async #setStorage(data: string) {
+        await this.#storage.set(this.#key, data)
+    }
+
+    getProperties() {
+        return {
+            fontSize: this.fontSize
+        }
+    }
+    constructor(theStorageInstance:  Storage) {
+        this.#storage = theStorageInstance
+    }
 }
 
-const HelperContext = createContext({} as TypeHelperContextValue)
+enum EnumTheme {
+    Standard = 'standard',
+    Heti = 'Heti',
+    HetiA = 'HetiA'
+}
+
+interface TypeReaderContext {
+    settingStatus: boolean
+    setSettingStatus: (value: boolean) => void
+
+    theme: EnumTheme
+    setTheme: (value: EnumTheme) => void
+}
+
+const ReaderContext = createContext({} as TypeReaderContext)
 
 function Author({link, author}: { link: string, author: string }) {
     if (!author) return null
@@ -76,19 +114,19 @@ function Author({link, author}: { link: string, author: string }) {
 }
 
 function HelpIcon() {
-    const {helperStatus, setHelperStatus} = useContext(HelperContext);
-
-    return <div className='w-[40px] h-[40px]' onClick={() => setHelperStatus(!helperStatus)}>
-        <div className={`
-            w-[40px] 
-            h-[80px] 
-            absolute 
-            ${helperStatus ? 'grayscale-0' : 'grayscale'} 
-            hover:grayscale-0
-        `}>
-            <img src={helperStatus ? CloseIcon : HelperIcon} className='icon w-[40px] h-[40px] cursor-pointer ' alt=""/>
-        </div>
-    </div>
+    // const {helperStatus, setHelperStatus} = useContext(HelperContext);
+    //
+    // return <div className='w-[40px] h-[40px]' onClick={() => setHelperStatus(!helperStatus)}>
+    //     <div className={`
+    //         w-[40px]
+    //         h-[80px]
+    //         absolute
+    //         ${helperStatus ? 'grayscale-0' : 'grayscale'}
+    //         hover:grayscale-0
+    //     `}>
+    //         <img src={helperStatus ? CloseIcon : HelperIcon} className='icon w-[40px] h-[40px] cursor-pointer ' alt=""/>
+    //     </div>
+    // </div>
 }
 
 function MessageBox() {
@@ -96,145 +134,171 @@ function MessageBox() {
         will fade in and out I will fade in and out</div>
 }
 
-function ChatBox() {
-    const {helperStatus} = useContext(HelperContext);
-
-    return <div className={'absolute right-0 bottom-[60px] rounded-[10px] overflow-hidden'}>
-        <Transition
-            show={helperStatus}
-            enter="transition-all ease-in-out duration-300"
-            enterFrom="opacity-0 w-[0] h-[0]"
-            enterTo={`opacity-100 w-[300px] h-[300px]`}
-            leave="transition-all ease-in-out duration-300"
-            leaveFrom="opacity-0 w-[300px] h-[300px]"
-            leaveTo="opacity-0 w-[0] h-[0]"
-        >
-            <div>
-                <div className='bg-amber-500 w-[300px] h-[300px] rounded-[10px]'>
-                    <MessageBox/>
-                    <input type="text"/>
-                </div>
-            </div>
-        </Transition>
-    </div>
-}
+// function ChatBox() {
+//     const {helperStatus} = useContext(HelperContext);
+//
+//     return <div className={'absolute right-0 bottom-[60px] rounded-[10px] overflow-hidden'}>
+//         <Transition
+//             show={helperStatus}
+//             enter="transition-all ease-in-out duration-300"
+//             enterFrom="opacity-0 w-[0] h-[0]"
+//             enterTo={`opacity-100 w-[300px] h-[300px]`}
+//             leave="transition-all ease-in-out duration-300"
+//             leaveFrom="opacity-0 w-[300px] h-[300px]"
+//             leaveTo="opacity-0 w-[0] h-[0]"
+//         >
+//             <div>
+//                 <div className='bg-amber-500 w-[300px] h-[300px] rounded-[10px]'>
+//                     <MessageBox/>
+//                     <input type="text"/>
+//                 </div>
+//             </div>
+//         </Transition>
+//     </div>
+// }
 
 function SelectionTip() {
     const plasmoRoot = document.querySelectorAll('plasmo-csui')[0].shadowRoot
     const plasmoContainer = plasmoRoot.querySelector('#plasmo-shadow-container')
 
-    const onContainerClick = function (e) {
+    const onMouseUp = function (e) {
         const selection = window.getSelection()
 
+        const start = selection.anchorOffset;
+        const end = selection.focusOffset;
+        // const range = selection.getRangeAt(0).cloneRange();
+        // range.collapse(false);
+        //
+        // // Create the marker element containing a single invisible character using DOM methods and insert it
+        // const markerEl = document.createElement("span");
+        // markerEl.id = 'hello';
+        // plasmoContainer.appendChild(document.createTextNode('good day'));
+        // range.insertNode(markerEl);
 
-        const range = selection.getRangeAt(0).cloneRange();
-        range.collapse(false);
 
-        // Create the marker element containing a single invisible character using DOM methods and insert it
-        const markerEl = document.createElement("span");
-        markerEl.id = 'hello';
-        plasmoContainer.appendChild(document.createTextNode('good day'));
-        range.insertNode(markerEl);
-
-
-        console.log('hello')
+        console.log('hello', start, end)
     }
 
     useEffect(() => {
-        plasmoContainer.addEventListener('mouseup', onContainerClick)
+        plasmoContainer.addEventListener('mouseup', onMouseUp)
 
         return () => {
-            plasmoContainer.removeEventListener('mouseup', onContainerClick)
+            plasmoContainer.removeEventListener('mouseup', onMouseUp)
         }
     }, []);
 
     return <div></div>
 }
 
-function HelperProvider({children}: { children: ReactNode }) {
-    const [helperStatus, setHelperStatus] = useState(false);
+function BasicSetting() {
+    const {settingStatus, setSettingStatus, setTheme} = useContext(ReaderContext);
 
-    return <HelperContext.Provider value={{
-        helperStatus,
-        setHelperStatus
+    const showSetting = function () {
+
+    }
+
+    return <div onClick={showSetting} className={'fixed select-none right-[20px] top-[20px] cursor-pointer'}>
+        <div>
+            {/*<div onClick={() => setSettingStatus(!settingStatus)}>*/}
+            {/*    Setting*/}
+            {/*</div>*/}
+
+            {/*<div className={'fixed right-[20px] top-[60px] text-[14px] text-[var(--setting-foreground)]'}>*/}
+            {/*    */}
+            {/*</div>*/}
+
+            <Popover >
+                <Popover.Button>Setting</Popover.Button>
+
+                <Popover.Panel className="fixed right-[20px] top-[60px]">
+                    {
+                         <div className='bg-[var(--setting-background)] text-[var(--setting-foreground)] w-[300px] p-[10px] h-[300px] '>
+                            <div className={'flex items-center'}>
+                                <div>Font Size:</div>
+                                <div><input className={'w-[40px] bg-[var(--setting-sub-background)] ml-[4px] mr-[4px] p-[2px] box-content outline-none border-[1px] border-transparent focus:border-[1px] focus:border-black'} type="text"/></div>
+                                <div>px</div>
+                            </div>
+                            <div className={'flex items-center mt-[20px]'}>
+                                <div>Theme:</div>
+                                <div>
+                                    {
+                                        Object.keys(EnumTheme).map(item =>
+                                            <button onClick={() => setTheme(EnumTheme[item])} className={'px-[10px] py-[5px] ml-[10px] border mr-[10px]'}>{item}</button>
+                                        )
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </Popover.Panel>
+            </Popover>
+        </div>
+    </div>
+}
+
+function ReaderProvider({children}: { children: ReactNode }) {
+    const [settingStatus, setSettingStatus] = useState(false);
+
+    const [theme, setTheme] = useState(EnumTheme.Heti);
+
+    return <ReaderContext.Provider value={{
+        settingStatus,
+        setSettingStatus,
+        theme,
+        setTheme
     }}>
         {children}
-    </HelperContext.Provider>
+    </ReaderContext.Provider>
 }
 
+// function HelperProvider({children}: { children: ReactNode }) {
+//     const [helperStatus, setHelperStatus] = useState(false);
+//
+//     return <HelperContext.Provider value={{
+//         helperStatus,
+//         setHelperStatus
+//     }}>
+//         {children}
+//     </HelperContext.Provider>
+// }
 
-function SettingHelper() {
-    return <HelperProvider>
-        <div className='helper fixed bottom-[30px] right-[30px]'>
-            <ChatBox/>
-            <HelpIcon/>
-        </div>
-    </HelperProvider>
+
+// function SettingHelper() {
+//     return <HelperProvider>
+//         <div className='helper fixed bottom-[30px] right-[30px]'>
+//             <ChatBox/>
+//             <HelpIcon/>
+//         </div>
+//     </HelperProvider>
+// }
+
+function ThemeWrap({children}: {children: ReactNode}) {
+    const {theme} = useContext(ReaderContext);
+
+    let themeClass = ''
+
+    switch (theme) {
+        case EnumTheme.Standard:
+            break
+        case EnumTheme.Heti:
+            themeClass = 'heti heti--classic'
+            break
+    }
+
+    return <div className={themeClass}>
+        {children}
+    </div>
 }
 
-const Reader = () => {
-    const [showReader, setShowReader] = useState(false);
-
-    const messageListen = async function () {
-        console.log('start gpt')
-
-        // const {message} = await sendToBackground({
-        //     name: "gpt",
-        // })
-        //
-        // if (message) {
-        //     const data = parseGptData(message)
-        //
-        //     if(data) {
-        //         console.log('----------------', data)
-        //     }
-        // }
-
-        setShowReader(prevState => {
-            if (!prevState) {
-                setTimeout(() => {
-                    // hljs.initHighlightingOnLoad()
-                    // console.log()
-                    // console.log(document.querySelectorAll('pre'))
-                    // console.log('-------highlightAll--------')
-
-                    const pres = document.querySelectorAll('plasmo-csui')[0].shadowRoot.querySelectorAll('pre')
-
-                    pres.forEach(item => {
-                        hljs.highlightElement(item)
-                    })
-
-
-                }, 2000)
-            }
-
-            return !prevState
-        });
-    }
-
-    const keyUp = function (e) {
-        if (e.key == "Escape") {
-            setShowReader(false)
-        }
-    }
-
+function Main() {
     useEffect(() => {
-        chrome.runtime.onMessage.addListener(messageListen)
-        document.body.addEventListener('keyup', keyUp);
-        // hljs.initHighlightingOnLoad()
-
-        // setTimeout(() => {
-        //     hljs.initHighlightingOnLoad()
-        // }, 3000)
-        // console.log('------------highlight')
+        const defaultOverflowStyle = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
 
         return () => {
-            chrome.runtime.onMessage.removeListener(messageListen)
-            document.body.removeEventListener('keyup', keyUp);
+            document.body.style.overflow = defaultOverflowStyle
         }
     }, []);
-
-    if (!showReader) return null
 
     const documentClone = document.cloneNode(true);
     const article = new Readability(documentClone as Document, {
@@ -246,39 +310,73 @@ const Reader = () => {
     const domain = window.location.hostname
     const timeToReadStr = readingTime(article.textContent).text
 
-    console.log(article)
-
-    // @ts-ignore
-    return <div style={{"--font-size": "20px", "--content-width": "50em"}}
-                className={'ReadSomething sans-serif loaded'}>
-        <div className={'fixed h-full w-full overflow-scroll left-0 top-0'} style={{
-            backgroundColor: "var(--main-background)"
-        }}>
-            <div className={'container'}>
-                <div className="header reader-header reader-show-element">
-                    <a className="domain reader-domain"
-                       href={articleUrl}>{domain}</a>
-                    <div className="domain-border"></div>
-                    <h1 className="reader-title">{article.title}</h1>
-                    <Author link={authorLink} author={author}/>
-                    <div className="meta-data">
-                        <div className="reader-estimated-time" data-l10n-id="about-reader-estimated-read-time"
-                             data-l10n-args="{&quot;range&quot;:&quot;3–4&quot;,&quot;rangePlural&quot;:&quot;other&quot;}"
-                             dir="ltr">{timeToReadStr}
+    return <ReaderProvider>
+        {/*@ts-ignore*/}
+        <div style={{"--font-size": "18px", "--content-width": "50em"}}
+             className={'ReadSomething'}>
+            <ThemeWrap>
+                <div className={'fixed h-full  w-full overflow-scroll left-0 top-0'} style={{
+                    backgroundColor: "var(--main-background)"
+                }}>
+                    <div className={'container'}>
+                        <div className="header reader-header reader-show-element">
+                            <a className="domain reader-domain"
+                               href={articleUrl}>{domain}</a>
+                            <div className="domain-border"></div>
+                            <h1 className="reader-title">{article.title}</h1>
+                            <Author link={authorLink} author={author}/>
+                            <div className="meta-data">
+                                <div className="reader-estimated-time" data-l10n-id="about-reader-estimated-read-time"
+                                     data-l10n-args="{&quot;range&quot;:&quot;3–4&quot;,&quot;rangePlural&quot;:&quot;other&quot;}"
+                                     dir="ltr">{timeToReadStr}
+                                </div>
+                            </div>
+                        </div>
+                        <hr/>
+                        <div className={'content'}>
+                            <div className={`mozReaderContent readerShowElement`}>
+                                <div className='page' dangerouslySetInnerHTML={{__html: article.content}}/>
+                            </div>
                         </div>
                     </div>
+                    {/*<SettingHelper/>*/}
+                    <SelectionTip/>
+                    <BasicSetting/>
                 </div>
-                <hr/>
-                <div className={'content'}>
-                    <div className={`mozReaderContent readerShowElement`}>
-                        <div className='page' dangerouslySetInnerHTML={{__html: article.content}}/>
-                    </div>
-                </div>
-            </div>
-            {/*<SettingHelper/>*/}
-            {/*<SelectionTip/>*/}
+            </ThemeWrap>
         </div>
-    </div>
+    </ReaderProvider>
+}
+
+const Reader = () => {
+    const [showReader, setShowReader] = useState(false);
+
+    useEffect(() => {
+        document.body.addEventListener('keyup', keyUp);
+        chrome.runtime.onMessage.addListener(messageListen)
+
+        return () => {
+            chrome.runtime.onMessage.removeListener(messageListen)
+            document.body.removeEventListener('keyup', keyUp);
+        }
+    }, []);
+
+    const messageListen = async function () {
+
+        setShowReader(prevState => {
+            return !prevState
+        });
+    }
+
+    const keyUp = function (e) {
+        if (e.key == "Escape") {
+            setShowReader(false)
+        }
+    }
+
+    if (!showReader) return null
+
+    return <Main/>
 }
 
 export default Reader

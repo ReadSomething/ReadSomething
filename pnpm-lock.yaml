@@ -5,6 +5,7 @@ specifiers:
   '@mozilla/readability': ^0.4.2
   '@plasmohq/messaging': ^0.0.4
   '@plasmohq/prettier-plugin-sort-imports': 3.6.1
+  '@plasmohq/storage': ^1.0.5
   '@types/chrome': 0.0.210
   '@types/node': 18.11.18
   '@types/react': 18.0.27
@@ -24,6 +25,7 @@ dependencies:
   '@headlessui/react': 1.7.9_biqbaboplfbrettd7655fr4n2y
   '@mozilla/readability': 0.4.2
   '@plasmohq/messaging': 0.0.4_react@18.2.0
+  '@plasmohq/storage': 1.0.5_react@18.2.0
   highlight.js: 11.7.0
   plasmo: 0.64.2_gjpyg5imi5mt2gbvkmn3a4dr7m
   react: 18.2.0
@@ -1931,6 +1933,19 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@plasmohq/storage/1.0.5_react@18.2.0:
+    resolution: {integrity: sha512-zxgB/53Tidr1S6cFguOGyZns439bo8p5srxRh2UPEJvDi/Ickh+ATpDAWfQUsC/TPEQEM/+1IXI0IkYlePKqfw==}
+    peerDependencies:
+      react: ^16.8.6 || ^17 || ^18
+    peerDependenciesMeta:
+      react:
+        optional: true
+    dependencies:
+      '@types/webextension-polyfill': 0.10.0
+      react: 18.2.0
+      webextension-polyfill: 0.10.0
+    dev: false
 
   /@pnpm/network.ca-file/1.0.2:
     resolution: {integrity: sha512-YcPQ8a0jwYU9bTdJDpXjMi7Brhkr1mXsXrUJvjqM2mQDgkRiz8jFaQGOdaLxgjtUfQgZhKy/O3cG/YwmgKaxLA==}
