@@ -6,6 +6,7 @@ export function SelectionTip() {
 
     const onMouseUp = function (e) {
         const selection = window.getSelection()
+        console.log(selection)
 
         const start = selection.anchorOffset;
         const end = selection.focusOffset;
