@@ -14,9 +14,9 @@
     --dark-theme-background: rgb(28, 27, 34);
     --light-theme-foreground: rgb(21, 20, 26);
     --dark-theme-foreground: rgb(251, 251, 254);
-    --content-width: 22em;
+    //--content-width: 22em;
     --body-padding: 64px;
-    --line-height: 1.6em;
+    //--line-height: 1.6em;
     --text-selected-foreground: inherit;
     --selected-background: rgba(0, 97, 224, 0.3);
     --primary-color: rgb(0, 97, 224);
@@ -28,9 +28,9 @@
     --text-selected-background: var(--selected-background);
     --main-foreground: var(--light-theme-foreground);
     --outline-focus-color: var(--primary-color);
-    --setting-background: #19191E;
-    --setting-foreground: var(--dark-theme-foreground);
-    --setting-sub-background: #AAAAAD;
+    --setting-background: rgb(244,245,245);
+    --setting-foreground: rgb(61,62,62);
+    //--setting-sub-background: #AAAAAD;
 
     @media (prefers-color-scheme: dark) {
         --main-background: var(--dark-theme-background);
@@ -42,9 +42,7 @@
         --link-selected-foreground: #fff;
         --visited-link-foreground: #e675fd;
 
-        --setting-background: var(--light-theme-background);
-        --setting-foreground: var(--light-theme-foreground);
-        --setting-sub-background: #AAAAAD;
+        //--setting-sub-background: #AAAAAD;
     }
 
     margin: 0;
@@ -74,8 +72,11 @@
     .container {
         margin: 0 auto;
         font-size: var(--font-size);
-        max-width: var(--content-width);
-        line-height: var(--line-height);
+        width: var(--content-width);
+        max-width: 100%;
+        padding: 20px;
+        box-sizing: border-box;
+        line-height: var(--line-height)!important;
     }
 
     table,
@@ -103,17 +104,17 @@
 
     h1 {
         font-size: 1.6em;
-        line-height: 1.25em;
+        line-height: calc(var(--line-height) * 0.8)!important;
     }
 
     h2 {
         font-size: 1.2em;
-        line-height: 1.51em;
+        line-height: calc(var(--line-height) * 0.94)!important;
     }
 
     h3 {
         font-size: 1em;
-        line-height: 1.66em;
+        line-height: calc(var(--line-height) * 1.03)!important;
     }
 
     a:link {
@@ -266,9 +267,46 @@
 
 .ReadSomething {
     .setting {
-        font-family: Helvetica, Arial, sans-serif!important;
+        font-family: SFMono-Regular, consolas, Liberation Mono, menlo, courier, monospace, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
+        font-size: 15px;
+
+        .thumb {
+            @apply bg-white w-fit h-[16px] px-[4px] rounded transition-transform text-[12px] outline-none;
+            @apply duration-300 drop-shadow text-[10px] flex justify-center items-center whitespace-nowrap;
+            &:hover {
+                @apply scale-[1.06] origin-center;
+            }
+        }
+        .track {
+            @apply bg-[rgb(233,234,233)] h-[4px] top-[6px];
+        }
+        .track-1 {
+            @apply bg-[rgb(222,222,222)];
+        }
+    }
+    .setting-font-size {
+
+    }
+
+    .lineSpacingRadioGroup {
+        @apply flex justify-between text-[14px];
+        .lineSpacingRadio {
+            @apply flex justify-center items-center cursor-pointer;
+            .circle {
+                @apply w-[14px] h-[12px]  border mr-[4px] inline-block rounded-full;
+                border-color: rgb(222,222,222);
+                &.selected {
+                    @apply relative;
+                    &:after {
+                        @apply absolute w-[4px] h-[4px] left-0 right-0 top-0 bottom-0 m-auto bg-[var(--setting-foreground)] rounded-full;
+                        content: '';
+                    }
+                }
+            }
+        }
     }
 }
+
 
 //@media print {
 //    .ReadSomething {

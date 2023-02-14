@@ -1,11 +1,9 @@
-import {createContext, ReactNode, useEffect, useMemo, useState} from "react";
-import {EnumTheme} from "~content";
+import {createContext, ReactNode, useState} from "react";
 
 interface TypeReaderContext {
     settingStatus: boolean
     setSettingStatus: (value: boolean) => void
 }
-
 
 export const ReaderContext = createContext({} as TypeReaderContext)
 

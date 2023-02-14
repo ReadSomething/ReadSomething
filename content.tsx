@@ -64,7 +64,6 @@ export enum EnumTheme {
     HetiA = 'HetiA'
 }
 
-
 function Author({link, author}: { link: string, author: string }) {
     if (!author) return null
 
@@ -75,7 +74,6 @@ function Author({link, author}: { link: string, author: string }) {
 
     return <div className="credits reader-credits">{authorNode}</div>
 }
-
 
 function ThemeWrap({children}: { children: ReactNode }) {
     const {settingObject} = useContext(SettingContext);
@@ -93,6 +91,16 @@ function ThemeWrap({children}: { children: ReactNode }) {
     }
 
     return <div className={themeClass}>
+        {children}
+    </div>
+}
+
+function MainContent({children}: {children: ReactNode}) {
+    const {settingObject: {fontSize, pageWidth, lineSpacing}} = useContext(SettingContext);
+    console.log('lineSpacing', lineSpacing)
+
+    // @ts-ignore
+    return <div style={{"--font-size": `${fontSize}px`, "--content-width": `${pageWidth}px`, "--line-height": lineSpacing}}>
         {children}
     </div>
 }
@@ -120,41 +128,42 @@ function Main() {
     return (
         <ReaderProvider>
             <SettingProvider>
-                {/*@ts-ignore*/}
-                <div style={{"--font-size": "18px", "--content-width": "50em"}}
-                     className={'ReadSomething'}>
-                    <ThemeWrap>
-                        <div className={'fixed h-full  w-full overflow-scroll left-0 top-0'} style={{
-                            backgroundColor: "var(--main-background)"
-                        }}>
-                            <div className={'container'}>
-                                <div className="header reader-header reader-show-element">
-                                    <a className="domain reader-domain"
-                                       href={articleUrl}>{domain}</a>
-                                    <div className="domain-border"></div>
-                                    <h1 className="reader-title">{article.title}</h1>
-                                    <Author link={authorLink} author={author}/>
-                                    <div className="meta-data">
-                                        <div className="reader-estimated-time"
-                                             data-l10n-id="about-reader-estimated-read-time"
-                                             data-l10n-args="{&quot;range&quot;:&quot;3–4&quot;,&quot;rangePlural&quot;:&quot;other&quot;}"
-                                             dir="ltr">{timeToReadStr}
-                                        </div>
-                                    </div>
-                                </div>
-                                <hr/>
-                                <div className={'content'}>
-                                    <div className={`mozReaderContent readerShowElement`}>
-                                        <div className='page' dangerouslySetInnerHTML={{__html: article.content}}/>
-                                    </div>
-                                </div>
-                            </div>
-                            {/*<SettingHelper/>*/}
-                            <SelectionTip/>
-                            <BasicSetting/>
-                        </div>
-                    </ThemeWrap>
-                </div>
+               <MainContent>
+                   <div
+                        className={'ReadSomething'}>
+                       <ThemeWrap>
+                           <div className={'fixed h-full  w-full overflow-scroll left-0 top-0'} style={{
+                               backgroundColor: "var(--main-background)"
+                           }}>
+                               <div className={'container'}>
+                                   <div className="header reader-header reader-show-element">
+                                       <a className="domain reader-domain"
+                                          href={articleUrl}>{domain}</a>
+                                       <div className="domain-border"></div>
+                                       <h1 className="reader-title">{article.title}</h1>
+                                       <Author link={authorLink} author={author}/>
+                                       <div className="meta-data">
+                                           <div className="reader-estimated-time"
+                                                data-l10n-id="about-reader-estimated-read-time"
+                                                data-l10n-args="{&quot;range&quot;:&quot;3–4&quot;,&quot;rangePlural&quot;:&quot;other&quot;}"
+                                                dir="ltr">{timeToReadStr}
+                                           </div>
+                                       </div>
+                                   </div>
+                                   <hr/>
+                                   <div className={'content'}>
+                                       <div className={`mozReaderContent readerShowElement`}>
+                                           <div className='page' dangerouslySetInnerHTML={{__html: article.content}}/>
+                                       </div>
+                                   </div>
+                               </div>
+                               {/*<SettingHelper/>*/}
+                               <SelectionTip/>
+                               <BasicSetting/>
+                           </div>
+                       </ThemeWrap>
+                   </div>
+               </MainContent>
             </SettingProvider>
         </ReaderProvider>
     )
