@@ -7,6 +7,7 @@ import FontSizeRight from "data-base64:~assets/font-size-right.svg"
 import PageWidthLeft from "data-base64:~assets/page-width-left.svg"
 import PageWidthRight from "data-base64:~assets/page-width-right.svg"
 import IconSetting from "react:~/assets/setting-config.svg"
+import {i18n} from "~utils/i18n";
 
 export enum EnumLineSpacing {
     Small = '1.4em',
@@ -82,7 +83,7 @@ function FontSelect() {
     }
 
     return (
-        <select onChange={selectFontChange} value={fontFamily} className={'text-[var(--setting-foreground)] text-[12px] outline-none p-[4px]'} name="fonts" id="fonts">
+        <select onChange={selectFontChange} value={fontFamily} className={'text-[var(--setting-foreground)] text-[12px] outline-none p-[4px] bg-[white]'} name="fonts" id="fonts">
             {
                 Fonts.map(item => <option key={item} value={item}>{item}</option>)
             }
@@ -97,7 +98,7 @@ export function BasicSetting() {
     }
 
     // @ts-ignore
-    return <div onClick={showSetting} className={'setting fixed select-none right-[20px] top-[20px] select-none'}>
+    return <div onClick={showSetting} className={'setting fixed select-none right-[30px] top-[30px] select-none'}>
         <div>
             <Popover>
                 <Popover.Button className={'outline-none'}><IconSetting/></Popover.Button>
@@ -109,7 +110,7 @@ export function BasicSetting() {
                                 <FontSelect/>
                             </SettingItem>
                             <VGap size={14}/>
-                            <SettingItem label={'Font Size'}>
+                            <SettingItem label={i18n('font_size')}>
                                 <div className={'flex items-center'}>
                                     <img className={'h-[20px] mr-[6px]'} src={FontSizeLeft} alt=""/>
                                     <div className={'h-[18px] flex-1 items-center'}>
