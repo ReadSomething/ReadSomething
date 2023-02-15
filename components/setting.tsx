@@ -43,7 +43,7 @@ export const Fonts = [
 ]
 
 function SettingItem({label, children}: { label: string, children: ReactNode }) {
-    return <div className={'flex'}>
+    return <div className={'flex items-center'}>
         <div className={'w-[120px]'}>
             {label}
         </div>

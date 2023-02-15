@@ -284,7 +284,7 @@
         .lineSpacingRadio {
             @apply flex justify-center items-center cursor-pointer;
             .circle {
-                @apply w-[14px] h-[12px]  border mr-[4px] inline-block rounded-full;
+                @apply w-[14px] h-[14px]  border mr-[4px] inline-block rounded-full;
                 border-color: rgb(222, 222, 222);
 
                 &.selected {
@@ -307,14 +307,9 @@
 
         &.custom-font {
             *:not(pre) {
-                font-family: var(--font-family)!important;
+                font-family: var(--font-family), Times New Roman, times, Heti Song, serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol!important;
             }
         }
     }
 }
 
-//@media print {
-//    .ReadSomething {
-//        background-color: white;
-//    }
-//}
