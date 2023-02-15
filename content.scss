@@ -1,13 +1,9 @@
 @use "sass:meta";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* Avoid adding ID selector rules in this style sheet, since they could
- * inadvertently match elements in the article content. */
 .ReadSomething {
     --main-background: white;
     --light-theme-background: #fff;
@@ -28,8 +24,8 @@
     --text-selected-background: var(--selected-background);
     --main-foreground: var(--light-theme-foreground);
     --outline-focus-color: var(--primary-color);
-    --setting-background: rgb(244,245,245);
-    --setting-foreground: rgb(61,62,62);
+    --setting-background: rgb(244, 245, 245);
+    --setting-foreground: rgb(61, 62, 62);
     //--setting-sub-background: #AAAAAD;
 
     @media (prefers-color-scheme: dark) {
@@ -41,12 +37,9 @@
         --icon-disabled-fill: rgba(251, 251, 254, 0.4);
         --link-selected-foreground: #fff;
         --visited-link-foreground: #e675fd;
-
-        //--setting-sub-background: #AAAAAD;
     }
 
     margin: 0;
-    font-family: Helvetica, Arial, sans-serif;
     padding: var(--body-padding);
     background-color: var(--main-background);
     color: var(--main-foreground);
@@ -76,7 +69,7 @@
         max-width: 100%;
         padding: 20px;
         box-sizing: border-box;
-        line-height: var(--line-height)!important;
+        line-height: var(--line-height) !important;
     }
 
     table,
@@ -92,10 +85,6 @@
         margin: 5px;
     }
 
-    pre {
-        font-family: -apple-system-ui-monospaced, Menlo;
-    }
-
     h1,
     h2,
     h3 {
@@ -104,17 +93,17 @@
 
     h1 {
         font-size: 1.6em;
-        line-height: calc(var(--line-height) * 0.8)!important;
+        line-height: calc(var(--line-height) * 0.8) !important;
     }
 
     h2 {
         font-size: 1.2em;
-        line-height: calc(var(--line-height) * 0.94)!important;
+        line-height: calc(var(--line-height) * 0.94) !important;
     }
 
     h3 {
         font-size: 1em;
-        line-height: calc(var(--line-height) * 1.03)!important;
+        line-height: calc(var(--line-height) * 1.03) !important;
     }
 
     a:link {
@@ -253,7 +242,6 @@
         font-size: 0.9em;
         line-height: 1.48em;
         padding-bottom: 4px;
-        font-family: Helvetica, Arial, sans-serif;
         text-decoration: underline var(--main-foreground) !important;
         color: var(--link-foreground);
     }
@@ -267,7 +255,7 @@
 
 .ReadSomething {
     .setting {
-        font-family: SFMono-Regular, consolas, Liberation Mono, menlo, courier, monospace, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
+        font-family: IBM_Plex_Sans;
         font-size: 15px;
 
         .thumb {
@@ -277,13 +265,16 @@
                 @apply scale-[1.06] origin-center;
             }
         }
+
         .track {
             @apply bg-[rgb(233,234,233)] h-[4px] top-[6px];
         }
+
         .track-1 {
             @apply bg-[rgb(222,222,222)];
         }
     }
+
     .setting-font-size {
 
     }
@@ -294,7 +285,8 @@
             @apply flex justify-center items-center cursor-pointer;
             .circle {
                 @apply w-[14px] h-[12px]  border mr-[4px] inline-block rounded-full;
-                border-color: rgb(222,222,222);
+                border-color: rgb(222, 222, 222);
+
                 &.selected {
                     @apply relative;
                     &:after {
@@ -307,6 +299,19 @@
     }
 }
 
+.ReadSomething {
+    .container {
+        pre {
+            font-family: Fira_Code!important;
+        }
+
+        &.custom-font {
+            *:not(pre) {
+                font-family: var(--font-family)!important;
+            }
+        }
+    }
+}
 
 //@media print {
 //    .ReadSomething {

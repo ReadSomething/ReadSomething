@@ -1,7 +1,7 @@
 import {Readability} from "@mozilla/readability";
 import {ReactNode, useContext, useEffect, useState} from "react";
 import styleText from "data-text:./content.scss"
-import type {PlasmoGetStyle} from "plasmo"
+import type {PlasmoCSConfig, PlasmoGetStyle} from "plasmo"
 import readingTime from 'reading-time/lib/reading-time'
 import type {GptRes} from "~bean/GptRes";
 import {Popover} from "@headlessui/react";
@@ -15,6 +15,10 @@ export const getStyle: PlasmoGetStyle = () => {
     const style = document.createElement("style")
     style.textContent = styleText
     return style
+}
+
+export const config: PlasmoCSConfig = {
+    css: ["fontFamily.css", "fontClassNames.scss"]
 }
 
 const getMetaContentByProperty = function (metaProperty: string) {
@@ -96,13 +100,18 @@ function ThemeWrap({children}: { children: ReactNode }) {
 }
 
 function MainContent({children}: {children: ReactNode}) {
-    const {settingObject: {fontSize, pageWidth, lineSpacing}} = useContext(SettingContext);
-    console.log('lineSpacing', lineSpacing)
+    const {settingObject: {fontSize, pageWidth, lineSpacing, fontFamily}} = useContext(SettingContext);
 
     // @ts-ignore
-    return <div style={{"--font-size": `${fontSize}px`, "--content-width": `${pageWidth}px`, "--line-height": lineSpacing}}>
+    return <div style={{"--font-size": `${fontSize}px`, "--content-width": `${pageWidth}px`, "--line-height": lineSpacing, "--font-family": fontFamily}}>
         {children}
     </div>
+}
+
+function ContainerWrap({children}: {children: ReactNode}) {
+    const {settingObject: {fontFamily}} = useContext(SettingContext);
+
+    return  <div className={`container ${fontFamily !== 'Default' ? 'custom-font' : ''}`}>{children}</div>
 }
 
 function Main() {
@@ -135,28 +144,28 @@ function Main() {
                            <div className={'fixed h-full  w-full overflow-scroll left-0 top-0'} style={{
                                backgroundColor: "var(--main-background)"
                            }}>
-                               <div className={'container'}>
-                                   <div className="header reader-header reader-show-element">
-                                       <a className="domain reader-domain"
-                                          href={articleUrl}>{domain}</a>
-                                       <div className="domain-border"></div>
-                                       <h1 className="reader-title">{article.title}</h1>
-                                       <Author link={authorLink} author={author}/>
-                                       <div className="meta-data">
-                                           <div className="reader-estimated-time"
-                                                data-l10n-id="about-reader-estimated-read-time"
-                                                data-l10n-args="{&quot;range&quot;:&quot;3–4&quot;,&quot;rangePlural&quot;:&quot;other&quot;}"
-                                                dir="ltr">{timeToReadStr}
-                                           </div>
-                                       </div>
-                                   </div>
-                                   <hr/>
-                                   <div className={'content'}>
-                                       <div className={`mozReaderContent readerShowElement`}>
-                                           <div className='page' dangerouslySetInnerHTML={{__html: article.content}}/>
-                                       </div>
-                                   </div>
-                               </div>
+                                <ContainerWrap>
+                                    <div className="header reader-header reader-show-element">
+                                        <a className="domain reader-domain"
+                                           href={articleUrl}>{domain}</a>
+                                        <div className="domain-border"></div>
+                                        <h1 className="reader-title" style={{fontFamily: 'Bookerly'}}>{article.title}</h1>
+                                        <Author link={authorLink} author={author}/>
+                                        <div className="meta-data">
+                                            <div className="reader-estimated-time"
+                                                 data-l10n-id="about-reader-estimated-read-time"
+                                                 data-l10n-args="{&quot;range&quot;:&quot;3–4&quot;,&quot;rangePlural&quot;:&quot;other&quot;}"
+                                                 dir="ltr">{timeToReadStr}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr/>
+                                    <div className={'content'}>
+                                        <div className={`mozReaderContent readerShowElement`}>
+                                            <div className='page' dangerouslySetInnerHTML={{__html: article.content}}/>
+                                        </div>
+                                    </div>
+                                </ContainerWrap>
                                {/*<SettingHelper/>*/}
                                <SelectionTip/>
                                <BasicSetting/>
