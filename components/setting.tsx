@@ -6,6 +6,7 @@ import FontSizeLeft from "data-base64:~assets/font-size-left.svg"
 import FontSizeRight from "data-base64:~assets/font-size-right.svg"
 import PageWidthLeft from "data-base64:~assets/page-width-left.svg"
 import PageWidthRight from "data-base64:~assets/page-width-right.svg"
+import IconSetting from "react:~/assets/setting-config.svg"
 
 export enum EnumLineSpacing {
     Small = '1.4em',
@@ -99,11 +100,11 @@ export function BasicSetting() {
     return <div onClick={showSetting} className={'setting fixed select-none right-[20px] top-[20px] select-none'}>
         <div>
             <Popover>
-                <Popover.Button>Setting</Popover.Button>
+                <Popover.Button className={'outline-none'}><IconSetting/></Popover.Button>
                 <Popover.Panel className="fixed right-[20px] top-[60px]">
                     {
                         <div
-                            className='bg-[var(--setting-background)] text-[var(--setting-foreground)] w-[360px] p-[18px]'>
+                            className='rounded-[4px] bg-[var(--setting-background)] text-[var(--setting-foreground)] w-[360px] p-[18px] '>
                             <SettingItem label={'Font'}>
                                 <FontSelect/>
                             </SettingItem>

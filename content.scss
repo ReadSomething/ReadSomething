@@ -273,6 +273,10 @@
         .track-1 {
             @apply bg-[rgb(222,222,222)];
         }
+
+        svg path {
+            fill: var(--icon-fill);
+        }
     }
 
     .setting-font-size {
