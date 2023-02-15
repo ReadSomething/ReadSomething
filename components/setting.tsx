@@ -1,7 +1,6 @@
-import {ReactNode, useContext} from "react";
+import React, {ReactNode, useContext} from "react";
 import {SettingContext} from "~provider/setting";
 import {Popover} from "@headlessui/react";
-import {EnumTheme} from "~content";
 import ReactSlider from "react-slider";
 import FontSizeLeft from "data-base64:~assets/font-size-left.svg"
 import FontSizeRight from "data-base64:~assets/font-size-right.svg"
@@ -9,10 +8,39 @@ import PageWidthLeft from "data-base64:~assets/page-width-left.svg"
 import PageWidthRight from "data-base64:~assets/page-width-right.svg"
 
 export enum EnumLineSpacing {
-    Small = '1.3em',
-    Medium = '1.6em',
-    Large = '2.2em'
+    Small = '1.4em',
+    Medium = '1.8em',
+    Large = '2.4em'
 }
+
+export const Fonts = [
+    "Default",
+    "Arial",
+    "Arial Black",
+    "Athelas",
+    "Bookerly",
+    "Chakra_Petch",
+    "Comic Sans",
+    "Comic Sans MS",
+    "Constantia",
+    "Courier New",
+    "Courier",
+    "Didot",
+    "Fira_Code",
+    "Georgia",
+    "Gill Sans",
+    "IBM_Plex_Sans",
+    "Impact",
+    "Iowan Old Style",
+    "Palatino",
+    "Optima",
+    "Sans-serif",
+    "Seravek",
+    "Serif",
+    "Sitka Text",
+    "Times New Roman",
+    "Trebuchet MS"
+]
 
 function SettingItem({label, children}: { label: string, children: ReactNode }) {
     return <div className={'flex'}>
@@ -30,12 +58,14 @@ function VGap({size = 0}: { size: number }) {
 }
 
 function LineSpacing() {
-    const {settingObject: {lineSpacing}, setLineSpacing} = useContext(SettingContext);
+    const {settingObject: {lineSpacing}, setSetting} = useContext(SettingContext);
 
     return <div className={'lineSpacingRadioGroup'}>
         {
             Object.keys(EnumLineSpacing).map(item => {
-                return  <div className={'lineSpacingRadio'} onClick={() => setLineSpacing(EnumLineSpacing[item])} key={item}>
+                return <div className={'lineSpacingRadio'}
+                            onClick={() => setSetting({lineSpacing: EnumLineSpacing[item]})}
+                            key={item}>
                     <span className={`circle ${lineSpacing === EnumLineSpacing[item] ? 'selected' : ''}`}/> {item}
                 </div>
             })
@@ -43,23 +73,39 @@ function LineSpacing() {
     </div>
 }
 
+function FontSelect() {
+    const {settingObject: {fontFamily}, setSetting} = useContext(SettingContext);
+
+    const selectFontChange = function (e: React.ChangeEvent<HTMLSelectElement>) {
+        void setSetting({fontFamily: e.target.value})
+    }
+
+    return (
+        <select onChange={selectFontChange} value={fontFamily} className={'text-[var(--setting-foreground)] text-[12px] outline-none p-[4px]'} name="fonts" id="fonts">
+            {
+                Fonts.map(item => <option key={item} value={item}>{item}</option>)
+            }
+        </select>
+    )
+}
+
 export function BasicSetting() {
-    const {settingObject: {fontSize, pageWidth}, setTheme, setFontSize, setPageWidth} = useContext(SettingContext);
+    const {settingObject: {fontSize, pageWidth}, setSetting} = useContext(SettingContext);
     const showSetting = function () {
 
     }
 
     // @ts-ignore
-    return <div onClick={showSetting} className={'setting fixed select-none right-[20px] top-[20px] cursor-pointer'}>
+    return <div onClick={showSetting} className={'setting fixed select-none right-[20px] top-[20px] select-none'}>
         <div>
             <Popover>
                 <Popover.Button>Setting</Popover.Button>
                 <Popover.Panel className="fixed right-[20px] top-[60px]">
                     {
                         <div
-                            className='bg-[var(--setting-background)] text-[var(--setting-foreground)] w-[360px] p-[18px] h-[300px] '>
+                            className='bg-[var(--setting-background)] text-[var(--setting-foreground)] w-[360px] p-[18px]'>
                             <SettingItem label={'Font'}>
-                                hello
+                                <FontSelect/>
                             </SettingItem>
                             <VGap size={14}/>
                             <SettingItem label={'Font Size'}>
@@ -71,7 +117,7 @@ export function BasicSetting() {
                                                      className="horizontal-slider mt-[2px] setting-font-size"
                                                      thumbClassName="thumb"
                                                      trackClassName="track"
-                                                     onChange={setFontSize}
+                                                     onChange={(value) => setSetting({fontSize: value})}
                                                      renderThumb={(props, state) =>
                                                          <div {...props}>{state.valueNow}</div>}
                                         />
@@ -94,7 +140,7 @@ export function BasicSetting() {
                                                      className="horizontal-slider mt-[2px] w-full setting-font-size"
                                                      thumbClassName="thumb"
                                                      trackClassName="track"
-                                                     onChange={setPageWidth}
+                                                     onChange={(value) => setSetting({pageWidth: value})}
                                                      renderThumb={(props, state) =>
                                                          <div {...props}>{state.valueNow}</div>}
                                         />

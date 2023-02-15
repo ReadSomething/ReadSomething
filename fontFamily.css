@@ -1,0 +1,230 @@
+@font-face {
+    font-family: 'Bookerly';
+    src: url('data-base64:~assets/fonts/Bookerly/Bookerly-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Bookerly';
+    src: url('data-base64:~assets/fonts/Bookerly/Bookerly-BoldItalic.ttf') format('truetype');
+    font-weight: 700;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Bookerly';
+    src: url('data-base64:~assets/fonts/Bookerly/Bookerly-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Bookerly';
+    src: url('data-base64:~assets/fonts/Bookerly/Bookerly-RegularItalic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Chakra_Petch';
+    src: url('data-base64:~assets/fonts/Chakra_Petch/ChakraPetch-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Chakra_Petch';
+    src: url('data-base64:~assets/fonts/Chakra_Petch/ChakraPetch-BoldItalic.ttf') format('truetype');
+    font-weight: 700;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Chakra_Petch';
+    src: url('data-base64:~assets/fonts/Chakra_Petch/ChakraPetch-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Chakra_Petch';
+    src: url('data-base64:~assets/fonts/Chakra_Petch/ChakraPetch-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Chakra_Petch';
+    src: url('data-base64:~assets/fonts/Chakra_Petch/ChakraPetch-LightItalic.ttf') format('truetype');
+    font-weight: 300;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Chakra_Petch';
+    src: url('data-base64:~assets/fonts/Chakra_Petch/ChakraPetch-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Chakra_Petch';
+    src: url('data-base64:~assets/fonts/Chakra_Petch/ChakraPetch-MediumItalic.ttf') format('truetype');
+    font-weight: 500;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Chakra_Petch';
+    src: url('data-base64:~assets/fonts/Chakra_Petch/ChakraPetch-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Chakra_Petch';
+    src: url('data-base64:~assets/fonts/Chakra_Petch/ChakraPetch-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Chakra_Petch';
+    src: url('data-base64:~assets/fonts/Chakra_Petch/ChakraPetch-SemiBoldItalic.ttf') format('truetype');
+    font-weight: 600;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Fira_Code';
+    src: url('data-base64:~assets/fonts/Fira_Code/FiraCode-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Fira_Code';
+    src: url('data-base64:~assets/fonts/Fira_Code/FiraCode-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Fira_Code';
+    src: url('data-base64:~assets/fonts/Fira_Code/FiraCode-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Fira_Code';
+    src: url('data-base64:~assets/fonts/Fira_Code/FiraCode-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Fira_Code';
+    src: url('data-base64:~assets/fonts/Fira_Code/FiraCode-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'IBM_Plex_Sans';
+    src: url('data-base64:~assets/fonts/IBM_Plex_Sans/IBMPlexSans-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'IBM_Plex_Sans';
+    src: url('data-base64:~assets/fonts/IBM_Plex_Sans/IBMPlexSans-BoldItalic.ttf') format('truetype');
+    font-weight: 700;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'IBM_Plex_Sans';
+    src: url('data-base64:~assets/fonts/IBM_Plex_Sans/IBMPlexSans-ExtraLight.ttf') format('truetype');
+    font-weight: 200;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'IBM_Plex_Sans';
+    src: url('data-base64:~assets/fonts/IBM_Plex_Sans/IBMPlexSans-ExtraLightItalic.ttf') format('truetype');
+    font-weight: 200;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'IBM_Plex_Sans';
+    src: url('data-base64:~assets/fonts/IBM_Plex_Sans/IBMPlexSans-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'IBM_Plex_Sans';
+    src: url('data-base64:~assets/fonts/IBM_Plex_Sans/IBMPlexSans-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'IBM_Plex_Sans';
+    src: url('data-base64:~assets/fonts/IBM_Plex_Sans/IBMPlexSans-LightItalic.ttf') format('truetype');
+    font-weight: 300;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'IBM_Plex_Sans';
+    src: url('data-base64:~assets/fonts/IBM_Plex_Sans/IBMPlexSans-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'IBM_Plex_Sans';
+    src: url('data-base64:~assets/fonts/IBM_Plex_Sans/IBMPlexSans-MediumItalic.ttf') format('truetype');
+    font-weight: 500;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'IBM_Plex_Sans';
+    src: url('data-base64:~assets/fonts/IBM_Plex_Sans/IBMPlexSans-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'IBM_Plex_Sans';
+    src: url('data-base64:~assets/fonts/IBM_Plex_Sans/IBMPlexSans-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'IBM_Plex_Sans';
+    src: url('data-base64:~assets/fonts/IBM_Plex_Sans/IBMPlexSans-SemiBoldItalic.ttf') format('truetype');
+    font-weight: 600;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'IBM_Plex_Sans';
+    src: url('data-base64:~assets/fonts/IBM_Plex_Sans/IBMPlexSans-Thin.ttf') format('truetype');
+    font-weight: 100;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'IBM_Plex_Sans';
+    src: url('data-base64:~assets/fonts/IBM_Plex_Sans/IBMPlexSans-ThinItalic.ttf') format('truetype');
+    font-weight: 100;
+    font-style: italic;
+}
