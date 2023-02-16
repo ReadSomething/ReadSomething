@@ -21,17 +21,17 @@ export const Fonts = [
     "Arial Black",
     "Athelas",
     "Bookerly",
-    "Chakra_Petch",
+    "Chakra Petch",
     "Comic Sans",
     "Comic Sans MS",
     "Constantia",
     "Courier New",
     "Courier",
     "Didot",
-    "Fira_Code",
+    "Fira Code",
     "Georgia",
     "Gill Sans",
-    "IBM_Plex_Sans",
+    "IBM Plex Sans",
     "Impact",
     "Iowan Old Style",
     "Palatino",
@@ -110,7 +110,7 @@ export function BasicSetting() {
                                 <FontSelect/>
                             </SettingItem>
                             <VGap size={14}/>
-                            <SettingItem label={i18n('font_size')}>
+                            <SettingItem label={'Font size'}>
                                 <div className={'flex items-center'}>
                                     <img className={'h-[20px] mr-[6px]'} src={FontSizeLeft} alt=""/>
                                     <div className={'h-[18px] flex-1 items-center'}>
