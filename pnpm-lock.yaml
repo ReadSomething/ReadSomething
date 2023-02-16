@@ -13,6 +13,7 @@ specifiers:
   '@types/react-slider': ^1.3.1
   autoprefixer: ^10.4.13
   highlight.js: ^11.7.0
+  html-to-md: ^0.8.3
   plasmo: 0.64.2
   postcss: ^8.4.21
   prettier: 2.8.3
@@ -29,6 +30,7 @@ dependencies:
   '@plasmohq/messaging': 0.0.4_react@18.2.0
   '@plasmohq/storage': 1.0.5_react@18.2.0
   highlight.js: 11.7.0
+  html-to-md: 0.8.3
   plasmo: 0.64.2_gjpyg5imi5mt2gbvkmn3a4dr7m
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
@@ -3501,6 +3503,10 @@ packages:
   /highlight.js/11.7.0:
     resolution: {integrity: sha512-1rRqesRFhMO/PRF+G86evnyJkCgaZFOI+Z6kdj15TA18funfoqJXvgPCLSf0SWq3SRfg1j3HlDs8o4s3EGq1oQ==}
     engines: {node: '>=12.0.0'}
+    dev: false
+
+  /html-to-md/0.8.3:
+    resolution: {integrity: sha512-Va+bB1YOdD6vMRDue9/l7YxbERgwOgsos4erUDRfRN6YE0B2Wbbw8uAj6xZJk9A9vrjVy7mG/WLlhDw6RXfgsA==}
     dev: false
 
   /htmlnano/2.0.3_postcss@8.4.21+svgo@2.8.0:

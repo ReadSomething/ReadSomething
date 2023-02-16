@@ -6,9 +6,10 @@ import readingTime from 'reading-time/lib/reading-time'
 import type {GptRes} from "~bean/GptRes";
 import {Popover} from "@headlessui/react";
 import SettingProvider, {SettingContext} from "~provider/setting";
-import {ReaderProvider} from "~provider/reader";
+import { Article, ReaderProvider } from "~provider/reader";
 import {BasicSetting} from "~components/setting";
 import {SelectionTip} from "~components/selectionTip";
+import { DownloadMarkdown } from "~components/download";
 
 // a plasmo hook
 export const getStyle: PlasmoGetStyle = () => {
@@ -135,7 +136,7 @@ function Main() {
     const timeToReadStr = readingTime(article.textContent).text
 
     return (
-        <ReaderProvider>
+        <ReaderProvider article={new Article(article.title)}>
             <SettingProvider>
                <MainContent>
                    <div
@@ -169,6 +170,7 @@ function Main() {
                                {/*<SettingHelper/>*/}
                                <SelectionTip/>
                                <BasicSetting/>
+                               <DownloadMarkdown/>
                            </div>
                        </ThemeWrap>
                    </div>

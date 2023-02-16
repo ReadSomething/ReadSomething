@@ -15,6 +15,7 @@
     "@plasmohq/messaging": "^0.0.4",
     "@plasmohq/storage": "^1.0.5",
     "highlight.js": "^11.7.0",
+    "html-to-md": "^0.8.3",
     "plasmo": "0.64.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",

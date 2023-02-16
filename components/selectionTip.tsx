@@ -1,24 +1,23 @@
-import {useEffect} from "react";
+import { useEffect } from "react";
 
 export function SelectionTip() {
-    const plasmoRoot = document.querySelectorAll('plasmo-csui')[0].shadowRoot
-    const plasmoContainer = plasmoRoot.querySelector('#plasmo-shadow-container')
+  const plasmoRoot = document.querySelectorAll("plasmo-csui")[0].shadowRoot;
+  const plasmoContainer = plasmoRoot.querySelector("#plasmo-shadow-container");
 
-    const onMouseUp = function (e) {
-        const selection = window.getSelection()
-        console.log(selection)
+  const onMouseUp = function(e) {
+    const selection = window.getSelection();
 
-        const start = selection.anchorOffset;
-        const end = selection.focusOffset;
-    }
+    const start = selection.anchorOffset;
+    const end = selection.focusOffset;
+  };
 
-    useEffect(() => {
-        plasmoContainer.addEventListener('mouseup', onMouseUp)
+  useEffect(() => {
+    plasmoContainer.addEventListener("mouseup", onMouseUp);
 
-        return () => {
-            plasmoContainer.removeEventListener('mouseup', onMouseUp)
-        }
-    }, []);
+    return () => {
+      plasmoContainer.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
 
-    return <div></div>
+  return <div></div>;
 }
