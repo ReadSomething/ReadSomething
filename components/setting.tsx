@@ -16,33 +16,33 @@ export enum EnumLineSpacing {
 }
 
 export const Fonts = [
-  "Default",
-  "Arial",
-  "Arial Black",
-  "Athelas",
-  "Bookerly",
-  "Chakra_Petch",
-  "Comic Sans",
-  "Comic Sans MS",
-  "Constantia",
-  "Courier New",
-  "Courier",
-  "Didot",
-  "Fira_Code",
-  "Georgia",
-  "Gill Sans",
-  "IBM_Plex_Sans",
-  "Impact",
-  "Iowan Old Style",
-  "Palatino",
-  "Optima",
-  "Sans-serif",
-  "Seravek",
-  "Serif",
-  "Sitka Text",
-  "Times New Roman",
-  "Trebuchet MS"
-];
+    "Default",
+    "Arial",
+    "Arial Black",
+    "Athelas",
+    "Bookerly",
+    "Chakra Petch",
+    "Comic Sans",
+    "Comic Sans MS",
+    "Constantia",
+    "Courier New",
+    "Courier",
+    "Didot",
+    "Fira Code",
+    "Georgia",
+    "Gill Sans",
+    "IBM Plex Sans",
+    "Impact",
+    "Iowan Old Style",
+    "Palatino",
+    "Optima",
+    "Sans-serif",
+    "Seravek",
+    "Serif",
+    "Sitka Text",
+    "Times New Roman",
+    "Trebuchet MS"
+]
 
 function SettingItem({ label, children }: { label: string, children: ReactNode }) {
   return <div className={"flex items-center"}>
@@ -99,63 +99,63 @@ export function BasicSetting() {
 
   };
 
-  // @ts-ignore
-  return <div onClick={showSetting} className={"setting fixed select-none right-[30px] top-[30px] select-none"} title={"Settings"}>
-    <div>
-      <Popover>
-        <Popover.Button className={"outline-none"}><IconSetting /></Popover.Button>
-        <Popover.Panel className="fixed right-[20px] top-[60px]">
-          {
-            <div
-              className="rounded-[4px] bg-[var(--setting-background)] text-[var(--setting-foreground)] w-[360px] p-[18px] ">
-              <SettingItem label={"Font"}>
-                <FontSelect />
-              </SettingItem>
-              <VGap size={14} />
-              <SettingItem label={i18n("font_size")}>
-                <div className={"flex items-center"}>
-                  <img className={"h-[20px] mr-[6px]"} src={FontSizeLeft} alt="" />
-                  <div className={"h-[18px] flex-1 items-center"}>
-                    {/*// @ts-ignore*/}
-                    <ReactSlider max={40} min={12} defaultValue={fontSize}
-                                 className="horizontal-slider mt-[2px] setting-font-size"
-                                 thumbClassName="thumb"
-                                 trackClassName="track"
-                                 onChange={(value) => setSetting({ fontSize: value })}
-                                 renderThumb={(props, state) =>
-                                   <div {...props}>{state.valueNow}</div>}
-                    />
-                  </div>
-                  <img className={"h-[20px] ml-[6px]"} src={FontSizeRight} alt="" />
-                </div>
-              </SettingItem>
-              <VGap size={14} />
-              <SettingItem label={"Line spacing"}>
-                <LineSpacing />
-              </SettingItem>
-              <VGap size={14} />
-              <SettingItem label={"Page width"}>
-                <div className={"flex items-center"}>
-                  <img src={PageWidthLeft} className={"h-[18px] mr-[6px]"} alt="" />
-                  <div className={"h-[18px] flex-1  items-center"}>
-                    {/*@ts-ignore*/}
-                    <ReactSlider defaultValue={pageWidth}
-                                 max={1200} min={400}
-                                 className="horizontal-slider mt-[2px] w-full setting-font-size"
-                                 thumbClassName="thumb"
-                                 trackClassName="track"
-                                 onChange={(value) => setSetting({ pageWidth: value })}
-                                 renderThumb={(props, state) =>
-                                   <div {...props}>{state.valueNow}</div>}
-                    />
-                  </div>
-                  <img src={PageWidthRight} className={"h-[18px] ml-[6px]"} alt="" />
-                </div>
-              </SettingItem>
-            </div>
-          }
-        </Popover.Panel>
-      </Popover>
-    </div>
-  </div>;
+    // @ts-ignore
+    return <div onClick={showSetting} className={'setting fixed select-none right-[30px] top-[30px] select-none'} title={"Settings"}>
+        <div>
+            <Popover>
+                <Popover.Button className={'outline-none'}><IconSetting/></Popover.Button>
+                <Popover.Panel className="fixed right-[20px] top-[60px]">
+                    {
+                        <div
+                            className='rounded-[4px] bg-[var(--setting-background)] text-[var(--setting-foreground)] w-[360px] p-[18px] '>
+                            <SettingItem label={'Font'}>
+                                <FontSelect/>
+                            </SettingItem>
+                            <VGap size={14}/>
+                            <SettingItem label={'Font size'}>
+                                <div className={'flex items-center'}>
+                                    <img className={'h-[20px] mr-[6px]'} src={FontSizeLeft} alt=""/>
+                                    <div className={'h-[18px] flex-1 items-center'}>
+                                        {/*// @ts-ignore*/}
+                                        <ReactSlider max={40} min={12} defaultValue={fontSize}
+                                                     className="horizontal-slider mt-[2px] setting-font-size"
+                                                     thumbClassName="thumb"
+                                                     trackClassName="track"
+                                                     onChange={(value) => setSetting({fontSize: value})}
+                                                     renderThumb={(props, state) =>
+                                                         <div {...props}>{state.valueNow}</div>}
+                                        />
+                                    </div>
+                                    <img className={'h-[20px] ml-[6px]'} src={FontSizeRight} alt=""/>
+                                </div>
+                            </SettingItem>
+                            <VGap size={14}/>
+                            <SettingItem label={'Line spacing'}>
+                                <LineSpacing/>
+                            </SettingItem>
+                            <VGap size={14}/>
+                            <SettingItem label={'Page width'}>
+                                <div className={'flex items-center'}>
+                                    <img src={PageWidthLeft} className={'h-[18px] mr-[6px]'} alt=""/>
+                                    <div className={'h-[18px] flex-1  items-center'}>
+                                        {/*@ts-ignore*/}
+                                        <ReactSlider defaultValue={pageWidth}
+                                                     max={1200} min={400}
+                                                     className="horizontal-slider mt-[2px] w-full setting-font-size"
+                                                     thumbClassName="thumb"
+                                                     trackClassName="track"
+                                                     onChange={(value) => setSetting({pageWidth: value})}
+                                                     renderThumb={(props, state) =>
+                                                         <div {...props}>{state.valueNow}</div>}
+                                        />
+                                    </div>
+                                    <img src={PageWidthRight} className={'h-[18px] ml-[6px]'} alt=""/>
+                                </div>
+                            </SettingItem>
+                        </div>
+                    }
+                </Popover.Panel>
+            </Popover>
+        </div>
+  </div>
 }

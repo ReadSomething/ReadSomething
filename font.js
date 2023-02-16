@@ -78,6 +78,6 @@ function generateFontClassNames() {
 }
 
 void function main() {
-    // generateFontFamily()
-    generateFontClassNames()
+    generateFontFamily()
+    // generateFontClassNames()
 }()
