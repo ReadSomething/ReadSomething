@@ -1,8 +1,8 @@
 {
   "name": "readsomething",
-  "displayName": "Readsomething",
-  "version": "0.0.1",
-  "description": "A browser plugin to assist reading, using AI capabilities to enhance reading efficiency.",
+  "displayName": "Read Something",
+  "version": "0.0.2",
+  "description": "This Chrome browser extension provides an article reading mode that simplifies webpage elements and supports custom adjustments such as font size and page width, offering users a more comfortable and convenient reading environment. Whether reading long articles, news reports, or study materials, the extension can enhance the reading experience according to personal preferences.",
   "author": "zhongyiio",
   "scripts": {
     "dev": "plasmo dev",
