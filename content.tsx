@@ -1,17 +1,14 @@
 import {Readability} from "@mozilla/readability";
-import {memo, ReactNode, useContext, useEffect, useMemo, useState} from "react";
-import ReactDOM from "react-dom";
+import { ReactNode, useContext, useEffect, useMemo, useState} from "react";
 import styleText from "data-text:./content.scss"
 import type {PlasmoCSConfig, PlasmoGetStyle} from "plasmo"
 import readingTime from 'reading-time/lib/reading-time'
 import type {GptRes} from "~bean/GptRes";
-import {Popover} from "@headlessui/react";
 import SettingProvider, {SettingContext} from "~provider/setting";
 import { Article, ReaderProvider } from "~provider/reader";
 import {BasicSetting} from "~components/setting";
 import {SelectionTip} from "~components/selectionTip";
 import { DownloadMarkdown } from "~components/download";
-import {translateAnchor} from "~components/tranlator";
 import Translate from "~components/translate";
 
 // a plasmo hook
