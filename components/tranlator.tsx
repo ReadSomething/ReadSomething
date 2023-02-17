@@ -46,6 +46,7 @@ export const translateAnchor = function (anchor: Element) {
 
     const container = document.createElement('p')
     container.setAttribute(TRANSLATED_TAG, '1')
+    anchor.setAttribute(TRANSLATED_TAG, '1')
     anchor.after(container)
     ReactDOM.createRoot(container).render(<Translator anchor={anchor}/>)
 }
