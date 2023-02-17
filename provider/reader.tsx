@@ -15,6 +15,10 @@ interface TypeReaderContext {
     article: Article
 
     setArticle: (article: Article) => void
+
+    translateOn: boolean
+
+    setTranslateOn: (on: boolean) => void
 }
 
 export const ReaderContext = createContext({} as TypeReaderContext)
@@ -28,6 +32,7 @@ export function ReaderProvider({
 }) {
     const [settingStatus, setSettingStatus] = useState(false)
     const [_article, setArticle] = useState(article)
+    const [translateOn, setTranslateOn] = useState(false)
 
     return (
         <ReaderContext.Provider
@@ -35,7 +40,9 @@ export function ReaderProvider({
                 settingStatus,
                 setSettingStatus,
                 article: _article,
-                setArticle
+                setArticle,
+                translateOn,
+                setTranslateOn
             }}>
             {children}
         </ReaderContext.Provider>
