@@ -10,6 +10,7 @@ import { Article, ReaderProvider } from "~provider/reader";
 import {BasicSetting} from "~components/setting";
 import {SelectionTip} from "~components/selectionTip";
 import { DownloadMarkdown } from "~components/download";
+import { Translate } from "~components/translate";
 
 // a plasmo hook
 export const getStyle: PlasmoGetStyle = () => {
@@ -169,8 +170,9 @@ function Main() {
                                 </ContainerWrap>
                                {/*<SettingHelper/>*/}
                                <SelectionTip/>
-                               <BasicSetting/>
+                               <Translate />
                                <DownloadMarkdown/>
+                               <BasicSetting/>
                            </div>
                        </ThemeWrap>
                    </div>
