@@ -8,6 +8,8 @@ import PageWidthLeft from "data-base64:~assets/page-width-left.svg";
 import PageWidthRight from "data-base64:~assets/page-width-right.svg";
 import IconSetting from "react:~/assets/setting-config.svg";
 import { i18n } from "~utils/i18n";
+import ToolTip from "~components/toolTip";
+
 
 export enum EnumLineSpacing {
   Small = "1.4em",
@@ -100,10 +102,14 @@ export function BasicSetting() {
   };
 
     // @ts-ignore
-    return <div onClick={showSetting} className={'setting fixed select-none right-[30px] top-[30px] select-none'} title={"Settings"}>
+    return <div onClick={showSetting} className={'setting fixed select-none right-[30px] top-[30px] select-none'}>
         <div>
             <Popover>
-                <Popover.Button className={'outline-none'}><IconSetting/></Popover.Button>
+                <ToolTip delayShow={1000} message={'Settings'}>
+                    <div>
+                        <Popover.Button data-tooltip-id="my-tooltip"  className={'outline-none'}><IconSetting/></Popover.Button>
+                    </div>
+                </ToolTip>
                 <Popover.Panel className="fixed right-[20px] top-[60px]">
                     {
                         <div

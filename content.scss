@@ -1,8 +1,8 @@
 @use "sass:meta";
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 
 .ReadSomething {
     --main-background: white;
@@ -320,3 +320,26 @@
     }
 }
 
+.ReadSomething {
+    .tooltip {
+        .tip {
+            @apply text-[12px] px-[6px] py-[2px] rounded-[2px] bg-[var(--main-foreground)];
+            @apply text-[var(--main-background)] drop-shadow;
+            font-family: Bookerly;
+            top: calc(100% + 4px);
+            &:after {
+
+            }
+        }
+    }
+    .translate-placeholder {
+        @apply bg-[rgb(229,231,235)];
+        font-family: Bookerly;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .translate-placeholder {
+            @apply bg-[rgb(55,65,81)];
+        }
+    }
+}
