@@ -9,7 +9,7 @@ function PlaceHolder() {
 }
 
 interface TranslatorProps {
-    anchor: HTMLParagraphElement,
+    anchor: Element,
 }
 
 function Translator({anchor}: TranslatorProps) {
@@ -37,8 +37,15 @@ function Translator({anchor}: TranslatorProps) {
     </>
 }
 
-export const translateAnchor = function (anchor) {
+const TRANSLATED_TAG = 'rs-translated'
+
+export const translateAnchor = function (anchor: Element) {
+    if(anchor.getAttribute(TRANSLATED_TAG)) {
+        return
+    }
+
     const container = document.createElement('p')
+    container.setAttribute(TRANSLATED_TAG, '1')
     anchor.after(container)
     ReactDOM.createRoot(container).render(<Translator anchor={anchor}/>)
 }
