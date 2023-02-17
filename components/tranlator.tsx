@@ -1,5 +1,6 @@
-import ReactDOM from "react-dom";
+import ReactDOM from "react-dom/client";
 import {Fragment, useEffect, useState} from "react";
+import {sendToBackground} from "@plasmohq/messaging";
 
 function PlaceHolder() {
     return <div className={'translate-placeholder animate-pulse w-full p-[4px] py-[10px]'}>
@@ -7,18 +8,26 @@ function PlaceHolder() {
     </div>
 }
 
-function Translator() {
+interface TranslatorProps {
+    anchor: HTMLParagraphElement,
+}
+
+function Translator({anchor}: TranslatorProps) {
     const [translatedDom, setTranslatedDom] = useState('');
 
     useEffect(() => {
-        // start translate
-        setTimeout(() => {
-            setTranslatedDom('<b>hello</b>')
-        }, 3000)
+        void translate()
     }, []);
 
-    function translate() {
 
+    async function translate() {
+        const message = await sendToBackground({
+            name: "translate",
+            body: anchor.outerHTML
+        })
+        const resp = JSON.parse(message.message)
+        setTranslatedDom(resp["data"])
+        console.log(resp)
     }
 
     return <>
@@ -31,8 +40,10 @@ function Translator() {
 }
 
 export const translateAnchor = function (anchor) {
-    const container = document.createElement('div')
+    const container = document.createElement('p')
     anchor.after(container)
+    ReactDOM.createRoot(container).render(<Translator anchor={anchor}/>)
 
-    ReactDOM.render(<Translator/>, container)
+    // container.render()
+    // ReactDOM.render(<Translator anchor={anchor}/>, container)
 }
