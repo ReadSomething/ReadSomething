@@ -3,6 +3,7 @@ import React, { useContext } from "react"
 import IconDownload from "react:~/assets/download.svg"
 
 import { ReaderContext } from "~provider/reader"
+import ToolTip from "./toolTip"
 
 export function DownloadMarkdown() {
     const {
@@ -46,10 +47,12 @@ export function DownloadMarkdown() {
 
     // @ts-ignore
     return (
-        <div onClick={download} className={"setting fixed select-none right-[80px] top-[30px] select-none"} title={"Export"} >
+        <div onClick={download} className={"setting fixed select-none right-[80px] top-[30px] select-none"}>
             <div>
                 <button className={"outline-none"}>
-                    <IconDownload />
+                    <ToolTip message={'Export'}>
+                        <IconDownload />
+                    </ToolTip>
                 </button>
             </div>
         </div>

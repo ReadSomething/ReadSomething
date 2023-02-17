@@ -1,5 +1,6 @@
 import {Readability} from "@mozilla/readability";
 import {ReactNode, useContext, useEffect, useState} from "react";
+import ReactDOM from "react-dom";
 import styleText from "data-text:./content.scss"
 import type {PlasmoCSConfig, PlasmoGetStyle} from "plasmo"
 import readingTime from 'reading-time/lib/reading-time'
@@ -10,6 +11,7 @@ import { Article, ReaderProvider } from "~provider/reader";
 import {BasicSetting} from "~components/setting";
 import {SelectionTip} from "~components/selectionTip";
 import { DownloadMarkdown } from "~components/download";
+import {translateAnchor} from "~components/tranlator";
 import { Translate } from "~components/translate";
 
 // a plasmo hook
@@ -116,10 +118,24 @@ function ContainerWrap({children}: {children: ReactNode}) {
     return  <div className={`container ${fontFamily !== 'Default' ? 'custom-font' : ''}`}>{children}</div>
 }
 
+function TestC () {
+    useEffect(() => {
+      console.log('TestC')
+    }, []);
+
+    return <div>hell</div>
+}
+
 function Main() {
     useEffect(() => {
         const defaultOverflowStyle = document.body.style.overflow
         document.body.style.overflow = 'hidden'
+
+        setTimeout(function () {
+            const source = document.querySelectorAll('plasmo-csui')[0].shadowRoot.querySelectorAll('p')[0]
+
+            translateAnchor(source)
+        },1000)
 
         return () => {
             document.body.style.overflow = defaultOverflowStyle
