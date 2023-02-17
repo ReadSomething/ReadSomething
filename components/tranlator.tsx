@@ -1,5 +1,5 @@
 import ReactDOM from "react-dom/client";
-import {Fragment, useEffect, useState} from "react";
+import {useEffect, useState} from "react";
 import {sendToBackground} from "@plasmohq/messaging";
 
 function PlaceHolder() {
@@ -19,7 +19,6 @@ function Translator({anchor}: TranslatorProps) {
         void translate()
     }, []);
 
-
     async function translate() {
         const message = await sendToBackground({
             name: "translate",
@@ -27,7 +26,6 @@ function Translator({anchor}: TranslatorProps) {
         })
         const resp = JSON.parse(message.message)
         setTranslatedDom(resp["data"])
-        console.log(resp)
     }
 
     return <>
@@ -43,7 +41,4 @@ export const translateAnchor = function (anchor) {
     const container = document.createElement('p')
     anchor.after(container)
     ReactDOM.createRoot(container).render(<Translator anchor={anchor}/>)
-
-    // container.render()
-    // ReactDOM.render(<Translator anchor={anchor}/>, container)
 }
