@@ -1,5 +1,5 @@
 import {Readability} from "@mozilla/readability";
-import {ReactNode, useContext, useEffect, useState} from "react";
+import {memo, ReactNode, useContext, useEffect, useMemo, useState} from "react";
 import ReactDOM from "react-dom";
 import styleText from "data-text:./content.scss"
 import type {PlasmoCSConfig, PlasmoGetStyle} from "plasmo"
@@ -12,7 +12,7 @@ import {BasicSetting} from "~components/setting";
 import {SelectionTip} from "~components/selectionTip";
 import { DownloadMarkdown } from "~components/download";
 import {translateAnchor} from "~components/tranlator";
-import { Translate } from "~components/translate";
+import Translate from "~components/translate";
 
 // a plasmo hook
 export const getStyle: PlasmoGetStyle = () => {
@@ -130,12 +130,6 @@ function Main() {
     useEffect(() => {
         const defaultOverflowStyle = document.body.style.overflow
         document.body.style.overflow = 'hidden'
-
-        setTimeout(function () {
-            const source = document.querySelectorAll('plasmo-csui')[0].shadowRoot.querySelectorAll('p')[0]
-
-            translateAnchor(source)
-        },1000)
 
         return () => {
             document.body.style.overflow = defaultOverflowStyle
