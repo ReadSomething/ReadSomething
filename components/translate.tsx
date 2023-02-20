@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {useContext, useEffect, useMemo, useState} from "react";
 import IconTranslate from "react:~/assets/translate.svg";
 import { translateAnchor } from "~components/tranlator";
 import { getLatestState } from "~utils/state";
@@ -8,6 +8,12 @@ import { ReaderContext } from "~provider/reader";
 function Translate() {
     const [paragraphs, setParagraphs] = useState<Element[]>();
     const { translateOn, setTranslateOn } = useContext(ReaderContext);
+
+    const scrollListener = debounce(async () => {
+        await translateCurrentPage();
+    }, 200);
+
+    const listener = useMemo(() => scrollListener, []);
 
     const handleTranslateButtonClick = async function() {
         setTranslateOn(!translateOn);
@@ -24,10 +30,10 @@ function Translate() {
 
             // listen scroll event
             const scroll = getScroll();
-            scroll.addEventListener("scroll", scrollListener);
+            scroll.addEventListener("scroll", listener);
         } else {
             const scroll = getScroll();
-            scroll.removeEventListener("scroll", scrollListener);
+            scroll.removeEventListener("scroll", listener);
             console.log("Translate off. Remove scroll event listener.");
         }
     };
@@ -36,7 +42,7 @@ function Translate() {
         const scroll = getScroll();
 
         return function() {
-            scroll.removeEventListener("scroll", scrollListener);
+            scroll.removeEventListener("scroll", listener);
         };
     });
 
@@ -63,10 +69,6 @@ function Translate() {
             timeout = setTimeout(func, wait);
         };
     }
-
-    const scrollListener = debounce(async () => {
-        await translateCurrentPage();
-    }, 200);
 
     const isInViewport = function(elem) {
         const bounding = elem.getBoundingClientRect();
