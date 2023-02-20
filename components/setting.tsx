@@ -7,7 +7,6 @@ import FontSizeRight from "data-base64:~assets/font-size-right.svg";
 import PageWidthLeft from "data-base64:~assets/page-width-left.svg";
 import PageWidthRight from "data-base64:~assets/page-width-right.svg";
 import IconSetting from "react:~/assets/setting-config.svg";
-import { i18n } from "~utils/i18n";
 import ToolTip from "~components/toolTip";
 
 
