@@ -5,7 +5,7 @@ const handler: PlasmoMessaging.MessageHandler<{ message: string }> = async (req,
   myHeaders.append("Content-Type", "application/json");
 
   const raw = JSON.stringify({
-    "prompt": "翻译成中文, 保留 HTML 标签:\n" + req.body
+    "prompt": "Translate to Chinese, returns the HTML tags in the original text:\n" + req.body
   });
 
   const requestOptions = {
@@ -14,7 +14,7 @@ const handler: PlasmoMessaging.MessageHandler<{ message: string }> = async (req,
     body: raw,
   };
 
-  await fetch("https://readsomething.xyz/v1/gpt3/translate", requestOptions)
+  await fetch("https://readsomething.xyz/v1/gpt3", requestOptions)
     .then(response => response.text())
     .then(result => {
       res.send({
