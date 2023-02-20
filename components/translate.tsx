@@ -9,50 +9,60 @@ function Translate() {
     const [paragraphs, setParagraphs] = useState<Element[]>();
     const { translateOn, setTranslateOn } = useContext(ReaderContext);
 
-
     const translate = async function() {
         setTranslateOn(true);
 
-        const paragraphs1 = document.querySelectorAll("plasmo-csui")[0]
+        const paragraphs = document.querySelectorAll("plasmo-csui")[0]
             .shadowRoot
             .querySelector("#readability-page-1")
-            .querySelectorAll(`[data-selectable-paragraph]`);
-        const paragraphs2 = document.querySelectorAll("plasmo-csui")[0]
-            .shadowRoot
-            .querySelector("#readability-page-1")
-            .querySelectorAll("p");
-        const paragraphs = Array.from(new Set([...paragraphs1, ...paragraphs2]));
+            .querySelectorAll("p, li, [data-selectable-paragraph]");
 
-        setParagraphs(paragraphs);
+        setParagraphs(Array.from(paragraphs));
 
         // first time
-        await scrollListener();
+        await translateCurrentPage();
 
         // listen scroll event
-        const scroll = document.querySelectorAll("plasmo-csui")[0]
-            .shadowRoot
-            .querySelector("#readsomething-scroll");
+        const scroll = getScroll();
 
         scroll.addEventListener("scroll", scrollListener, false);
     };
 
     useEffect(function() {
-        const scroll = document.querySelectorAll("plasmo-csui")[0]
-            .shadowRoot
-            .querySelector("#readsomething-scroll");
+        const scroll = getScroll();
 
         return function() {
             scroll.removeEventListener("scroll", scrollListener, false);
         };
     });
 
-    const scrollListener = async function() {
+    function getScroll() {
+        return document.querySelectorAll("plasmo-csui")[0]
+            .shadowRoot
+            .querySelector("#readsomething-scroll");
+    }
+
+    const translateCurrentPage = async function() {
         const _paragraphs = await getLatestState(setParagraphs);
         for (let i = 0; i < _paragraphs.length; i++) {
             const item = _paragraphs[i];
             if (isInViewport(item)) translateAnchor(item);
         }
     };
+
+    function debounce(func, wait) {
+        let timeout;
+        return () => {
+            if (timeout) {
+                clearTimeout(timeout);
+            }
+            timeout = setTimeout(func, wait);
+        };
+    }
+
+    const scrollListener = debounce(async () => {
+        await translateCurrentPage();
+    }, 200);
 
     const isInViewport = function(elem) {
         const bounding = elem.getBoundingClientRect();
