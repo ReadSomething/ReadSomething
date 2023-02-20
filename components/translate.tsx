@@ -9,30 +9,34 @@ function Translate() {
     const [paragraphs, setParagraphs] = useState<Element[]>();
     const { translateOn, setTranslateOn } = useContext(ReaderContext);
 
-    const translate = async function() {
-        setTranslateOn(true);
+    const handleTranslateButtonClick = async function() {
+        setTranslateOn(!translateOn);
 
-        const paragraphs = document.querySelectorAll("plasmo-csui")[0]
-            .shadowRoot
-            .querySelector("#readability-page-1")
-            .querySelectorAll("p, li, [data-selectable-paragraph]");
+        if (await getLatestState(setTranslateOn)) {
+            const paragraphs = document.querySelectorAll("plasmo-csui")[0]
+                .shadowRoot
+                .querySelector("#readability-page-1")
+                .querySelectorAll("p, li, [data-selectable-paragraph]");
+            setParagraphs(Array.from(paragraphs));
 
-        setParagraphs(Array.from(paragraphs));
+            // first time
+            await translateCurrentPage();
 
-        // first time
-        await translateCurrentPage();
-
-        // listen scroll event
-        const scroll = getScroll();
-
-        scroll.addEventListener("scroll", scrollListener, false);
+            // listen scroll event
+            const scroll = getScroll();
+            scroll.addEventListener("scroll", scrollListener);
+        } else {
+            const scroll = getScroll();
+            scroll.removeEventListener("scroll", scrollListener);
+            console.log("Translate off. Remove scroll event listener.");
+        }
     };
 
     useEffect(function() {
         const scroll = getScroll();
 
         return function() {
-            scroll.removeEventListener("scroll", scrollListener, false);
+            scroll.removeEventListener("scroll", scrollListener);
         };
     });
 
@@ -84,7 +88,8 @@ function Translate() {
 
     // @ts-ignore
     return (
-        <div onClick={translate} className={"setting fixed select-none right-[130px] top-[30px] select-none"}
+        <div onClick={handleTranslateButtonClick}
+             className={"setting fixed select-none right-[130px] top-[30px] select-none"}
              title={"Translate"}>
             <div>
                 <button className={"outline-none"}>

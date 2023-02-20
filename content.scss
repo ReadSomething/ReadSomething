@@ -200,6 +200,12 @@
         fill: var(--icon-fill);
     }
 
+    button:active {
+        transform: translateY(1px);
+        box-shadow: none;
+    }
+
+
     button:disabled {
         fill: var(--icon-disabled-fill) !important;
     }
