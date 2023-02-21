@@ -270,8 +270,8 @@
 }
 
 .heti p {
-    margin-block-start: 12px;
-    margin-block-end: 24px;
+    margin-block-start: 0.2em;
+    margin-block-end: 0.4em;
     text-align: justify
 }
 
