@@ -1,7 +1,7 @@
-import ReactDOM from "react-dom/client";
+import {renderToString} from 'react-dom/server'
 import {useEffect, useState} from "react";
 import {sendToBackground} from "@plasmohq/messaging";
-
+import ReactHtmlParser from 'react-html-parser';
 function PlaceHolder() {
     return <div className={'translate-placeholder animate-pulse w-full p-[4px] py-[10px]'}>
         <span className={'text-[12px] leading-[12px]'}>Translating..</span>
@@ -12,41 +12,72 @@ interface TranslatorProps {
     anchor: Element,
 }
 
-function Translator({anchor}: TranslatorProps) {
-    const [translatedDom, setTranslatedDom] = useState('');
+const TRANSLATED_TAG = 'rs-translated'
 
-    useEffect(() => {
-        void translate()
-    }, []);
+// function Translator({anchor}: TranslatorProps) {
+//     const [translatedDom, setTranslatedDom] = useState('');
+//
+//     useEffect(() => {
+//         void translate()
+//     }, []);
+//
+//     async function translate() {
+//         const message = await sendToBackground({
+//             name: "translate",
+//             body: anchor.outerHTML
+//         })
+//         const resp = JSON.parse(message.message)
+//         setTranslatedDom(resp["data"])
+//         // console.log(   ReactHtmlParser(resp["data"]))
+//     }
+//
+//
+//     return <>
+//         {
+//             translatedDom
+//                 ? ReactHtmlParser(translatedDom)
+//                 : <PlaceHolder/>
+//         }
+//     </>
+// }
 
-    async function translate() {
+export const TRANSLATED_RESULT = 'rs-translated-result'
+
+export const translateAnchor = async function (anchor: Element) {
+    if(anchor.getAttribute(TRANSLATED_TAG)) {
+        return
+    }
+
+    // create translate result container
+    const container = document.createElement(anchor.nodeName.toLowerCase())
+
+    // tag result as translated
+    container.setAttribute(TRANSLATED_TAG, '1')
+    container.setAttribute(TRANSLATED_RESULT, '1')
+
+    // set translating placeholder
+    container.innerHTML = renderToString(<PlaceHolder/>)
+
+    // tag origin source as translated
+    anchor.setAttribute(TRANSLATED_TAG, '1')
+    anchor.after(container)
+
+    try {
+        // try translate
         const message = await sendToBackground({
             name: "translate",
             body: anchor.outerHTML
         })
         const resp = JSON.parse(message.message)
-        setTranslatedDom(resp["data"])
+
+        // create a template container to get translated result, as the result is a string
+        const tempContainer = document.createElement('div')
+        tempContainer.innerHTML = resp["data"]
+
+        // set result
+        container.innerHTML = tempContainer.firstElementChild.innerHTML
+    } catch (e) {
+        // ignore
+        console.log(e)
     }
-
-    return <>
-        {
-            translatedDom
-                ? <p dangerouslySetInnerHTML={{__html: translatedDom}}></p>
-                : <PlaceHolder/>
-        }
-    </>
-}
-
-const TRANSLATED_TAG = 'rs-translated'
-
-export const translateAnchor = function (anchor: Element) {
-    if(anchor.getAttribute(TRANSLATED_TAG)) {
-        return
-    }
-
-    const container = document.createElement('p')
-    container.setAttribute(TRANSLATED_TAG, '1')
-    anchor.setAttribute(TRANSLATED_TAG, '1')
-    anchor.after(container)
-    ReactDOM.createRoot(container).render(<Translator anchor={anchor}/>)
 }

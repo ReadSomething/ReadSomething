@@ -1,61 +1,37 @@
 {
-  "extends": [
-    "eslint:recommended",
-    "plugin:react/recommended"
-  ],
-  "rules": {
-    "spaced-comment": 1,
-    // 注释符号后必须有空格
-    "no-console": "off",
-    // 关闭尾随空白限制
-    "no-trailing-spaces": 0,
-    // 不以新行开始的块{前面要有空格
-    "space-before-blocks": [1, "always"],
-    // 定义函数时括号前面要有空格
-    "space-before-function-paren": [1, "always"],
-    // 大括号内总是有空格
-    "object-curly-spacing": [1, "always"],
-    // 关闭块内上下空行限制
-    "padded-blocks": 0,
-    // 当最后一个元素或属性与闭括号 ] 或 } 在 不同的行时，允许（但不要求）使用拖尾逗号
-    "comma-dangle": [1, {
-      "arrays": "only-multiline",
-      "objects": "only-multiline",
-      "imports": "only-multiline",
-      "exports": "only-multiline",
-      "functions": "never"
-    }],
-    // 要求箭头函数的箭头之前或之后有空格
-    "arrow-spacing": ["error", { "before": true, "after": true }],
-    // 逗号前后空格
-    "comma-spacing": ["error", { "before": false, "after": true }],
-    // 关键字后需要空格
-    "keyword-spacing": ["error", { "after": true }],
-    // 操作符号空格
-    "space-infix-ops": ["error", { "int32Hint": false }],
-    // 冒号空格
-    "key-spacing": ["error", { "beforeColon": false, "afterColon": true }],
-    // 关闭文件末尾强制换行
-    "eol-last": 0,
-    // 空行最多不能超过1行
-    "no-multiple-empty-lines": [1, { "max": 1 }],
-    "no-unused-vars": "on",
-    "@typescript-eslint/no-unused-vars": "error",
-    "padding-line-between-statements": ["warn",
-      { "blankLine": "always", "prev": "*", "next": "return" },
-      { "blankLine": "always", "prev": "*", "next": "block" },
-      { "blankLine": "always", "prev": "block", "next": "*" },
-      { "blankLine": "always", "prev": "*", "next": "block-like" },
-      { "blankLine": "always", "prev": "block-like", "next": "*" }
+    "extends": [
+        "react-app",
+        "react-app/jest"
     ],
-    // 关闭!提示
-    "@typescript-eslint/no-non-null-assertion": "off",
-    // 关闭react-hook deps为空提示
-    "react-hooks/exhaustive-deps": "off",
-    // 关闭禁用ts-ignore的提示
-    "@typescript-eslint/ban-ts-comment": "off",
-    "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/no-var-requires": "off"
-  },
-  "ignorePatterns": ["rem.ts", "**/abi.ts"]
+    "rules": {
+        "indent": ["error", 4],
+        "no-trailing-spaces": 0,
+        "space-before-blocks": [1, "always"],
+        "space-before-function-paren": [1, "always"],
+        "object-curly-spacing": [1, "always"],
+        "padded-blocks": 0,
+        "comma-dangle": [1, {
+            "arrays": "only-multiline",
+            "objects": "only-multiline",
+            "imports": "only-multiline",
+            "exports": "only-multiline",
+            "functions": "never"
+        }],
+        "arrow-spacing": ["error", { "before": true, "after": true }],
+        "comma-spacing": ["error", { "before": false, "after": true }],
+        "keyword-spacing": ["error", { "after": true }],
+        "space-infix-ops": ["error", { "int32Hint": false }],
+        "key-spacing": ["error", { "beforeColon": false, "afterColon": true }],
+        "eol-last": 0,
+        "no-multiple-empty-lines": [1, { "max": 1 }],
+        "no-unused-vars": "error",
+        "@typescript-eslint/no-unused-vars": "error",
+        "padding-line-between-statements": ["warn",
+            { "blankLine": "always", "prev": "*", "next": "return" },
+            { "blankLine": "always", "prev": "*", "next": "block" },
+            { "blankLine": "always", "prev": "block", "next": "*" },
+            { "blankLine": "always", "prev": "*", "next": "block-like" },
+            { "blankLine": "always", "prev": "block-like", "next": "*" }
+        ]
+    }
 }

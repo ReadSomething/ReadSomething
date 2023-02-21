@@ -1,16 +1,14 @@
 import {Readability} from "@mozilla/readability";
-import { ReactNode, useContext, useEffect, useMemo, useState} from "react";
+import { ReactNode, useContext, useEffect, useState} from "react";
 import styleText from "data-text:./content.scss"
 import type {PlasmoCSConfig, PlasmoGetStyle} from "plasmo"
 import readingTime from 'reading-time/lib/reading-time'
-import type {GptRes} from "~bean/GptRes";
 import SettingProvider, {SettingContext} from "~provider/setting";
 import { Article, ReaderProvider } from "~provider/reader";
 import {BasicSetting} from "~components/setting";
 import {SelectionTip} from "~components/selectionTip";
 import { DownloadMarkdown } from "~components/download";
 import Translate from "~components/translate";
-
 // a plasmo hook
 export const getStyle: PlasmoGetStyle = () => {
     const style = document.createElement("style")
@@ -42,27 +40,6 @@ const isValidUrl = urlString => {
     }
 }
 
-const riskStringEscape = function (text: string) {
-    return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-function parseGptData(str: string): string | null {
-    try {
-        const data: GptRes = JSON.parse(str)
-
-        if (data.message.toLowerCase() === 'ok') return data.data
-
-        return null
-    } catch (e) {
-        return null
-    }
-}
-
 export enum EnumTheme {
     Standard = 'standard',
     Heti = 'Heti',
@@ -75,7 +52,7 @@ function Author({link, author}: { link: string, author: string }) {
     let authorNode = <span>{author}</span>
 
     if (isValidUrl(link)) authorNode =
-        <a href={link} style={{color: 'inherit', textDecoration: 'none'}} target={'_blank'}>{author}</a>
+        <a href={link} style={{color: 'inherit', textDecoration: 'none'}} target={'_blank'} rel="noreferrer">{author}</a>
 
     return <div className="credits reader-credits">{authorNode}</div>
 }
@@ -88,11 +65,11 @@ function ThemeWrap({children}: { children: ReactNode }) {
     let themeClass = ''
 
     switch (settingObject.theme) {
-        case EnumTheme.Standard:
-            break
-        case EnumTheme.Heti:
-            themeClass = 'heti heti--classic'
-            break
+    case EnumTheme.Standard:
+        break
+    case EnumTheme.Heti:
+        themeClass = 'heti heti--classic'
+        break
     }
 
     return <div className={themeClass}>
@@ -117,7 +94,7 @@ function ContainerWrap({children}: {children: ReactNode}) {
 
 function TestC () {
     useEffect(() => {
-      console.log('TestC')
+        console.log('TestC')
     }, []);
 
     return <div>hell</div>
@@ -146,25 +123,25 @@ function Main() {
     return (
         <ReaderProvider article={new Article(article.title)}>
             <SettingProvider>
-               <MainContent>
-                   <div
+                <MainContent>
+                    <div
                         className={'ReadSomething'}>
-                       <ThemeWrap>
-                           <div id={'readsomething-scroll'} className={'fixed h-full  w-full overflow-scroll left-0 top-0'} style={{
-                               backgroundColor: "var(--main-background)"
-                           }}>
+                        <ThemeWrap>
+                            <div id={'readsomething-scroll'} className={'fixed h-full  w-full overflow-scroll left-0 top-0'} style={{
+                                backgroundColor: "var(--main-background)"
+                            }}>
                                 <ContainerWrap>
                                     <div className="header reader-header reader-show-element">
                                         <a className="domain reader-domain"
-                                           href={articleUrl}>{domain}</a>
+                                            href={articleUrl}>{domain}</a>
                                         <div className="domain-border"></div>
                                         <h1 className="reader-title" style={{fontFamily: 'Bookerly'}}>{article.title}</h1>
                                         <Author link={authorLink} author={author}/>
                                         <div className="meta-data">
                                             <div className="reader-estimated-time"
-                                                 data-l10n-id="about-reader-estimated-read-time"
-                                                 data-l10n-args="{&quot;range&quot;:&quot;3–4&quot;,&quot;rangePlural&quot;:&quot;other&quot;}"
-                                                 dir="ltr">{timeToReadStr}
+                                                data-l10n-id="about-reader-estimated-read-time"
+                                                data-l10n-args="{&quot;range&quot;:&quot;3–4&quot;,&quot;rangePlural&quot;:&quot;other&quot;}"
+                                                dir="ltr">{timeToReadStr}
                                             </div>
                                         </div>
                                     </div>
@@ -175,15 +152,15 @@ function Main() {
                                         </div>
                                     </div>
                                 </ContainerWrap>
-                               {/*<SettingHelper/>*/}
-                               <SelectionTip/>
-                               <Translate />
-                               <DownloadMarkdown/>
-                               <BasicSetting/>
-                           </div>
-                       </ThemeWrap>
-                   </div>
-               </MainContent>
+                                {/*<SettingHelper/>*/}
+                                <SelectionTip/>
+                                <Translate />
+                                <DownloadMarkdown/>
+                                <BasicSetting/>
+                            </div>
+                        </ThemeWrap>
+                    </div>
+                </MainContent>
             </SettingProvider>
         </ReaderProvider>
     )
