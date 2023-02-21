@@ -131,7 +131,7 @@
 
         background-color: #ccc;
         border: 0;
-        margin-block: 48px 47px;
+        margin-block: 34px 34px;
         margin-inline: auto;
     }
 
@@ -146,7 +146,7 @@
     figure,
     li {
         //margin: -10px -10px 20px;
-        padding: 0.6em 0;
+        padding: .6em 0;
     }
 
     li > ul,
@@ -199,12 +199,6 @@
         //color: var(--main-foreground);
         fill: var(--icon-fill);
     }
-
-    button:active {
-        transform: translateY(1px);
-        box-shadow: none;
-    }
-
 
     button:disabled {
         fill: var(--icon-disabled-fill) !important;
@@ -286,11 +280,32 @@
         svg path {
             fill: var(--icon-fill);
         }
+
+        button {
+            @apply relative;
+            &:after {
+                border-radius: 100px;
+                opacity: 1;
+                content: '';
+                --expand-size: -6px;
+                @apply left-[var(--expand-size)] right-[var(--expand-size)] top-[var(--expand-size)] bottom-[var(--expand-size)] absolute m-auto;
+
+            }
+            &:hover {
+                transform: scale(1.1);
+                transform-origin: center;
+                &:after {
+                    box-shadow: 0px 2px 3px rgb(0 0 0 / 20%);
+                }
+            }
+        }
     }
 
     .setting-font-size {
 
     }
+
+
 
     .lineSpacingRadioGroup {
         @apply flex justify-between text-[13px];
@@ -309,6 +324,21 @@
                 }
             }
         }
+    }
+
+    *[rs-translated-result] {
+        padding: 0 10px;
+        box-sizing: border-box;
+        margin: 0 -10px;
+        //margin-top: -10px!important;
+        //background: rgba(255,255,255,.1);
+        background: rgba(178, 143, 206, .1);
+
+        p {
+            margin: 0!important;
+            padding: 0!important;
+        }
+        //margin-bottom: 2em!important;
     }
 }
 
@@ -339,8 +369,11 @@
         }
     }
     .translate-placeholder {
-        @apply bg-[rgb(229,231,235)];
         font-family: Bookerly;
+    }
+
+    .translate {
+
     }
 
     @media (prefers-color-scheme: dark) {

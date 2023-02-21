@@ -1,8 +1,8 @@
 import type {MouseEvent, ReactNode} from "react";
-import {useEffect, useRef, useState} from "react";
+import {useState} from "react";
 import {Transition} from "@headlessui/react";
 
-interface ToolTip {
+interface ToolTipProps {
     children: ReactNode,
     maxWidth?: number,
     message: string,
@@ -11,14 +11,14 @@ interface ToolTip {
 }
 
 export default function ToolTip({
-                                    children,
-                                    maxWidth,
-                                    message,
-                                    delayShow
-                                }: ToolTip) {
+    children,
+    maxWidth,
+    message,
+    delayShow
+}: ToolTipProps) {
 
     const _maxWidth = maxWidth ?? 'max-content'
-    const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout>(null);
+    const [, setHoverTimer] = useState<NodeJS.Timeout>(null);
     const [showContent, setShowContent] = useState(false);
 
 
@@ -31,6 +31,7 @@ export default function ToolTip({
 
         setHoverTimer(timeout)
     }
+
 
     function contentMouseLeave() {
         setShowContent(false)
@@ -45,7 +46,7 @@ export default function ToolTip({
 
     return <div className={'relative tooltip'}>
         <div className={'tooltip-content'} onMouseLeave={contentMouseLeave}
-             onMouseOver={contentMouseOver}>{children}</div>
+            onMouseOver={contentMouseOver}>{children}</div>
         <Transition
             show={showContent}
             enter="transition-opacity duration-200"
@@ -56,7 +57,7 @@ export default function ToolTip({
             leaveTo="opacity-0"
         >
             <div style={{maxWidth: _maxWidth}}
-                 className={'tip absolute w-fit left-[-9999px] right-[-9999px] m-auto'}>{message}</div>
+                className={'tip absolute w-fit left-[-9999px] right-[-9999px] m-auto'}>{message}</div>
         </Transition>
     </div>
 }
