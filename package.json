@@ -9,13 +9,18 @@
     "dev": "plasmo dev",
     "build": "plasmo build",
     "package": "plasmo package",
-    "lint": "eslint --fix . --ext .tsx,.ts"
+    "lint": "eslint --fix . --ext .tsx,.ts",
+    "prepare": "husky install"
   },
   "dependencies": {
+    "@babel/core": ">=7.0.0-0 <8.0.0",
+    "@babel/plugin-syntax-flow": "^7.14.5",
+    "@babel/plugin-transform-react-jsx": "^7.14.9",
     "@headlessui/react": "^1.7.9",
     "@mozilla/readability": "^0.4.2",
     "@plasmohq/messaging": "^0.0.4",
     "@plasmohq/storage": "^1.0.5",
+    "@typescript-eslint/parser": ">=5.0.0 <6.0.0",
     "eslint-config-react-app": "^7.0.1",
     "highlight.js": "^11.7.0",
     "html-to-md": "^0.8.3",
@@ -40,6 +45,7 @@
     "eslint-plugin-n": "^15.0.0",
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-react": "^7.32.2",
+    "husky": "^8.0.3",
     "postcss": "^8.4.21",
     "tailwindcss": "^3.2.4",
     "typescript": "*"
