@@ -4,7 +4,6 @@
   "version": "0.0.2",
   "description": "A browser plugin to assist reading, using AI capabilities to enhance reading efficiency.",
   "author": "zhongyiio",
-  "type": "module",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
