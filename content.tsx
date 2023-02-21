@@ -1,18 +1,19 @@
-import {Readability} from "@mozilla/readability";
-import { ReactNode, useContext, useEffect, useState} from "react";
+import { Readability } from "@mozilla/readability";
+import { ReactNode, useContext, useEffect, useState } from "react";
 import styleText from "data-text:./content.scss"
-import type {PlasmoCSConfig, PlasmoGetStyle} from "plasmo"
+import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import readingTime from 'reading-time/lib/reading-time'
-import SettingProvider, {SettingContext} from "~provider/setting";
+import SettingProvider, { SettingContext } from "~provider/setting";
 import { Article, ReaderProvider } from "~provider/reader";
-import {BasicSetting} from "~components/setting";
-import {SelectionTip} from "~components/selectionTip";
+import { BasicSetting } from "~components/setting";
 import { DownloadMarkdown } from "~components/download";
 import Translate from "~components/translate";
+
 // a plasmo hook
 export const getStyle: PlasmoGetStyle = () => {
     const style = document.createElement("style")
     style.textContent = styleText
+
     return style
 }
 
@@ -46,19 +47,19 @@ export enum EnumTheme {
     HetiA = 'HetiA'
 }
 
-function Author({link, author}: { link: string, author: string }) {
+function Author ({ link, author }: { link: string, author: string }) {
     if (!author) return null
 
     let authorNode = <span>{author}</span>
 
     if (isValidUrl(link)) authorNode =
-        <a href={link} style={{color: 'inherit', textDecoration: 'none'}} target={'_blank'} rel="noreferrer">{author}</a>
+        <a href={link} style={{ color: 'inherit', textDecoration: 'none' }} target={'_blank'} rel="noreferrer">{author}</a>
 
     return <div className="credits reader-credits">{authorNode}</div>
 }
 
-function ThemeWrap({children}: { children: ReactNode }) {
-    const {settingObject} = useContext(SettingContext);
+function ThemeWrap ({ children }: { children: ReactNode }) {
+    const { settingObject } = useContext(SettingContext);
 
     console.log('-------------', settingObject)
 
@@ -77,30 +78,22 @@ function ThemeWrap({children}: { children: ReactNode }) {
     </div>
 }
 
-function MainContent({children}: {children: ReactNode}) {
-    const {settingObject: {fontSize, pageWidth, lineSpacing, fontFamily}} = useContext(SettingContext);
+function MainContent ({ children }: {children: ReactNode}) {
+    const { settingObject: { fontSize, pageWidth, lineSpacing, fontFamily } } = useContext(SettingContext);
 
     // @ts-ignore
-    return <div style={{"--font-size": `${fontSize}px`, "--content-width": `${pageWidth}px`, "--line-height": lineSpacing, "--font-family": fontFamily}}>
+    return <div style={{ "--font-size": `${fontSize}px`, "--content-width": `${pageWidth}px`, "--line-height": lineSpacing, "--font-family": fontFamily }}>
         {children}
     </div>
 }
 
-function ContainerWrap({children}: {children: ReactNode}) {
-    const {settingObject: {fontFamily}} = useContext(SettingContext);
+function ContainerWrap ({ children }: {children: ReactNode}) {
+    const { settingObject: { fontFamily } } = useContext(SettingContext);
 
     return  <div className={`container ${fontFamily !== 'Default' ? 'custom-font' : ''}`}>{children}</div>
 }
 
-function TestC () {
-    useEffect(() => {
-        console.log('TestC')
-    }, []);
-
-    return <div>hell</div>
-}
-
-function Main() {
+function Main () {
     useEffect(() => {
         const defaultOverflowStyle = document.body.style.overflow
         document.body.style.overflow = 'hidden'
@@ -135,7 +128,7 @@ function Main() {
                                         <a className="domain reader-domain"
                                             href={articleUrl}>{domain}</a>
                                         <div className="domain-border"></div>
-                                        <h1 className="reader-title" style={{fontFamily: 'Bookerly'}}>{article.title}</h1>
+                                        <h1 className="reader-title" style={{ fontFamily: 'Bookerly' }}>{article.title}</h1>
                                         <Author link={authorLink} author={author}/>
                                         <div className="meta-data">
                                             <div className="reader-estimated-time"
@@ -148,12 +141,11 @@ function Main() {
                                     <hr/>
                                     <div className={'content'}>
                                         <div className={`mozReaderContent readerShowElement`}>
-                                            <div className='page' dangerouslySetInnerHTML={{__html: article.content}}/>
+                                            <div className='page' dangerouslySetInnerHTML={{ __html: article.content }}/>
                                         </div>
                                     </div>
                                 </ContainerWrap>
                                 {/*<SettingHelper/>*/}
-                                <SelectionTip/>
                                 <Translate />
                                 <DownloadMarkdown/>
                                 <BasicSetting/>
@@ -187,7 +179,7 @@ const Reader = () => {
     }
 
     const keyUp = function (e) {
-        if (e.key == "Escape") {
+        if (e.key === "Escape") {
             setShowReader(false)
         }
     }

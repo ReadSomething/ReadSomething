@@ -3,7 +3,7 @@ import { ReactNode, createContext, useState } from "react"
 export class Article {
     title: string
 
-    constructor(title: string) {
+    constructor (title: string) {
         this.title = title
     }
 }
@@ -23,7 +23,7 @@ interface TypeReaderContext {
 
 export const ReaderContext = createContext({} as TypeReaderContext)
 
-export function ReaderProvider({
+export function ReaderProvider ({
     children,
     article
 }: {

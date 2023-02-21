@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
-    "package": "plasmo package"
+    "package": "plasmo package",
+    "lint": "eslint --fix . --ext .tsx,.ts"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.9",
