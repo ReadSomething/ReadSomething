@@ -1,11 +1,10 @@
-import React, {useContext, useEffect, useMemo, useState} from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import IconTranslate from "react:~/assets/translate.svg";
-import {translateAnchor, TRANSLATED_RESULT} from "~components/tranlator";
+import { translateAnchor, TRANSLATED_RESULT } from "~components/tranlator";
 import { getLatestState } from "~utils/state";
 import { ReaderContext } from "~provider/reader";
 
-
-function Translate() {
+function Translate () {
     const [, setParagraphs] = useState<Element[]>();
     const { translateOn, setTranslateOn } = useContext(ReaderContext);
 
@@ -43,7 +42,7 @@ function Translate() {
 
     const listener = useMemo(() => scrollListener, []);
 
-    const handleTranslateButtonClick = async function() {
+    const handleTranslateButtonClick = async function () {
         setTranslateOn(!translateOn);
 
         if (await getLatestState(setTranslateOn)) {
@@ -69,40 +68,44 @@ function Translate() {
         }
     };
 
-    useEffect(function() {
+    useEffect(function () {
         const scroll = getScroll();
 
-        return function() {
+        return function () {
             scroll.removeEventListener("scroll", listener);
         };
     });
 
-    function getScroll() {
+    function getScroll () {
         return document.querySelectorAll("plasmo-csui")[0]
             .shadowRoot
             .querySelector("#readsomething-scroll");
     }
 
-    const translateCurrentPage = async function() {
+    const translateCurrentPage = async function () {
         const _paragraphs = await getLatestState(setParagraphs);
+
         for (let i = 0; i < _paragraphs.length; i++) {
             const item = _paragraphs[i];
             if (isInViewport(item)) translateAnchor(item);
         }
     };
 
-    function debounce(func, wait) {
+    function debounce (func, wait) {
         let timeout;
+
         return () => {
             if (timeout) {
                 clearTimeout(timeout);
             }
+
             timeout = setTimeout(func, wait);
         };
     }
 
-    const isInViewport = function(elem) {
+    const isInViewport = function (elem) {
         const bounding = elem.getBoundingClientRect();
+
         return (
             bounding.top >= 0 &&
             bounding.left >= 0 &&

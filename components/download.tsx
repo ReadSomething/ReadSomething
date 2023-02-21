@@ -5,7 +5,7 @@ import IconDownload from "react:~/assets/download.svg"
 import { ReaderContext } from "~provider/reader"
 import ToolTip from "./toolTip"
 
-export function DownloadMarkdown() {
+export function DownloadMarkdown () {
     const {
         article: { title }
     } = useContext(ReaderContext)

@@ -1,6 +1,6 @@
-import type {MouseEvent, ReactNode} from "react";
-import {useState} from "react";
-import {Transition} from "@headlessui/react";
+import type { MouseEvent, ReactNode } from "react";
+import { useState } from "react";
+import { Transition } from "@headlessui/react";
 
 interface ToolTipProps {
     children: ReactNode,
@@ -10,19 +10,17 @@ interface ToolTipProps {
     delayShow?: number
 }
 
-export default function ToolTip({
+export default function ToolTip ({
     children,
     maxWidth,
     message,
     delayShow
 }: ToolTipProps) {
-
     const _maxWidth = maxWidth ?? 'max-content'
     const [, setHoverTimer] = useState<NodeJS.Timeout>(null);
     const [showContent, setShowContent] = useState(false);
 
-
-    function contentMouseOver(e: MouseEvent<HTMLDivElement>) {
+    function contentMouseOver (e: MouseEvent<HTMLDivElement>) {
         e.stopPropagation()
 
         const timeout = setTimeout(() => {
@@ -32,12 +30,10 @@ export default function ToolTip({
         setHoverTimer(timeout)
     }
 
-
-    function contentMouseLeave() {
+    function contentMouseLeave () {
         setShowContent(false)
 
         setHoverTimer(prevState => {
-            console.log('-------111--------------')
             clearTimeout(prevState)
 
             return null
@@ -56,7 +52,7 @@ export default function ToolTip({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
         >
-            <div style={{maxWidth: _maxWidth}}
+            <div style={{ maxWidth: _maxWidth }}
                 className={'tip absolute w-fit left-[-9999px] right-[-9999px] m-auto'}>{message}</div>
         </Transition>
     </div>

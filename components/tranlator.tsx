@@ -1,15 +1,10 @@
-import {renderToString} from 'react-dom/server'
-import {useEffect, useState} from "react";
-import {sendToBackground} from "@plasmohq/messaging";
-import ReactHtmlParser from 'react-html-parser';
-function PlaceHolder() {
+import { renderToString } from 'react-dom/server'
+import { sendToBackground } from "@plasmohq/messaging";
+
+function PlaceHolder () {
     return <div className={'translate-placeholder animate-pulse w-full p-[4px] py-[10px]'}>
         <span className={'text-[12px] leading-[12px]'}>Translating..</span>
     </div>
-}
-
-interface TranslatorProps {
-    anchor: Element,
 }
 
 const TRANSLATED_TAG = 'rs-translated'
@@ -44,7 +39,7 @@ const TRANSLATED_TAG = 'rs-translated'
 export const TRANSLATED_RESULT = 'rs-translated-result'
 
 export const translateAnchor = async function (anchor: Element) {
-    if(anchor.getAttribute(TRANSLATED_TAG)) {
+    if (anchor.getAttribute(TRANSLATED_TAG)) {
         return
     }
 
