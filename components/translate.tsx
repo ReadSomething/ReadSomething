@@ -3,6 +3,7 @@ import IconTranslate from "react:~/assets/translate.svg";
 import { translateAnchor, TRANSLATED_RESULT } from "~components/tranlator";
 import { getLatestState } from "~utils/state";
 import { ReaderContext } from "~provider/reader";
+import Tooltip from "./tooltip"
 
 function Translate () {
     const [, setParagraphs] = useState<Element[]>();
@@ -11,6 +12,8 @@ function Translate () {
     const scrollListener = debounce(async () => {
         await translateCurrentPage();
     }, 200);
+
+    const listener = useMemo(() => scrollListener, []);
 
     const hideTranslateResult = function () {
         const translateResult = document.querySelectorAll("plasmo-csui")[0]
@@ -32,16 +35,6 @@ function Translate () {
         }
     }
 
-    useEffect(() => {
-        console.log('translateOn', translateOn)
-
-        // if(!translateOn) {
-        //     hideTranslateResult()
-        // }
-    }, [translateOn]);
-
-    const listener = useMemo(() => scrollListener, []);
-
     const handleTranslateButtonClick = async function () {
         setTranslateOn(!translateOn);
 
@@ -51,7 +44,8 @@ function Translate () {
             const paragraphs = document.querySelectorAll("plasmo-csui")[0]
                 .shadowRoot
                 .querySelector("#readability-page-1")
-                .querySelectorAll("p, li");
+                .querySelectorAll("p:not(ul p, ol p), ul:not(ul ul, ol ul), ol:not(ol ol, ul ol)");
+
             setParagraphs(Array.from(paragraphs));
 
             // first time
@@ -114,22 +108,15 @@ function Translate () {
         );
     };
 
-    // function createElementFromHTML(htmlString) {
-    //     const div = document.createElement("div");
-    //     div.innerHTML = htmlString.trim();
-    //
-    //     // Change this to div.childNodes to support multiple top-level nodes.
-    //     return div;
-    // }
     return (
         <div onClick={handleTranslateButtonClick}
             className={"setting fixed select-none right-[130px] top-[30px] select-none"}
-            title={"Translate"}>
-            <div>
+        >
+            <Tooltip message={'Translate'}>
                 <button className={"outline-none"}>
                     <IconTranslate />
                 </button>
-            </div>
+            </Tooltip>
         </div>
     );
 }
