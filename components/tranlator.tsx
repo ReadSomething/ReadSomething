@@ -1,5 +1,6 @@
 import { renderToString } from 'react-dom/server'
 import { sendToBackground } from "@plasmohq/messaging";
+import { TranslateServices } from "~components/setting";
 
 function PlaceHolder () {
     return <div className={'translate-placeholder animate-pulse w-full p-[4px] py-[10px]'}>
@@ -11,7 +12,8 @@ const TRANSLATED_TAG = 'rs-translated'
 
 export const TRANSLATED_RESULT = 'rs-translated-result'
 
-export const translateAnchor = async function (anchor: Element) {
+export const translateAnchor = async function (anchor: Element, translateService: string) {
+
     if (anchor.getAttribute(TRANSLATED_TAG)) {
         return
     }
@@ -31,9 +33,8 @@ export const translateAnchor = async function (anchor: Element) {
     anchor.after(container)
 
     try {
-        // try translate
         const message = await sendToBackground({
-            name: "translate",
+            name: TranslateServices[translateService],
             body: anchor.outerHTML
         })
         const resp = JSON.parse(message.message)

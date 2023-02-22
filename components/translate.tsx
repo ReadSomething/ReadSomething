@@ -4,10 +4,12 @@ import { translateAnchor, TRANSLATED_RESULT } from "~components/tranlator";
 import { getLatestState } from "~utils/state";
 import { ReaderContext } from "~provider/reader";
 import Tooltip from "./tooltip"
+import { SettingContext } from "~provider/setting";
 
 function Translate () {
     const [, setParagraphs] = useState<Element[]>();
     const { translateOn, setTranslateOn } = useContext(ReaderContext);
+    const { settingObject } = useContext(SettingContext);
 
     const scrollListener = debounce(async () => {
         await translateCurrentPage();
@@ -81,7 +83,7 @@ function Translate () {
 
         for (let i = 0; i < _paragraphs.length; i++) {
             const item = _paragraphs[i];
-            if (isInViewport(item)) translateAnchor(item);
+            if (isInViewport(item)) void translateAnchor(item, settingObject.translateService);
         }
     };
 

@@ -45,6 +45,11 @@ export const Fonts = [
     'Trebuchet MS'
 ]
 
+export const TranslateServices = {
+    'Google Translate': 'google_translate',
+    'OpenAI': "openai_translate"
+}
+
 function SettingItem ({ label, children }: { label: string, children: ReactNode }) {
     return <div className={'flex items-center'}>
         <div className={'w-[120px]'}>
@@ -91,6 +96,24 @@ function FontSelect () {
             id="fonts">
             {
                 Fonts.map(item => <option key={item} value={item}>{item}</option>)
+            }
+        </select>
+    )
+}
+
+function TranslateServiceSelect () {
+    const { settingObject: { translateService }, setSetting } = useContext(SettingContext)
+
+    const selectTranslateServiceChange = function (e: React.ChangeEvent<HTMLSelectElement>) {
+        void setSetting({ translateService: e.target.value })
+    }
+
+    return (
+        <select onChange={selectTranslateServiceChange} value={translateService}
+            className={'text-[var(--setting-foreground)] text-[12px] outline-none p-[4px] bg-[white]'} name="translateServices"
+            id="translateServices">
+            {
+                Object.keys(TranslateServices).map(item => <option key={item} value={item}>{item}</option>)
             }
         </select>
     )
@@ -161,6 +184,10 @@ export function BasicSetting () {
                                     </div>
                                     <img src={PageWidthRight} className={'h-[18px] ml-[6px]'} alt=""/>
                                 </div>
+                            </SettingItem>
+                            <VGap size={14}/>
+                            <SettingItem label={'Font'}>
+                                <TranslateServiceSelect/>
                             </SettingItem>
                         </div>
                     }

@@ -1,7 +1,7 @@
 import { createContext, type ReactNode, useEffect, useMemo, useState } from 'react'
 import { EnumTheme } from '~content'
 import { Storage } from '@plasmohq/storage'
-import { EnumLineSpacing, Fonts } from '~components/setting'
+import { EnumLineSpacing, Fonts, TranslateServices } from "~components/setting";
 
 interface SettingObject {
   fontSize?: number
@@ -9,6 +9,7 @@ interface SettingObject {
   pageWidth?: number
   lineSpacing?: EnumLineSpacing
   fontFamily?: string
+  translateService?: string
 
 }
 
@@ -37,6 +38,7 @@ export default function SettingProvider ({ children }: { children: ReactNode }) 
         let pageWidth = 800
         let lineSpacing = EnumLineSpacing.Medium
         let fontFamily = Fonts[0]
+        let translateService = TranslateServices["Google Translate"]
 
         try {
             const setting = JSON.parse(await storage.get(SettingStorageKey))
@@ -47,7 +49,8 @@ export default function SettingProvider ({ children }: { children: ReactNode }) 
                     theme: _theme,
                     pageWidth: _pageWidth,
                     lineSpacing: _lineSpacing,
-                    fontFamily: _fontFamily
+                    fontFamily: _fontFamily,
+                    translateService: _translateService,
                 } = setting
 
                 if (_fontSize) fontSize = _fontSize
@@ -55,12 +58,13 @@ export default function SettingProvider ({ children }: { children: ReactNode }) 
                 if (_pageWidth) pageWidth = _pageWidth
                 if (_lineSpacing) lineSpacing = _lineSpacing
                 if (_fontFamily) fontFamily = _fontFamily
+                if (_translateService) translateService = _translateService
             }
         } catch (e) {
             // ignore
             console.error(e)
         } finally {
-            await _setData({ fontSize, theme, pageWidth, lineSpacing, fontFamily })
+            await _setData({ fontSize, theme, pageWidth, lineSpacing, fontFamily, translateService })
         }
     }
 
