@@ -7,7 +7,6 @@ interface ToolTipProps {
     maxWidth?: number,
     message: string,
     // The delay (in ms) before showing the tooltip, default is 1000
-    delayShow?: number
     margin?: number
 }
 
@@ -15,13 +14,11 @@ export default function Tooltip ({
     children,
     maxWidth,
     message,
-    delayShow,
     margin
 }: ToolTipProps) {
     const _maxWidth = maxWidth ?? 'max-content'
-    // const [, setHoverTimer] = useState<NodeJS.Timeout>(null);
-    const [showContent, setShowContent] = useState(false);
     const _margin = margin ?? 10
+    const [showContent, setShowContent] = useState(false);
 
     function contentMouseOver (e: MouseEvent<HTMLDivElement>) {
         setShowContent(true)

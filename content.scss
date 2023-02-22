@@ -363,22 +363,15 @@
             @apply text-[var(--main-background)] drop-shadow;
             font-family: Bookerly;
             top: calc(100% + 4px);
-            &:after {
-
-            }
         }
     }
     .translate-placeholder {
         font-family: Bookerly;
     }
 
-    .translate {
-
-    }
-
     @media (prefers-color-scheme: dark) {
         .translate-placeholder {
-            @apply bg-[rgb(55,65,81)];
+            //@apply bg-[rgb(55,65,81)];
         }
     }
 }

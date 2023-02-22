@@ -13,6 +13,8 @@ function Translate () {
         await translateCurrentPage();
     }, 200);
 
+    const listener = useMemo(() => scrollListener, []);
+
     const hideTranslateResult = function () {
         const translateResult = document.querySelectorAll("plasmo-csui")[0]
             .shadowRoot
@@ -33,8 +35,6 @@ function Translate () {
         }
     }
 
-    const listener = useMemo(() => scrollListener, []);
-
     const handleTranslateButtonClick = async function () {
         setTranslateOn(!translateOn);
 
@@ -44,7 +44,8 @@ function Translate () {
             const paragraphs = document.querySelectorAll("plasmo-csui")[0]
                 .shadowRoot
                 .querySelector("#readability-page-1")
-                .querySelectorAll("p, li");
+                .querySelectorAll("p:not(ul p, ol p), ul:not(ul ul, ol ul), ol:not(ol ol, ul ol)");
+
             setParagraphs(Array.from(paragraphs));
 
             // first time

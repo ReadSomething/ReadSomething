@@ -1,13 +1,14 @@
 import { Readability } from "@mozilla/readability";
-import { ReactNode, useContext, useEffect, useState } from "react";
+import { ReactNode, useContext, useEffect, useRef, useState } from "react";
 import styleText from "data-text:./content.scss"
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import readingTime from 'reading-time/lib/reading-time'
 import SettingProvider, { SettingContext } from "~provider/setting";
-import { Article, ReaderProvider } from "~provider/reader";
+import { Article, ReaderContext, ReaderProvider } from "~provider/reader";
 import { BasicSetting } from "~components/setting";
 import { DownloadMarkdown } from "~components/download";
 import Translate from "~components/translate";
+import { translateAnchor } from "~components/tranlator";
 
 // a plasmo hook
 export const getStyle: PlasmoGetStyle = () => {
@@ -93,6 +94,19 @@ function ContainerWrap ({ children }: {children: ReactNode}) {
     return  <div className={`container ${fontFamily !== 'Default' ? 'custom-font' : ''}`}>{children}</div>
 }
 
+function Title ({ title }: {title: string}) {
+    const { translateOn } = useContext(ReaderContext);
+    const ref = useRef<HTMLHeadingElement>(null)
+
+    useEffect(() => {
+        if (translateOn && ref && ref.current) {
+            void translateAnchor(ref.current)
+        }
+    }, [translateOn, ref, ref.current]);
+
+    return <h1 ref={ref} className="reader-title" style={{ fontFamily: 'Bookerly' }}>{title}</h1>
+}
+
 function Main () {
     useEffect(() => {
         const defaultOverflowStyle = document.body.style.overflow
@@ -128,7 +142,7 @@ function Main () {
                                         <a className="domain reader-domain"
                                             href={articleUrl}>{domain}</a>
                                         <div className="domain-border"></div>
-                                        <h1 className="reader-title" style={{ fontFamily: 'Bookerly' }}>{article.title}</h1>
+                                        <Title title={article.title}/>
                                         <Author link={authorLink} author={author}/>
                                         <div className="meta-data">
                                             <div className="reader-estimated-time"
@@ -145,7 +159,6 @@ function Main () {
                                         </div>
                                     </div>
                                 </ContainerWrap>
-                                {/*<SettingHelper/>*/}
                                 <Translate />
                                 <DownloadMarkdown/>
                                 <BasicSetting/>
