@@ -8,7 +8,7 @@ import FontSizeRight from 'data-base64:~assets/font-size-right.svg'
 import PageWidthLeft from 'data-base64:~assets/page-width-left.svg'
 import PageWidthRight from 'data-base64:~assets/page-width-right.svg'
 import IconSetting from 'react:~/assets/setting-config.svg'
-import ToolTip from '~components/toolTip'
+import Tooltip from '~components/tooltip'
 
 export enum EnumLineSpacing {
     Small = '1.4em',
@@ -103,12 +103,12 @@ export function BasicSetting () {
     return <div className={'setting fixed select-none right-[30px] top-[30px] select-none'}>
         <div>
             <Popover>
-                <ToolTip delayShow={1000} message={'Settings'}>
+                <Tooltip delayShow={1000} message={'Settings'}>
                     <div>
                         <Popover.Button data-tooltip-id="my-tooltip"
                             className={'outline-none'}><IconSetting/></Popover.Button>
                     </div>
-                </ToolTip>
+                </Tooltip>
                 <Popover.Panel className="fixed right-[20px] top-[60px]">
                     {
                         <div

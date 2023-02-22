@@ -3,6 +3,7 @@ import IconTranslate from "react:~/assets/translate.svg";
 import { translateAnchor, TRANSLATED_RESULT } from "~components/tranlator";
 import { getLatestState } from "~utils/state";
 import { ReaderContext } from "~provider/reader";
+import Tooltip from "./tooltip"
 
 function Translate () {
     const [, setParagraphs] = useState<Element[]>();
@@ -31,14 +32,6 @@ function Translate () {
             translateResult[i].style.display = 'block'
         }
     }
-
-    useEffect(() => {
-        console.log('translateOn', translateOn)
-
-        // if(!translateOn) {
-        //     hideTranslateResult()
-        // }
-    }, [translateOn]);
 
     const listener = useMemo(() => scrollListener, []);
 
@@ -114,22 +107,15 @@ function Translate () {
         );
     };
 
-    // function createElementFromHTML(htmlString) {
-    //     const div = document.createElement("div");
-    //     div.innerHTML = htmlString.trim();
-    //
-    //     // Change this to div.childNodes to support multiple top-level nodes.
-    //     return div;
-    // }
     return (
         <div onClick={handleTranslateButtonClick}
             className={"setting fixed select-none right-[130px] top-[30px] select-none"}
-            title={"Translate"}>
-            <div>
+        >
+            <Tooltip message={'Translate'}>
                 <button className={"outline-none"}>
                     <IconTranslate />
                 </button>
-            </div>
+            </Tooltip>
         </div>
     );
 }
