@@ -9,33 +9,6 @@ function PlaceHolder () {
 
 const TRANSLATED_TAG = 'rs-translated'
 
-// function Translator({anchor}: TranslatorProps) {
-//     const [translatedDom, setTranslatedDom] = useState('');
-//
-//     useEffect(() => {
-//         void translate()
-//     }, []);
-//
-//     async function translate() {
-//         const message = await sendToBackground({
-//             name: "translate",
-//             body: anchor.outerHTML
-//         })
-//         const resp = JSON.parse(message.message)
-//         setTranslatedDom(resp["data"])
-//         // console.log(   ReactHtmlParser(resp["data"]))
-//     }
-//
-//
-//     return <>
-//         {
-//             translatedDom
-//                 ? ReactHtmlParser(translatedDom)
-//                 : <PlaceHolder/>
-//         }
-//     </>
-// }
-
 export const TRANSLATED_RESULT = 'rs-translated-result'
 
 export const translateAnchor = async function (anchor: Element) {
