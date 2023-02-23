@@ -39,6 +39,28 @@
         --visited-link-foreground: #e675fd;
     }
 
+    &.dark {
+        --main-background: var(--dark-theme-background);
+        --main-foreground: var(--dark-theme-foreground);
+        --primary-color: rgb(0, 221, 255);
+        --selected-background: rgba(0, 221, 255, 0.3);
+        --icon-fill: rgb(251, 251, 254);
+        --icon-disabled-fill: rgba(251, 251, 254, 0.4);
+        --link-selected-foreground: #fff;
+        --visited-link-foreground: #e675fd;
+    }
+
+    &.light {
+        --main-background: var(--light-theme-background);
+        --main-foreground: var(--light-theme-foreground);
+        --primary-color: rgb(0, 97, 224);
+        --selected-background: rgba(0, 97, 224, 0.3);
+        --icon-fill: rgb(91, 91, 102);
+        --icon-disabled-fill: rgba(91, 91, 102, 0.4);
+        --link-selected-foreground: #000;
+        --visited-link-foreground: #b5007f;
+    }
+
     margin: 0;
     padding: var(--body-padding);
     background-color: var(--main-background);
