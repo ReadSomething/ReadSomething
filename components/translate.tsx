@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect } from "react";
 import IconTranslate from "react:~/assets/translate.svg";
 import { translateAnchor, TRANSLATED_RESULT } from "~components/tranlator";
 import { getLatestState } from "~utils/state";
@@ -7,22 +7,32 @@ import Tooltip from "./tooltip";
 import { SettingContext } from "~provider/setting";
 
 function Translate () {
-    const [, setParagraphs] = useState<Element[]>();
     const { translateOn, setTranslateOn } = useContext(ReaderContext);
     const { settingObject } = useContext(SettingContext);
 
-    // fixme: singleton
-    const observer = new IntersectionObserver(
-        function (entries) {
-            for (const entry of entries) {
-                if (entry.isIntersecting) {
-                    void translateAnchor(entry.target, settingObject.translateService);
-                } else {
-                    console.log(entry.isIntersecting);
+    useEffect(() => {
+        const ob = new IntersectionObserver(
+            entries => {
+                for (const entry of entries) {
+                    if (entry.isIntersecting) {
+                        void translateAnchor(entry.target, settingObject.translateService);
+                    } else {
+                        console.log(entry.isIntersecting);
+                    }
                 }
-            }
-        }
-    );
+            })
+
+        const paragraphs = Array.from(document.querySelectorAll("plasmo-csui")[0]
+            .shadowRoot
+            .querySelector("#readability-page-1")
+            .querySelectorAll("p:not(ul p, ol p), ul:not(ul ul, ol ul), ol:not(ol ol, ul ol)"));
+
+        translateOn
+            ? paragraphs.map(e => ob.observe(e))
+            : (paragraphs.map(e => ob.unobserve(e)))
+
+        return () => ob.disconnect()
+    }, [settingObject, translateOn]);
 
     const hideTranslateResult = function () {
         const translateResult = document.querySelectorAll("plasmo-csui")[0]
@@ -47,28 +57,8 @@ function Translate () {
     const handleTranslateButtonClick = async function () {
         setTranslateOn(!translateOn);
 
-        const paragraphs = document.querySelectorAll("plasmo-csui")[0]
-            .shadowRoot
-            .querySelector("#readability-page-1")
-            .querySelectorAll("p:not(ul p, ol p), ul:not(ul ul, ol ul), ol:not(ol ol, ul ol)");
-
-        if (await getLatestState(setTranslateOn)) {
-            showTranslateResult();
-
-            setParagraphs(Array.from(paragraphs));
-            Array.from(paragraphs).map(e => observer.observe(e));
-        } else {
-            hideTranslateResult();
-            Array.from(paragraphs).map(e => observer.unobserve(e));
-        }
+        await getLatestState(setTranslateOn) ? showTranslateResult() :  hideTranslateResult()
     };
-
-    useEffect(function () {
-        return function () {
-            observer.disconnect();
-
-        };
-    });
 
     return (
         <div onClick={handleTranslateButtonClick}
@@ -76,7 +66,7 @@ function Translate () {
         >
             <Tooltip message={"Translate"}>
                 <button className={"outline-none"}>
-                    <IconTranslate />
+                    <IconTranslate/>
                 </button>
             </Tooltip>
         </div>

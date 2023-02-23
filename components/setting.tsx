@@ -44,10 +44,11 @@ export const Fonts = [
     'Times New Roman',
     'Trebuchet MS'
 ]
-
+export const TencentTranslateServicesKey = 'Tencent Smart Translation'
 export const TranslateServices = {
     'Google Translate': 'google_translate',
-    'OpenAI': "openai_translate"
+    'OpenAI': "openai_translate",
+    [TencentTranslateServicesKey]: "tencent_translate"
 }
 
 function SettingItem ({ label, children }: { label: string, children: ReactNode }) {
@@ -126,7 +127,7 @@ export function BasicSetting () {
     return <div className={'setting fixed select-none right-[30px] top-[30px] select-none'}>
         <div>
             <Popover>
-                <Tooltip delayShow={1000} message={'Settings'}>
+                <Tooltip message={'Settings'}>
                     <div>
                         <Popover.Button data-tooltip-id="my-tooltip"
                             className={'outline-none'}><IconSetting/></Popover.Button>

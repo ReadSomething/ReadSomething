@@ -1,6 +1,6 @@
 import { renderToString } from 'react-dom/server'
 import { sendToBackground } from "@plasmohq/messaging";
-import { TranslateServices } from "~components/setting";
+import { TencentTranslateServicesKey, TranslateServices } from "~components/setting";
 
 function PlaceHolder () {
     return <div className={'translate-placeholder animate-pulse w-full p-[4px] py-[10px]'}>
@@ -35,16 +35,21 @@ export const translateAnchor = async function (anchor: Element, translateService
     try {
         const message = await sendToBackground({
             name: TranslateServices[translateService],
-            body: anchor.outerHTML
+            body: translateService === TencentTranslateServicesKey ? anchor.textContent : anchor.outerHTML
         })
         const resp = JSON.parse(message.message)
 
         // create a template container to get translated result, as the result is a string
         const tempContainer = document.createElement('div')
-        tempContainer.innerHTML = resp["data"]
 
-        // set result
-        container.innerHTML = tempContainer.firstElementChild.innerHTML
+        if (translateService === TencentTranslateServicesKey) {
+            container.innerHTML = resp["data"]
+        } else {
+            tempContainer.innerHTML = resp["data"]
+
+            // set result
+            container.innerHTML = tempContainer.firstElementChild.innerHTML
+        }
     } catch (e) {
         // ignore
         console.log(e)
