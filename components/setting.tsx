@@ -187,7 +187,7 @@ export function BasicSetting () {
                                 </div>
                             </SettingItem>
                             <VGap size={14}/>
-                            <SettingItem label={'Font'}>
+                            <SettingItem label={'Translation'}>
                                 <TranslateServiceSelect/>
                             </SettingItem>
                         </div>

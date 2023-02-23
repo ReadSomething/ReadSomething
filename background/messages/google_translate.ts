@@ -15,7 +15,7 @@ const handler: PlasmoMessaging.MessageHandler<{ message: string }> = async (req,
     };
 
     // @ts-ignore
-    await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=en&tl=zh-CN&q=" + encodeURIComponent(req.body), requestOptions)
+    await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=auto&tl=zh-CN&q=" + encodeURIComponent(req.body), requestOptions)
         .then(response => response.json())
         .then(result => {
             const data = result[0].map((item) => item[0]).filter(Boolean).join("")

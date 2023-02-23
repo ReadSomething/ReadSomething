@@ -1,7 +1,7 @@
 import { createContext, type ReactNode, useEffect, useMemo, useState } from 'react'
 import { EnumTheme } from '~content'
 import { Storage } from '@plasmohq/storage'
-import { EnumLineSpacing, Fonts, TranslateServices } from "~components/setting";
+import { EnumLineSpacing, Fonts, TencentTranslateServicesKey, TranslateServices } from "~components/setting";
 
 interface SettingObject {
   fontSize?: number
@@ -38,7 +38,7 @@ export default function SettingProvider ({ children }: { children: ReactNode }) 
         let pageWidth = 800
         let lineSpacing = EnumLineSpacing.Medium
         let fontFamily = Fonts[0]
-        let translateService = TranslateServices["Google Translate"]
+        let translateService = TranslateServices[TencentTranslateServicesKey]
 
         try {
             const setting = JSON.parse(await storage.get(SettingStorageKey))
