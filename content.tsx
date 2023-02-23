@@ -9,6 +9,7 @@ import { BasicSetting } from "~components/setting";
 import { DownloadMarkdown } from "~components/download";
 import Translate from "~components/translate";
 import { translateAnchor } from "~components/tranlator";
+import Theme from "~components/theme";
 
 // a plasmo hook
 export const getStyle: PlasmoGetStyle = () => {
@@ -60,19 +61,21 @@ function Author ({ link, author }: { link: string, author: string }) {
 }
 
 function ThemeWrap ({ children }: { children: ReactNode }) {
-    const { settingObject } = useContext(SettingContext);
+    const { settingObject: { themeMode } } = useContext(SettingContext);
 
     let themeClass = ''
 
-    switch (settingObject.theme) {
-    case EnumTheme.Standard:
+    switch (themeMode) {
+    case 'light':
+        themeClass = 'light'
         break
-    case EnumTheme.Heti:
-        themeClass = 'heti heti--classic'
+    case 'dark':
+        themeClass = 'dark'
         break
     }
 
-    return <div className={themeClass}>
+    return <div
+        className={`ReadSomething  heti heti--classic ${themeClass}`}>
         {children}
     </div>
 }
@@ -130,40 +133,39 @@ function Main () {
         <ReaderProvider article={new Article(article.title)}>
             <SettingProvider>
                 <MainContent>
-                    <div
-                        className={'ReadSomething'}>
-                        <ThemeWrap>
-                            <div id={'readsomething-scroll'} className={'fixed h-full  w-full overflow-scroll left-0 top-0'} style={{
-                                backgroundColor: "var(--main-background)"
-                            }}>
-                                <ContainerWrap>
-                                    <div className="header reader-header reader-show-element">
-                                        <a className="domain reader-domain"
-                                            href={articleUrl}>{domain}</a>
-                                        <div className="domain-border"></div>
-                                        <Title title={article.title}/>
-                                        <Author link={authorLink} author={author}/>
-                                        <div className="meta-data">
-                                            <div className="reader-estimated-time"
-                                                data-l10n-id="about-reader-estimated-read-time"
-                                                data-l10n-args="{&quot;range&quot;:&quot;3–4&quot;,&quot;rangePlural&quot;:&quot;other&quot;}"
-                                                dir="ltr">{timeToReadStr}
-                                            </div>
+
+                    <ThemeWrap>
+                        <div id={'readsomething-scroll'} className={'fixed h-full  w-full overflow-scroll left-0 top-0'} style={{
+                            backgroundColor: "var(--main-background)"
+                        }}>
+                            <ContainerWrap>
+                                <div className="header reader-header reader-show-element">
+                                    <a className="domain reader-domain"
+                                        href={articleUrl}>{domain}</a>
+                                    <div className="domain-border"></div>
+                                    <Title title={article.title}/>
+                                    <Author link={authorLink} author={author}/>
+                                    <div className="meta-data">
+                                        <div className="reader-estimated-time"
+                                            data-l10n-id="about-reader-estimated-read-time"
+                                            data-l10n-args="{&quot;range&quot;:&quot;3–4&quot;,&quot;rangePlural&quot;:&quot;other&quot;}"
+                                            dir="ltr">{timeToReadStr}
                                         </div>
                                     </div>
-                                    <hr/>
-                                    <div className={'content'}>
-                                        <div className={`mozReaderContent readerShowElement`}>
-                                            <div className='page' dangerouslySetInnerHTML={{ __html: article.content }}/>
-                                        </div>
+                                </div>
+                                <hr/>
+                                <div className={'content'}>
+                                    <div className={`mozReaderContent readerShowElement`}>
+                                        <div className='page' dangerouslySetInnerHTML={{ __html: article.content }}/>
                                     </div>
-                                </ContainerWrap>
-                                <Translate />
-                                <DownloadMarkdown/>
-                                <BasicSetting/>
-                            </div>
-                        </ThemeWrap>
-                    </div>
+                                </div>
+                            </ContainerWrap>
+                            <Translate />
+                            <DownloadMarkdown/>
+                            <BasicSetting/>
+                            <Theme/>
+                        </div>
+                    </ThemeWrap>
                 </MainContent>
             </SettingProvider>
         </ReaderProvider>
