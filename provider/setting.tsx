@@ -2,6 +2,7 @@ import { createContext, type ReactNode, useEffect, useMemo, useState } from 'rea
 import { EnumTheme } from '~content'
 import { Storage } from '@plasmohq/storage'
 import { EnumLineSpacing, Fonts, TencentTranslateServicesKey, TranslateServices } from "~components/setting";
+import { getLatestState } from "~utils/state";
 
 interface SettingObject {
   fontSize?: number
@@ -10,7 +11,6 @@ interface SettingObject {
   lineSpacing?: EnumLineSpacing
   fontFamily?: string
   translateService?: string
-
 }
 
 interface TypeSettingContext {
@@ -28,17 +28,17 @@ export default function SettingProvider ({ children }: { children: ReactNode }) 
 
     const _setData = async function (data: SettingObject) {
         setSettingObject({ ...Object.assign(settingObject, data) })
-
-        await storage.set(SettingStorageKey, JSON.stringify(settingObject))
+        const _settingObject = await getLatestState(setSettingObject)
+        await storage.set(SettingStorageKey, JSON.stringify(_settingObject))
     }
 
     const init = async function () {
-        let fontSize = 18
-        let theme = EnumTheme.Heti
-        let pageWidth = 800
-        let lineSpacing = EnumLineSpacing.Medium
-        let fontFamily = Fonts[0]
-        let translateService = TranslateServices[TencentTranslateServicesKey]
+        let fontSize = 18,
+            theme = EnumTheme.Heti,
+            pageWidth = 800,
+            lineSpacing = EnumLineSpacing.Medium,
+            fontFamily = Fonts[0],
+            translateService = TranslateServices[TencentTranslateServicesKey];
 
         try {
             const setting = JSON.parse(await storage.get(SettingStorageKey))
