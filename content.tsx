@@ -62,8 +62,6 @@ function Author ({ link, author }: { link: string, author: string }) {
 function ThemeWrap ({ children }: { children: ReactNode }) {
     const { settingObject } = useContext(SettingContext);
 
-    console.log('-------------', settingObject)
-
     let themeClass = ''
 
     switch (settingObject.theme) {
@@ -97,10 +95,11 @@ function ContainerWrap ({ children }: {children: ReactNode}) {
 function Title ({ title }: {title: string}) {
     const { translateOn } = useContext(ReaderContext);
     const ref = useRef<HTMLHeadingElement>(null)
+    const { settingObject: { translateService } } = useContext(SettingContext);
 
     useEffect(() => {
         if (translateOn && ref && ref.current) {
-            void translateAnchor(ref.current)
+            void translateAnchor(ref.current, translateService)
         }
     }, [translateOn, ref, ref.current]);
 
