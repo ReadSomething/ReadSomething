@@ -51,6 +51,20 @@ export const TranslateServices = {
     [TencentTranslateServicesKey]: "tencent_translate"
 }
 
+export function debounce (func, wait = 200) {
+    let timeout;
+
+    return function () {
+        const self = this
+
+        if (timeout) {
+            clearTimeout(timeout);
+        }
+
+        timeout = setTimeout(() => func.apply(self, arguments), wait);
+    };
+}
+
 function SettingItem ({ label, children }: { label: string, children: ReactNode }) {
     return <div className={'flex items-center'}>
         <div className={'w-[120px]'}>
