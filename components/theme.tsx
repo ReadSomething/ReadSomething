@@ -28,8 +28,8 @@ export default function Theme () {
             {
                 modeKey.map((item, index) => {
                     return <Transition
-                        enter="transition-all duration-100"
-                        enterFrom="opacity-0 translate-y-[-30px]"
+                        enter="transition-all duration-300"
+                        enterFrom="opacity-0 translate-y-[0]"
                         enterTo="opacity-[1] translate-y-[0]"
                         leave="duration-0"
                         leaveFrom="opacity-1 mr-[0]"
