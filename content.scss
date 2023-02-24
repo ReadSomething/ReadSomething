@@ -303,8 +303,8 @@
             fill: var(--icon-fill);
         }
 
-        button {
-            @apply relative;
+        button, .boxWrap {
+            @apply relative cursor-pointer;
             &:after {
                 border-radius: 100px;
                 opacity: 1;
