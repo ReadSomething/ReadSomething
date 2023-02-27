@@ -17,7 +17,7 @@ function Translate () {
                     if (entry.isIntersecting) {
                         void translateAnchor(entry.target, settingObject.translateService);
                     } else {
-                        console.log(entry.isIntersecting);
+                        // do nothing
                     }
                 }
             })

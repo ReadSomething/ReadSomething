@@ -1,7 +1,7 @@
 import { createContext, type ReactNode, useEffect, useMemo, useState } from "react";
 import { EnumTheme } from "~content";
 import { Storage } from "@plasmohq/storage";
-import { EnumLineSpacing, Fonts, TencentTranslateServicesKey, TranslateServices } from "~components/setting";
+import { EnumLineSpacing, EnumTranslateServices, Fonts } from "~components/setting";
 import { getLatestState } from "~utils/state";
 
 export enum ThemeMode {
@@ -45,7 +45,7 @@ export default function SettingProvider ({ children }: { children: ReactNode }) 
             pageWidth = 800,
             lineSpacing = EnumLineSpacing.Medium,
             fontFamily = Fonts[0],
-            translateService = TranslateServices[TencentTranslateServicesKey],
+            translateService = EnumTranslateServices.GoogleTranslate,
             themeMode = ThemeMode.Auto;
 
         try {
