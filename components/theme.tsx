@@ -1,8 +1,8 @@
 import React, { useContext } from "react";
 import { SettingContext, ThemeMode } from "~provider/setting";
-import IconThemeLight from "data-base64:~assets/theme-light.svg"
-import IconThemeDark from "data-base64:~assets/theme-dark.svg"
-import IconThemeAutoLight from "data-base64:~assets/theme-auto-light.svg"
+import IconThemeLight from "data-base64:~assets/theme-light.svg";
+import IconThemeDark from "data-base64:~assets/theme-dark.svg";
+import IconThemeAutoLight from "data-base64:~assets/theme-auto-light.svg";
 import { Transition } from "@headlessui/react";
 // import Tooltip from "~components/tooltip";
 // import IconThemeAutoDark from "react:~/assets/theme-auto-dark.svg"
@@ -10,20 +10,20 @@ import { Transition } from "@headlessui/react";
 export default function Theme () {
     const { settingObject: { themeMode }, setSetting } = useContext(SettingContext);
 
-    const modeKey = Object.keys(ThemeMode)
+    const modeKey = Object.keys(ThemeMode);
 
     const getIcon = function (theme: ThemeMode) {
         switch (theme) {
         case ThemeMode.Auto:
-            return IconThemeAutoLight
+            return IconThemeAutoLight;
         case ThemeMode.Light:
-            return IconThemeLight
+            return IconThemeLight;
         case ThemeMode.Dark:
-            return IconThemeDark
+            return IconThemeDark;
         }
-    }
+    };
 
-    return <div className={'setting fixed w-[24px] h-[24px] select-none right-[180px] top-[30px]'}>
+    return <div className={"setting fixed w-[24px] h-[24px] select-none right-[180px] top-[30px]"}>
         <div className={"flex flex-wrap "}>
             {
                 modeKey.map((item, index) => {
@@ -37,20 +37,20 @@ export default function Theme () {
                         show={ThemeMode[item] === themeMode}
                     >
                         <div
-                            className={`themeModeRadio cursor-pointer ${themeMode === ThemeMode[item] ? 'selected' : ''}`}
+                            className={`themeModeRadio cursor-pointer ${themeMode === ThemeMode[item] ? "selected" : ""}`}
                             onClick={(e) => {
-                                console.log(e)
+                                console.log(e);
                                 e.preventDefault();
-                                e.stopPropagation()
-                                console.log(ThemeMode[item])
-                                void setSetting({ themeMode: ThemeMode[modeKey[(index + 1) % 3]] })
+                                e.stopPropagation();
+                                console.log(ThemeMode[item]);
+                                void setSetting({ themeMode: ThemeMode[modeKey[(index + 1) % 3]] });
                             }}
                             key={item}>
-                            <img src={getIcon(ThemeMode[item])} alt={item}/>
+                            <img src={getIcon(ThemeMode[item])} alt={item} />
                         </div>
-                    </Transition>
+                    </Transition>;
                 })
             }
         </div>
-    </div>
+    </div>;
 }
