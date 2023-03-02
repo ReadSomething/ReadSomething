@@ -1,399 +1,406 @@
 @use "sass:meta";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 
 .ReadSomething {
-    --main-background: white;
-    --light-theme-background: #fff;
-    --dark-theme-background: rgb(28, 27, 34);
-    --light-theme-foreground: rgb(21, 20, 26);
-    --dark-theme-foreground: rgb(251, 251, 254);
-    //--content-width: 22em;
-    --body-padding: 64px;
-    //--line-height: 1.6em;
-    --text-selected-foreground: inherit;
-    --selected-background: rgba(0, 97, 224, 0.3);
-    --primary-color: rgb(0, 97, 224);
-    --visited-link-foreground: #b5007f;
-    --icon-disabled-fill: rgba(91, 91, 102, 0.4);
-    --icon-fill: rgb(91, 91, 102);
-    --link-selected-background: var(--selected-background);
-    --link-foreground: var(--primary-color);
-    --text-selected-background: var(--selected-background);
+  --main-background: white;
+  --light-theme-background: #fff;
+  --dark-theme-background: rgb(28, 27, 34);
+  --light-theme-foreground: rgb(21, 20, 26);
+  --dark-theme-foreground: rgb(251, 251, 254);
+  //--content-width: 22em;
+  --body-padding: 64px;
+  //--line-height: 1.6em;
+  --text-selected-foreground: inherit;
+  --selected-background: rgba(0, 97, 224, 0.3);
+  --primary-color: rgb(0, 97, 224);
+  --visited-link-foreground: #b5007f;
+  --icon-disabled-fill: rgba(91, 91, 102, 0.4);
+  --icon-fill: rgb(91, 91, 102);
+  --link-selected-background: var(--selected-background);
+  --link-foreground: var(--primary-color);
+  --text-selected-background: var(--selected-background);
+  --main-foreground: var(--light-theme-foreground);
+  --outline-focus-color: var(--primary-color);
+  --setting-background: rgb(244, 245, 245);
+  --setting-foreground: rgb(61, 62, 62);
+  //--setting-sub-background: #AAAAAD;
+
+  @media (prefers-color-scheme: dark) {
+    --main-background: var(--dark-theme-background);
+    --main-foreground: var(--dark-theme-foreground);
+    --primary-color: rgb(0, 221, 255);
+    --selected-background: rgba(0, 221, 255, 0.3);
+    --icon-fill: rgb(251, 251, 254);
+    --icon-disabled-fill: rgba(251, 251, 254, 0.4);
+    --link-selected-foreground: #fff;
+    --visited-link-foreground: #e675fd;
+  }
+
+  &.dark {
+    --main-background: var(--dark-theme-background);
+    --main-foreground: var(--dark-theme-foreground);
+    --primary-color: rgb(0, 221, 255);
+    --selected-background: rgba(0, 221, 255, 0.3);
+    --icon-fill: rgb(251, 251, 254);
+    --icon-disabled-fill: rgba(251, 251, 254, 0.4);
+    --link-selected-foreground: #fff;
+    --visited-link-foreground: #e675fd;
+  }
+
+  &.light {
+    --main-background: var(--light-theme-background);
     --main-foreground: var(--light-theme-foreground);
-    --outline-focus-color: var(--primary-color);
-    --setting-background: rgb(244, 245, 245);
-    --setting-foreground: rgb(61, 62, 62);
-    //--setting-sub-background: #AAAAAD;
+    --primary-color: rgb(0, 97, 224);
+    --selected-background: rgba(0, 97, 224, 0.3);
+    --icon-fill: rgb(91, 91, 102);
+    --icon-disabled-fill: rgba(91, 91, 102, 0.4);
+    --link-selected-foreground: #000;
+    --visited-link-foreground: #b5007f;
+  }
 
-    @media (prefers-color-scheme: dark) {
-        --main-background: var(--dark-theme-background);
-        --main-foreground: var(--dark-theme-foreground);
-        --primary-color: rgb(0, 221, 255);
-        --selected-background: rgba(0, 221, 255, 0.3);
-        --icon-fill: rgb(251, 251, 254);
-        --icon-disabled-fill: rgba(251, 251, 254, 0.4);
-        --link-selected-foreground: #fff;
-        --visited-link-foreground: #e675fd;
-    }
+  margin: 0;
+  padding: var(--body-padding);
+  background-color: var(--main-background);
+  color: var(--main-foreground);
 
-    &.dark {
-        --main-background: var(--dark-theme-background);
-        --main-foreground: var(--dark-theme-foreground);
-        --primary-color: rgb(0, 221, 255);
-        --selected-background: rgba(0, 221, 255, 0.3);
-        --icon-fill: rgb(251, 251, 254);
-        --icon-disabled-fill: rgba(251, 251, 254, 0.4);
-        --link-selected-foreground: #fff;
-        --visited-link-foreground: #e675fd;
-    }
+  a {
+    border-radius: 2px;
+  }
 
-    &.light {
-        --main-background: var(--light-theme-background);
-        --main-foreground: var(--light-theme-foreground);
-        --primary-color: rgb(0, 97, 224);
-        --selected-background: rgba(0, 97, 224, 0.3);
-        --icon-fill: rgb(91, 91, 102);
-        --icon-disabled-fill: rgba(91, 91, 102, 0.4);
-        --link-selected-foreground: #000;
-        --visited-link-foreground: #b5007f;
-    }
+  a::selection {
+    background-color: var(--link-selected-background);
+    color: var(--link-selected-foreground);
+  }
 
-    margin: 0;
-    padding: var(--body-padding);
+  a:focus-visible {
+    outline: 2px solid var(--outline-focus-color);
+    outline-offset: 1px;
+  }
+
+  blockquote {
+    box-shadow: var(--main-foreground) 3px 0px 0px 0px inset;
+  }
+
+  .container {
+    margin: 0 auto;
+    font-size: var(--font-size);
+    width: var(--content-width);
+    max-width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    line-height: var(--line-height) !important;
+  }
+
+  table,
+  th,
+  td {
+    border: 1px solid currentColor;
+    border-collapse: collapse;
+    padding: 6px;
+    vertical-align: top;
+  }
+
+  table {
+    margin: 5px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 400;
+  }
+
+  h1 {
+    font-size: 1.6em;
+    line-height: calc(var(--line-height) * 0.8) !important;
+  }
+
+  h2 {
+    font-size: 1.2em;
+    line-height: calc(var(--line-height) * 0.94) !important;
+  }
+
+  h3 {
+    font-size: 1em;
+    line-height: calc(var(--line-height) * 1.03) !important;
+  }
+
+  a:link {
+    text-decoration: underline;
+    font-weight: normal;
+  }
+
+  a:link,
+  a:link:hover,
+  a:link:active {
+    color: var(--link-foreground);
+  }
+
+  a:visited {
+    color: var(--visited-link-foreground);
+  }
+
+  * {
+    max-width: 100%;
+  }
+
+  hr {
+    width: 30%;
+    height: 1px;
+
+    background-color: #ccc;
+    border: 0;
+    margin-block: 34px 34px;
+    margin-inline: auto;
+  }
+
+  p,
+  code,
+  pre,
+  blockquote,
+  figure {
+    padding: 1em 0;
+  }
+
+  ul,
+  ol,
+  li {
+    padding: .1em 0;
+  }
+
+  li > ul,
+  li > ol {
+    margin-bottom: -10px;
+  }
+
+  p > img:only-child,
+  p > a:only-child > img:only-child,
+  figure img {
+    display: block;
+    margin: auto;
+  }
+
+  img[moz-reader-center] {
+    margin-inline: auto;
+  }
+
+  figcaption {
+    font-size: 0.9em;
+    line-height: 1.48em;
+    font-style: italic;
+  }
+
+  pre {
+    white-space: pre-wrap;
+  }
+
+  blockquote {
+    padding: 0;
+    padding-inline-start: 16px;
+  }
+
+  ul,
+  ol {
+    padding: 0;
+  }
+
+  ul {
+    padding-inline-start: 32px;
+    list-style: disc;
+  }
+
+  ol {
+    padding-inline-start: 32px;
+  }
+
+  button {
+    -moz-context-properties: fill;
+    //color: var(--main-foreground);
+    fill: var(--icon-fill);
+  }
+
+  button:disabled {
+    fill: var(--icon-disabled-fill) !important;
+  }
+
+  pre code {
     background-color: var(--main-background);
-    color: var(--main-foreground);
+    border: 1px solid var(--main-foreground);
+    display: block;
+    overflow: auto;
 
-    a {
-        border-radius: 2px;
+  }
+
+  *::selection {
+    background-color: var(--text-selected-background);
+    color: var(--text-selected-foreground);
+  }
+
+  .header > h1 {
+    font-size: 1.6em;
+    line-height: 1.25em;
+    width: 100%;
+    margin: 30px 0;
+    padding: 0;
+  }
+
+  .header > .credits {
+    font-size: 0.9em;
+    line-height: 1.48em;
+    margin: 0 0 10px;
+    padding: 0;
+    font-style: italic;
+  }
+
+  .header > .meta-data {
+    font-size: 0.65em;
+    margin: 0 0 15px;
+  }
+
+  .domain {
+    font-size: 0.9em;
+    line-height: 1.48em;
+    padding-bottom: 4px;
+    text-decoration: underline var(--main-foreground) !important;
+    color: var(--link-foreground);
+  }
+
+
+}
+
+.ReadSomething {
+  @include meta.load-css("./heti.css");
+
+  .heti {
+  }
+}
+
+.ReadSomething {
+  .setting {
+    font-family: IBM_Plex_Sans;
+    font-size: 15px;
+
+    .thumb {
+      @apply bg-white w-fit h-[16px] px-[4px] rounded transition-transform text-[12px] outline-none;
+      @apply duration-300 drop-shadow text-[10px] flex justify-center items-center whitespace-nowrap;
+      &:hover {
+        @apply scale-[1.06] origin-center;
+      }
     }
 
-    a::selection {
-        background-color: var(--link-selected-background);
-        color: var(--link-selected-foreground);
+    .track {
+      @apply bg-[rgb(233,234,233)] h-[4px] top-[6px];
     }
 
-    a:focus-visible {
-        outline: 2px solid var(--outline-focus-color);
-        outline-offset: 1px;
+    .track-1 {
+      @apply bg-[rgb(222,222,222)];
     }
 
-    blockquote {
-        box-shadow: var(--main-foreground) 3px 0px 0px 0px inset;
+    svg path {
+      fill: var(--icon-fill);
     }
 
-    .container {
-        margin: 0 auto;
-        font-size: var(--font-size);
-        width: var(--content-width);
-        max-width: 100%;
-        padding: 20px;
-        box-sizing: border-box;
-        line-height: var(--line-height) !important;
+    button, .boxWrap {
+      @apply relative cursor-pointer;
+      &:after {
+        border-radius: 100px;
+        opacity: 1;
+        content: '';
+        --expand-size: -6px;
+        @apply left-[var(--expand-size)] right-[var(--expand-size)] top-[var(--expand-size)] bottom-[var(--expand-size)] absolute m-auto;
+
+      }
+
+      &:hover {
+        transform: scale(1.1);
+        transform-origin: center;
+
+        &:after {
+          box-shadow: 0px 2px 3px rgb(0 0 0 / 20%);
+        }
+      }
+    }
+  }
+
+  .setting-font-size {
+
+  }
+
+
+  .lineSpacingRadioGroup {
+    @apply flex justify-between text-[13px];
+    .lineSpacingRadio {
+      @apply flex justify-center items-center cursor-pointer;
+      .circle {
+        @apply w-[14px] h-[14px]  border mr-[4px] inline-block rounded-full;
+        border-color: rgb(222, 222, 222);
+
+        &.selected {
+          @apply relative;
+          &:after {
+            @apply absolute w-[4px] h-[4px] left-0 right-0 top-0 bottom-0 m-auto bg-[var(--setting-foreground)] rounded-full;
+            content: '';
+          }
+        }
+      }
+    }
+  }
+
+  *[rs-translated-result] {
+    padding: 0 10px;
+    box-sizing: border-box;
+    margin: 0 -10px;
+    //margin-top: -10px!important;
+    //background: rgba(255,255,255,.1);
+    background: rgba(178, 143, 206, .1);
+
+    p {
+      margin: 0 !important;
+      padding: 0 !important;
     }
 
-    table,
-    th,
-    td {
-        border: 1px solid currentColor;
-        border-collapse: collapse;
-        padding: 6px;
-        vertical-align: top;
-    }
+    //margin-bottom: 2em!important;
+  }
+}
 
-    table {
-        margin: 5px;
-    }
-
-    h1,
-    h2,
-    h3 {
-        font-weight: bold;
-    }
-
-    h1 {
-        font-size: 1.6em;
-        line-height: calc(var(--line-height) * 0.8) !important;
-    }
-
-    h2 {
-        font-size: 1.2em;
-        line-height: calc(var(--line-height) * 0.94) !important;
-    }
-
-    h3 {
-        font-size: 1em;
-        line-height: calc(var(--line-height) * 1.03) !important;
-    }
-
-    a:link {
-        text-decoration: underline;
-        font-weight: normal;
-    }
-
-    a:link,
-    a:link:hover,
-    a:link:active {
-        color: var(--link-foreground);
-    }
-
-    a:visited {
-        color: var(--visited-link-foreground);
-    }
-
-    * {
-        max-width: 100%;
-    }
-
-    hr {
-        width: 30%;
-        height: 1px;
-
-        background-color: #ccc;
-        border: 0;
-        margin-block: 34px 34px;
-        margin-inline: auto;
-    }
-
-    p,
-    p,
-    code,
-    pre,
-    blockquote,
-    ul,
-    ol,
-    li,
-    figure,
-    li {
-        //margin: -10px -10px 20px;
-        padding: .6em 0;
-    }
-
-    li > ul,
-    li > ol {
-        margin-bottom: -10px;
-    }
-
-    p > img:only-child,
-    p > a:only-child > img:only-child,
-    figure img {
-        display: block;
-        margin: auto;
-    }
-
-    img[moz-reader-center] {
-        margin-inline: auto;
-    }
-
-    figcaption {
-        font-size: 0.9em;
-        line-height: 1.48em;
-        font-style: italic;
-    }
-
+.ReadSomething {
+  .container {
     pre {
-        white-space: pre-wrap;
+      font-family: Fira_Code !important;
     }
 
-    blockquote {
-        padding: 0;
-        padding-inline-start: 16px;
+    &.custom-font {
+      *:not(pre) {
+        font-family: var(--font-family), Times New Roman, times, Heti Song, serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol !important;
+      }
     }
-
-    ul,
-    ol {
-        padding: 0;
-    }
-
-    ul {
-        padding-inline-start: 30px;
-        list-style: disc;
-    }
-
-    ol {
-        padding-inline-start: 30px;
-    }
-
-    button {
-        -moz-context-properties: fill;
-        //color: var(--main-foreground);
-        fill: var(--icon-fill);
-    }
-
-    button:disabled {
-        fill: var(--icon-disabled-fill) !important;
-    }
-
-    pre code {
-        background-color: var(--main-background);
-        border: 1px solid var(--main-foreground);
-        display: block;
-        overflow: auto;
-
-    }
-
-    *::selection {
-        background-color: var(--text-selected-background);
-        color: var(--text-selected-foreground);
-    }
-
-    .header > h1 {
-        font-size: 1.6em;
-        line-height: 1.25em;
-        width: 100%;
-        margin: 30px 0;
-        padding: 0;
-    }
-
-    .header > .credits {
-        font-size: 0.9em;
-        line-height: 1.48em;
-        margin: 0 0 10px;
-        padding: 0;
-        font-style: italic;
-    }
-
-    .header > .meta-data {
-        font-size: 0.65em;
-        margin: 0 0 15px;
-    }
-
-    .domain {
-        font-size: 0.9em;
-        line-height: 1.48em;
-        padding-bottom: 4px;
-        text-decoration: underline var(--main-foreground) !important;
-        color: var(--link-foreground);
-    }
-
-
+  }
 }
 
 .ReadSomething {
-    @include meta.load-css("./heti.css");
-
-    .heti {
+  .tooltip {
+    .tip {
+      @apply text-[12px] px-[6px] py-[2px] rounded-[2px] bg-[var(--main-foreground)];
+      @apply text-[var(--main-background)] drop-shadow;
+      font-family: Bookerly;
+      top: calc(100% + 4px);
     }
-}
-
-.ReadSomething {
-    .setting {
-        font-family: IBM_Plex_Sans;
-        font-size: 15px;
-
-        .thumb {
-            @apply bg-white w-fit h-[16px] px-[4px] rounded transition-transform text-[12px] outline-none;
-            @apply duration-300 drop-shadow text-[10px] flex justify-center items-center whitespace-nowrap;
-            &:hover {
-                @apply scale-[1.06] origin-center;
-            }
-        }
-
-        .track {
-            @apply bg-[rgb(233,234,233)] h-[4px] top-[6px];
-        }
-
-        .track-1 {
-            @apply bg-[rgb(222,222,222)];
-        }
-
-        svg path {
-            fill: var(--icon-fill);
-        }
-
-        button, .boxWrap {
-            @apply relative cursor-pointer;
-            &:after {
-                border-radius: 100px;
-                opacity: 1;
-                content: '';
-                --expand-size: -6px;
-                @apply left-[var(--expand-size)] right-[var(--expand-size)] top-[var(--expand-size)] bottom-[var(--expand-size)] absolute m-auto;
-
-            }
-            &:hover {
-                transform: scale(1.1);
-                transform-origin: center;
-                &:after {
-                    box-shadow: 0px 2px 3px rgb(0 0 0 / 20%);
-                }
-            }
-        }
+    .tooltip-content {
+      @apply flex justify-end items-center ml-[20px];
     }
+  }
 
-    .setting-font-size {
+  .translate-placeholder {
+    font-family: Bookerly;
+  }
 
-    }
-
-
-
-    .lineSpacingRadioGroup {
-        @apply flex justify-between text-[13px];
-        .lineSpacingRadio {
-            @apply flex justify-center items-center cursor-pointer;
-            .circle {
-                @apply w-[14px] h-[14px]  border mr-[4px] inline-block rounded-full;
-                border-color: rgb(222, 222, 222);
-
-                &.selected {
-                    @apply relative;
-                    &:after {
-                        @apply absolute w-[4px] h-[4px] left-0 right-0 top-0 bottom-0 m-auto bg-[var(--setting-foreground)] rounded-full;
-                        content: '';
-                    }
-                }
-            }
-        }
-    }
-
-    *[rs-translated-result] {
-        padding: 0 10px;
-        box-sizing: border-box;
-        margin: 0 -10px;
-        //margin-top: -10px!important;
-        //background: rgba(255,255,255,.1);
-        background: rgba(178, 143, 206, .1);
-
-        p {
-            margin: 0!important;
-            padding: 0!important;
-        }
-        //margin-bottom: 2em!important;
-    }
-}
-
-.ReadSomething {
-    .container {
-        pre {
-            font-family: Fira_Code!important;
-        }
-
-        &.custom-font {
-            *:not(pre) {
-                font-family: var(--font-family), Times New Roman, times, Heti Song, serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol!important;
-            }
-        }
-    }
-}
-
-.ReadSomething {
-    .tooltip {
-        .tip {
-            @apply text-[12px] px-[6px] py-[2px] rounded-[2px] bg-[var(--main-foreground)];
-            @apply text-[var(--main-background)] drop-shadow;
-            font-family: Bookerly;
-            top: calc(100% + 4px);
-        }
-    }
+  @media (prefers-color-scheme: dark) {
     .translate-placeholder {
-        font-family: Bookerly;
+      //@apply bg-[rgb(55,65,81)];
     }
-
-    @media (prefers-color-scheme: dark) {
-        .translate-placeholder {
-            //@apply bg-[rgb(55,65,81)];
-        }
-    }
+  }
 }
