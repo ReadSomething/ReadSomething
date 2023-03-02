@@ -62,7 +62,7 @@ function Translate () {
 
     return (
         <div onClick={handleTranslateButtonClick}
-            className={"setting fixed select-none right-[130px] top-[30px] select-none"}
+            className={"setting select-none"}
         >
             <Tooltip message={"Translate"}>
                 <button className={"outline-none"}>

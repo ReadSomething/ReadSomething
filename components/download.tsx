@@ -1,14 +1,14 @@
-import html2md from "html-to-md"
-import React, { useContext } from "react"
-import IconDownload from "react:~/assets/download.svg"
+import html2md from "html-to-md";
+import React, { useContext } from "react";
+import IconDownload from "react:~/assets/download.svg";
 
-import { ReaderContext } from "~provider/reader"
-import Tooltip from "./tooltip"
+import { ReaderContext } from "~provider/reader";
+import Tooltip from "./tooltip";
 
 export function DownloadMarkdown () {
     const {
         article: { title }
-    } = useContext(ReaderContext)
+    } = useContext(ReaderContext);
 
     const getFileName = function () {
         return (
@@ -16,42 +16,38 @@ export function DownloadMarkdown () {
                 .toLowerCase()
                 .replaceAll(" ", "-")
                 .replace(/-+/g, "-") + ".md"
-        )
-    }
+        );
+    };
 
     const download = function () {
-        console.log("download")
-        const plasmoRoot =
-            document.querySelectorAll("plasmo-csui")[0].shadowRoot
-        const plasmoContainer = plasmoRoot.querySelector(
-            "#plasmo-shadow-container"
-        )
-        const html = plasmoContainer.innerHTML
-        const md = html2md(html)
+        const plasmoRoot = document.querySelectorAll("plasmo-csui")[0].shadowRoot;
+        const plasmoContainer = plasmoRoot.querySelector("#plasmo-shadow-container");
+        const html = plasmoContainer.innerHTML;
+        const md = html2md(html);
 
-        const element = document.createElement("a")
+        const element = document.createElement("a");
         element.setAttribute(
             "href",
             "data:text/plain;charset=utf-8," + encodeURIComponent(md)
-        )
-        element.setAttribute("download", getFileName())
+        );
+        element.setAttribute("download", getFileName());
 
-        element.style.display = "none"
+        element.style.display = "none";
 
-        document.body.appendChild(element)
+        document.body.appendChild(element);
 
-        element.click()
+        element.click();
 
-        document.body.removeChild(element)
-    }
+        document.body.removeChild(element);
+    };
 
     return (
-        <div onClick={download} className={"setting fixed select-none right-[80px] top-[30px] select-none"}>
-            <Tooltip message={'Export'}>
+        <div onClick={download} className={"setting select-none"}>
+            <Tooltip message={"Export"}>
                 <button className={"outline-none"}>
                     <IconDownload />
                 </button>
             </Tooltip>
         </div>
-    )
+    );
 }

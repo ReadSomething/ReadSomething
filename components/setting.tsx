@@ -144,7 +144,7 @@ export function BasicSetting () {
     const { settingObject: { fontSize, pageWidth }, setSetting } = useContext(SettingContext);
 
     //
-    return <div className={"setting fixed select-none right-[30px] top-[30px] select-none"}>
+    return <div className={"setting select-none"}>
         <div>
             <Popover>
                 <Tooltip message={"Settings"}>

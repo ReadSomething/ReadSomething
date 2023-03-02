@@ -1,39 +1,36 @@
 import { Readability } from "@mozilla/readability";
 import { ReactNode, useContext, useEffect, useRef, useState } from "react";
-import styleText from "data-text:./content.scss"
-import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
-import readingTime from 'reading-time/lib/reading-time'
+import styleText from "data-text:./content.scss";
+import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo";
+import readingTime from "reading-time/lib/reading-time";
 import SettingProvider, { SettingContext } from "~provider/setting";
 import { Article, ReaderContext, ReaderProvider } from "~provider/reader";
-import { BasicSetting } from "~components/setting";
-import { DownloadMarkdown } from "~components/download";
-import Translate from "~components/translate";
 import { translateAnchor } from "~components/tranlator";
-import Theme from "~components/theme";
+import Toolbar from "~components/toolbar";
 
 // a plasmo hook
 export const getStyle: PlasmoGetStyle = () => {
-    const style = document.createElement("style")
-    style.textContent = styleText
+    const style = document.createElement("style");
+    style.textContent = styleText;
 
-    return style
-}
+    return style;
+};
 
 export const config: PlasmoCSConfig = {
     css: ["fontFamily.css", "fontClassNames.scss"]
-}
+};
 
 const getMetaContentByProperty = function (metaProperty: string) {
-    const metas = document.getElementsByTagName('meta');
+    const metas = document.getElementsByTagName("meta");
 
     for (let i = 0; i < metas.length; i++) {
-        if (metas[i].getAttribute('property') === metaProperty) {
-            return metas[i].getAttribute('content');
+        if (metas[i].getAttribute("property") === metaProperty) {
+            return metas[i].getAttribute("content");
         }
     }
 
-    return '';
-}
+    return "";
+};
 
 const isValidUrl = urlString => {
     try {
@@ -41,82 +38,88 @@ const isValidUrl = urlString => {
     } catch (e) {
         return false;
     }
-}
+};
 
 export enum EnumTheme {
-    Standard = 'standard',
-    Heti = 'Heti',
-    HetiA = 'HetiA'
+    Standard = "standard",
+    Heti = "Heti",
+    HetiA = "HetiA"
 }
 
 function Author ({ link, author }: { link: string, author: string }) {
-    if (!author) return null
+    if (!author) return null;
 
-    let authorNode = <span>{author}</span>
+    let authorNode = <span>{author}</span>;
 
     if (isValidUrl(link)) authorNode =
-        <a href={link} style={{ color: 'inherit', textDecoration: 'none' }} target={'_blank'} rel="noreferrer">{author}</a>
+        <a href={link} style={{ color: "inherit", textDecoration: "none" }} target={"_blank"}
+            rel="noreferrer">{author}</a>;
 
-    return <div className="credits reader-credits">{authorNode}</div>
+    return <div className="credits reader-credits">{authorNode}</div>;
 }
 
 function ThemeWrap ({ children }: { children: ReactNode }) {
     const { settingObject: { themeMode } } = useContext(SettingContext);
 
-    let themeClass = ''
+    let themeClass = "";
 
     switch (themeMode) {
-    case 'light':
-        themeClass = 'light'
-        break
-    case 'dark':
-        themeClass = 'dark'
-        break
+    case "light":
+        themeClass = "light";
+        break;
+    case "dark":
+        themeClass = "dark";
+        break;
     }
 
     return <div
         className={`ReadSomething  heti heti--classic ${themeClass}`}>
         {children}
-    </div>
+    </div>;
 }
 
-function MainContent ({ children }: {children: ReactNode}) {
+function MainContent ({ children }: { children: ReactNode }) {
     const { settingObject: { fontSize, pageWidth, lineSpacing, fontFamily } } = useContext(SettingContext);
 
-    // @ts-ignore
-    return <div style={{ "--font-size": `${fontSize}px`, "--content-width": `${pageWidth}px`, "--line-height": lineSpacing, "--font-family": fontFamily }}>
+    return <div style={{
+        // @ts-ignore
+        "--font-size": `${fontSize}px`,
+        "--content-width": `${pageWidth}px`,
+        "--line-height": lineSpacing,
+        "--font-family": fontFamily
+    }}>
         {children}
-    </div>
+    </div>;
 }
 
-function ContainerWrap ({ children }: {children: ReactNode}) {
+function ContainerWrap ({ children }: { children: ReactNode }) {
     const { settingObject: { fontFamily } } = useContext(SettingContext);
 
-    return  <div className={`container ${fontFamily !== 'Default' ? 'custom-font' : ''}`}>{children}</div>
+    return <div className={`container ${fontFamily !== "Default" ? "custom-font" : ""}`}>{children}</div>;
 }
 
-function Title ({ title }: {title: string}) {
+function Title ({ title }: { title: string }) {
     const { translateOn } = useContext(ReaderContext);
-    const ref = useRef<HTMLHeadingElement>(null)
+    const ref = useRef<HTMLHeadingElement>(null);
     const { settingObject: { translateService } } = useContext(SettingContext);
 
     useEffect(() => {
         if (translateOn && ref && ref.current) {
-            void translateAnchor(ref.current, translateService)
+            void translateAnchor(ref.current, translateService);
         }
     }, [translateOn, ref, ref.current]);
 
-    return <h1 ref={ref} className="reader-title" style={{ fontFamily: 'Bookerly' }}>{title}</h1>
+    return <h1 ref={ref} className="reader-title" style={{ fontFamily: "Bookerly" }}>{title}</h1>;
 }
 
 function Main () {
     useEffect(() => {
-        const defaultOverflowStyle = document.body.style.overflow
-        document.body.style.overflow = 'hidden'
+        const defaultOverflowStyle = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
 
         return () => {
-            document.body.style.overflow = defaultOverflowStyle
-        }
+            document.body.style.overflow = defaultOverflowStyle;
+        };
     }, []);
 
     const documentClone = document.cloneNode(true);
@@ -124,27 +127,27 @@ function Main () {
         keepClasses: true
     }).parse();
     const articleUrl = window.location.href;
-    const author = article.byline ?? ""
-    const authorLink = getMetaContentByProperty('article:author')
-    const domain = window.location.hostname
-    const timeToReadStr = readingTime(article.textContent).text
+    const author = article.byline ?? "";
+    const authorLink = getMetaContentByProperty("article:author");
+    const domain = window.location.hostname;
+    const timeToReadStr = readingTime(article.textContent).text;
 
     return (
         <ReaderProvider article={new Article(article.title)}>
             <SettingProvider>
                 <MainContent>
-
                     <ThemeWrap>
-                        <div id={'readsomething-scroll'} className={'fixed h-full  w-full overflow-scroll left-0 top-0'} style={{
-                            backgroundColor: "var(--main-background)"
-                        }}>
+                        <div id={"readsomething-scroll"} className={"fixed h-full  w-full overflow-scroll left-0 top-0"}
+                            style={{
+                                backgroundColor: "var(--main-background)"
+                            }}>
                             <ContainerWrap>
                                 <div className="header reader-header reader-show-element">
-                                    <a className="domain reader-domain"
+                                    <a className="domain reader-domain hidden"
                                         href={articleUrl}>{domain}</a>
                                     <div className="domain-border"></div>
-                                    <Title title={article.title}/>
-                                    <Author link={authorLink} author={author}/>
+                                    <Title title={article.title} />
+                                    <Author link={authorLink} author={author} />
                                     <div className="meta-data">
                                         <div className="reader-estimated-time"
                                             data-l10n-id="about-reader-estimated-read-time"
@@ -153,54 +156,52 @@ function Main () {
                                         </div>
                                     </div>
                                 </div>
-                                <hr/>
-                                <div className={'content'}>
+                                <hr />
+                                <div className={"content"}>
                                     <div className={`mozReaderContent readerShowElement`}>
-                                        <div className='page' dangerouslySetInnerHTML={{ __html: article.content }}/>
+                                        <div className="page" dangerouslySetInnerHTML={{ __html: article.content }} />
                                     </div>
                                 </div>
                             </ContainerWrap>
-                            <Translate />
-                            <DownloadMarkdown/>
-                            <BasicSetting/>
-                            <Theme/>
+                            <Toolbar />
                         </div>
+
                     </ThemeWrap>
                 </MainContent>
             </SettingProvider>
         </ReaderProvider>
-    )
+    );
 }
 
 const Reader = () => {
     const [showReader, setShowReader] = useState(false);
 
     useEffect(() => {
-        document.body.addEventListener('keyup', keyUp);
-        chrome.runtime.onMessage.addListener(messageListen)
+        document.body.addEventListener("keyup", keyUp);
+        chrome.runtime.onMessage.addListener(messageListen);
 
         return () => {
-            chrome.runtime.onMessage.removeListener(messageListen)
-            document.body.removeEventListener('keyup', keyUp);
-        }
+            chrome.runtime.onMessage.removeListener(messageListen);
+            document.body.removeEventListener("keyup", keyUp);
+        };
     }, []);
 
     const messageListen = async function () {
 
         setShowReader(prevState => {
-            return !prevState
+            return !prevState;
         });
-    }
+    };
 
     const keyUp = function (e) {
         if (e.key === "Escape") {
-            setShowReader(false)
+            setShowReader(false);
         }
-    }
+    };
 
-    if (!showReader) return null
+    if (!showReader) return null;
 
-    return <Main/>
-}
+    return <Main />;
+};
 
-export default Reader
+export default Reader;

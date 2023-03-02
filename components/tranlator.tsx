@@ -39,6 +39,7 @@ export const translateAnchor = async function (anchor: Element, translateService
             name: translateService,
             body: translateService === EnumTranslateServices.TencentTranslate ? anchor.textContent : anchor.outerHTML
         });
+        console.log(message.message);
         const resp = JSON.parse(message.message);
 
         // create a template container to get translated result, as the result is a string
