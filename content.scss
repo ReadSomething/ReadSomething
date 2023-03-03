@@ -373,6 +373,7 @@
       font-family: Fira_Code !important;
     }
 
+    // Heti sets default font-family, but use custom font to overwrite it.
     &.custom-font {
       *:not(pre) {
         font-family: var(--font-family), Times New Roman, times, Heti Song, serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol !important;
