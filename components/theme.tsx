@@ -35,6 +35,7 @@ export default function Theme () {
                             leaveFrom="opacity-1 mr-[0]"
                             leaveTo="opacity-0 translate-x-[30px]"
                             show={ThemeMode[item] === themeMode}
+                            key={item}
                         >
                             <button
                                 className={`themeModeRadio cursor-pointer ${themeMode === ThemeMode[item] ? "selected" : ""}`}
@@ -45,7 +46,7 @@ export default function Theme () {
                                     console.log(ThemeMode[item]);
                                     void setSetting({ themeMode: ThemeMode[modeKey[(index + 1) % 3]] });
                                 }}
-                                key={item}>
+                            >
                                 <img src={getIcon(ThemeMode[item])} alt={item} />
                             </button>
                         </Transition>;
