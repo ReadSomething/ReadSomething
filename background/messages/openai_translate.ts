@@ -4,7 +4,7 @@ import fetchAdapter from "@vespaiach/axios-fetch-adapter";
 
 const handler: PlasmoMessaging.MessageHandler<{ message: string }> = async (req, res) => {
     const configuration = new Configuration({
-        apiKey: "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"
+        apiKey: "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"
     });
     const openai = new OpenAIApi(configuration);
 

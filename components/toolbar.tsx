@@ -2,7 +2,6 @@ import React from "react";
 import Translate from "~components/translate";
 import { DownloadMarkdown } from "~components/download";
 import { BasicSetting } from "~components/setting";
-import Theme from "~components/theme";
 import OpenAI from "~components/openai";
 
 function Toolbar () {
@@ -11,7 +10,7 @@ function Toolbar () {
             <div className="flex justify-end">
                 <OpenAI />
                 <Translate />
-                <Theme />
+                {/*<Theme />*/}
                 <DownloadMarkdown />
                 <BasicSetting />
             </div>

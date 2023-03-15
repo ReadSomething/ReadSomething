@@ -27,7 +27,7 @@ specifiers:
   highlight.js: ^11.7.0
   html-to-md: ^0.8.3
   husky: ^8.0.3
-  openai: ^3.1.0
+  openai: ^3.2.1
   plasmo: 0.64.2
   postcss: ^8.4.21
   react: 18.2.0
@@ -35,8 +35,10 @@ specifiers:
   react-html-parser: ^2.0.2
   react-slider: ^2.0.4
   reading-time: ^1.5.0
+  sse.js: ^0.6.1
   tailwindcss: ^3.2.4
   typescript: '*'
+  xhr2: ^0.2.1
 
 dependencies:
   '@babel/core': 7.21.0
@@ -51,13 +53,15 @@ dependencies:
   eslint-config-react-app: 7.0.1_aw525btanfsnjvobynduxx6b2i
   highlight.js: 11.7.0
   html-to-md: 0.8.3
-  openai: 3.1.0
+  openai: 3.2.1
   plasmo: 0.64.2_gjpyg5imi5mt2gbvkmn3a4dr7m
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
   react-html-parser: 2.0.2_react@18.2.0
   react-slider: 2.0.4_react@18.2.0
   reading-time: 1.5.0
+  sse.js: 0.6.1
+  xhr2: 0.2.1
 
 devDependencies:
   '@types/chrome': 0.0.210
@@ -6664,8 +6668,8 @@ packages:
       mimic-fn: 2.1.0
     dev: false
 
-  /openai/3.1.0:
-    resolution: {integrity: sha512-v5kKFH5o+8ld+t0arudj833Mgm3GcgBnbyN9946bj6u7bvel4Yg6YFz2A4HLIYDzmMjIo0s6vSG9x73kOwvdCg==}
+  /openai/3.2.1:
+    resolution: {integrity: sha512-762C9BNlJPbjjlWZi4WYK9iM2tAVAv0uUp1UmI34vb0CN5T2mjB/qM6RYBmNKMh/dN9fC+bxqPwWJZUTWW052A==}
     dependencies:
       axios: 0.26.1
       form-data: 4.0.0
@@ -7488,6 +7492,10 @@ packages:
     engines: {node: '>=12'}
     dev: false
 
+  /sse.js/0.6.1:
+    resolution: {integrity: sha512-peXG6GnWqF5hnubhMw0WfB6rqQy7z7LaMBT067vqgQwC3gKz8JGFzexBSV80FqZ9JoUDwo3Xt5nxkrGrgbPrtA==}
+    dev: false
+
   /stable/0.1.8:
     resolution: {integrity: sha512-ji9qxRnOVfcuLDySj9qzhGSEFVobyt1kIOSkj1qZzYLzq7Tos/oUUWvotUPQLlrsidqsK6tBH89Bc9kL5zHA6w==}
     deprecated: 'Modern JS already guarantees Array#sort() is a stable sort, so this library is deprecated. See the compatibility table on MDN: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#browser_compatibility'
@@ -8070,6 +8078,11 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+    dev: false
+
+  /xhr2/0.2.1:
+    resolution: {integrity: sha512-sID0rrVCqkVNUn8t6xuv9+6FViXjUVXq8H5rWOH2rz9fDNQEd4g0EA2XlcEdJXRz5BMEn4O1pJFdT+z4YHhoWw==}
+    engines: {node: '>= 6'}
     dev: false
 
   /xtend/4.0.2:

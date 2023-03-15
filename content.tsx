@@ -40,20 +40,14 @@ const isValidUrl = urlString => {
     }
 };
 
-export enum EnumTheme {
-    Standard = "standard",
-    Heti = "Heti",
-    HetiA = "HetiA"
-}
-
 function Author ({ link, author }: { link: string, author: string }) {
     if (!author) return null;
 
-    let authorNode = <span>{author}</span>;
+    let authorNode = <span>{author},</span>;
 
     if (isValidUrl(link)) authorNode =
         <a href={link} style={{ color: "inherit", textDecoration: "none" }} target={"_blank"}
-            rel="noreferrer">{author}</a>;
+            rel="noreferrer">{author},</a>;
 
     return <div className="credits reader-credits">{authorNode}</div>;
 }
@@ -73,7 +67,7 @@ function ThemeWrap ({ children }: { children: ReactNode }) {
     }
 
     return <div
-        className={`ReadSomething  heti heti--classic ${themeClass}`}>
+        className={`ReadSomething heti heti--classic ${themeClass}`}>
         {children}
     </div>;
 }
@@ -147,12 +141,15 @@ function Main () {
                                         href={articleUrl}>{domain}</a>
                                     <div className="domain-border"></div>
                                     <Title title={article.title} />
-                                    <Author link={authorLink} author={author} />
-                                    <div className="meta-data">
-                                        <div className="reader-estimated-time"
-                                            data-l10n-id="about-reader-estimated-read-time"
-                                            data-l10n-args="{&quot;range&quot;:&quot;3–4&quot;,&quot;rangePlural&quot;:&quot;other&quot;}"
-                                            dir="ltr">{timeToReadStr}
+
+                                    <div className={"flex gap-[10px]"}>
+                                        <Author link={authorLink} author={author} />
+                                        <div className="meta-data">
+                                            <div className="reader-estimated-time"
+                                                data-l10n-id="about-reader-estimated-read-time"
+                                                data-l10n-args="{&quot;range&quot;:&quot;3–4&quot;,&quot;rangePlural&quot;:&quot;other&quot;}"
+                                                dir="ltr">{timeToReadStr}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

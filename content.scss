@@ -151,10 +151,11 @@
   hr {
     width: 30%;
     height: 1px;
+    transform: scaleY(0.5);
 
     background-color: #ccc;
     border: 0;
-    margin-block: 34px 34px;
+    margin-block: 40px 24px;
     margin-inline: auto;
   }
 
