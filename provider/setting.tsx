@@ -1,5 +1,4 @@
 import { createContext, type ReactNode, useEffect, useMemo, useState } from "react";
-import { EnumTheme } from "~content";
 import { Storage } from "@plasmohq/storage";
 import { EnumLineSpacing, EnumTranslateServices, Fonts } from "~components/setting";
 import { getLatestState } from "~utils/state";
@@ -12,7 +11,6 @@ export enum ThemeMode {
 
 interface SettingObject {
     fontSize?: number;
-    theme?: EnumTheme;
     pageWidth?: number;
     lineSpacing?: EnumLineSpacing;
     fontFamily?: string;
@@ -41,10 +39,9 @@ export default function SettingProvider ({ children }: { children: ReactNode }) 
 
     const init = async function () {
         let fontSize = 18,
-            theme = EnumTheme.Heti,
             pageWidth = 800,
             lineSpacing = EnumLineSpacing.Medium,
-            fontFamily = Fonts[0],
+            fontFamily = Fonts[4],  // Bookerly
             translateService = EnumTranslateServices.GoogleTranslate,
             themeMode = ThemeMode.Auto;
 
@@ -54,7 +51,6 @@ export default function SettingProvider ({ children }: { children: ReactNode }) 
             if (setting) {
                 const {
                     fontSize: _fontSize,
-                    theme: _theme,
                     pageWidth: _pageWidth,
                     lineSpacing: _lineSpacing,
                     fontFamily: _fontFamily,
@@ -63,7 +59,6 @@ export default function SettingProvider ({ children }: { children: ReactNode }) 
                 } = setting;
 
                 if (_fontSize) fontSize = _fontSize;
-                if (_theme) theme = _theme;
                 if (_pageWidth) pageWidth = _pageWidth;
                 if (_lineSpacing) lineSpacing = _lineSpacing;
                 if (_fontFamily) fontFamily = _fontFamily;
@@ -74,7 +69,7 @@ export default function SettingProvider ({ children }: { children: ReactNode }) 
             // ignore
             console.error(e);
         } finally {
-            await _setData({ fontSize, theme, pageWidth, lineSpacing, fontFamily, translateService, themeMode });
+            await _setData({ fontSize, pageWidth, lineSpacing, fontFamily, translateService, themeMode });
         }
     };
 

@@ -1,11 +1,11 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M12 1V3" stroke="black"/>
-<path d="M12 21V23" stroke="black"/>
-<path d="M4.21973 4.22021L5.63973 5.64021" stroke="black"/>
-<path d="M18.3604 18.3599L19.7804 19.7799" stroke="black"/>
-<path d="M1 12H3" stroke="black"/>
-<path d="M21 12H23" stroke="black"/>
-<path d="M4.21973 19.7799L5.63973 18.3599" stroke="black"/>
-<path d="M18.3604 5.64021L19.7804 4.22021" stroke="black"/>
-<path d="M12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18Z" fill="black"/>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="#202123" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 1V3" stroke="#202123"/>
+<path d="M12 21V23" stroke="#202123"/>
+<path d="M4.21973 4.22021L5.63973 5.64021" stroke="#202123"/>
+<path d="M18.3604 18.3599L19.7804 19.7799" stroke="#202123"/>
+<path d="M1 12H3" stroke="#202123"/>
+<path d="M21 12H23" stroke="#202123"/>
+<path d="M4.21973 19.7799L5.63973 18.3599" stroke="#202123"/>
+<path d="M18.3604 5.64021L19.7804 4.22021" stroke="#202123"/>
+<path d="M12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18Z" fill="#202123"/>
 </svg>
