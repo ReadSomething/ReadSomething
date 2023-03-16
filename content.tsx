@@ -1,5 +1,5 @@
 import { Readability } from "@mozilla/readability";
-import { ReactNode, useContext, useEffect, useRef, useState } from "react";
+import React, { ReactNode, useContext, useEffect, useRef, useState } from "react";
 import styleText from "data-text:./content.scss";
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo";
 import readingTime from "reading-time/lib/reading-time";
@@ -7,6 +7,10 @@ import SettingProvider, { SettingContext } from "~provider/setting";
 import { Article, ReaderContext, ReaderProvider } from "~provider/reader";
 import { translateAnchor } from "~components/tranlator";
 import Toolbar from "~components/toolbar";
+import ChatArticle from "~components/chat_article";
+import { ScrollProvider } from "~provider/scroll";
+import Scroll from "~components/scroll";
+import { ChatMessageProvider } from "~provider/chat";
 
 // a plasmo hook
 export const getStyle: PlasmoGetStyle = () => {
@@ -131,43 +135,47 @@ function Main () {
             <SettingProvider>
                 <MainContent>
                     <ThemeWrap>
-                        <div id={"readsomething-scroll"} className={"fixed h-full  w-full overflow-scroll left-0 top-0"}
-                            style={{
-                                backgroundColor: "var(--main-background)"
-                            }}>
-                            <ContainerWrap>
-                                <div className="header reader-header reader-show-element">
-                                    <a className="domain reader-domain hidden"
-                                        href={articleUrl}>{domain}</a>
-                                    <div className="domain-border"></div>
-                                    <Title title={article.title} />
+                        <ScrollProvider>
+                            <Scroll>
+                                <ContainerWrap>
+                                    <div className="header reader-header reader-show-element">
+                                        <a className="domain reader-domain hidden"
+                                            href={articleUrl}>{domain}</a>
+                                        <div className="domain-border"></div>
+                                        <Title title={article.title} />
 
-                                    <div className={"flex gap-[10px]"}>
-                                        <Author link={authorLink} author={author} />
-                                        <div className="meta-data">
-                                            <div className="reader-estimated-time"
-                                                data-l10n-id="about-reader-estimated-read-time"
-                                                data-l10n-args="{&quot;range&quot;:&quot;3–4&quot;,&quot;rangePlural&quot;:&quot;other&quot;}"
-                                                dir="ltr">{timeToReadStr}
+                                        <div className={"flex gap-[10px]"}>
+                                            <Author link={authorLink} author={author} />
+                                            <div className="meta-data">
+                                                <div className="reader-estimated-time"
+                                                    data-l10n-id="about-reader-estimated-read-time"
+                                                    data-l10n-args="{&quot;range&quot;:&quot;3–4&quot;,&quot;rangePlural&quot;:&quot;other&quot;}"
+                                                    dir="ltr">{timeToReadStr}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <hr />
-                                <div className={"content"}>
-                                    <div className={`mozReaderContent readerShowElement`}>
-                                        <div className="page" dangerouslySetInnerHTML={{ __html: article.content }} />
+                                    <hr />
+                                    <div className={"content"}>
+                                        <div className={`mozReaderContent readerShowElement`}>
+                                            <div className="page"
+                                                dangerouslySetInnerHTML={{ __html: article.content }} />
+                                        </div>
                                     </div>
-                                </div>
-                            </ContainerWrap>
-                            <Toolbar />
-                        </div>
+                                    <ChatMessageProvider>
+                                        <ChatArticle />
+                                    </ChatMessageProvider>
 
+                                </ContainerWrap>
+                                <Toolbar />
+                            </Scroll>
+                        </ScrollProvider>
                     </ThemeWrap>
                 </MainContent>
             </SettingProvider>
         </ReaderProvider>
-    );
+    )
+    ;
 }
 
 const Reader = () => {

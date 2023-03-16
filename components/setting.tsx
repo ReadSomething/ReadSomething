@@ -191,7 +191,7 @@ export function BasicSetting () {
                                     <div className={"h-[18px] flex-1  items-center"}>
                                         {/*@ts-ignore*/}
                                         <ReactSlider defaultValue={pageWidth}
-                                            max={1200} min={400}
+                                            max={1900} min={400}
                                             className="horizontal-slider mt-[2px] w-full setting-font-size"
                                             thumbClassName="thumb"
                                             trackClassName="track"

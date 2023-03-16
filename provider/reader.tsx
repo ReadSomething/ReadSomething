@@ -42,7 +42,7 @@ export function ReaderProvider ({
                 article: _article,
                 setArticle,
                 translateOn,
-                setTranslateOn
+                setTranslateOn,
             }}>
             {children}
         </ReaderContext.Provider>
