@@ -1,7 +1,7 @@
 import { ChatAssistantMessage, ChatUserMessage } from "~components/chat_messgae";
 import IconChatSend from "react:~/assets/send.svg";
 import IconChatDrag from "react:~/assets/drag.svg";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { ChatMessage, ChatMessageContext } from "~provider/chat";
 import Loading from "~components/loading";
 import { debounce } from "lodash";
@@ -14,6 +14,30 @@ const ChatBox = () => {
     const [visitedEntries, setVisitedEntries] = useState([]);
     const [cache, setCache] = useState([]);
 
+    const doSummarize =  debounce(async () => {
+        const _cache = await getLatestState(setCache);
+        console.log("调用接口，缓存更新为：", _cache);
+        let content = _cache.map(entry => {
+            return  entry.target.textContent
+        }).join(" ");
+
+        console.log('content: ', content);
+
+        if (content === "") {
+            return;
+        }
+
+        console.log(_cache.length, content);
+        setCache([]);
+
+        //@ts-ignore
+        setMessages(preState => [...preState, {
+            role: "user",
+            content: "这是一段文章内容：\n\n" + content
+        } as ChatMessage]);
+        setComponents(prevState => [...prevState, <ChatAssistantMessage />]);
+    }, 2000);
+
     useEffect(() => {
         const callback = (entries, observer) => {
             const intersectingEntries = entries
@@ -23,27 +47,13 @@ const ChatBox = () => {
             if (intersectingEntries.length === 0) return;
 
             intersectingEntries.map(entry => setVisitedEntries(prevState => [...prevState, entry]));
-            setCache(prevState => [...prevState, ...intersectingEntries]);
+            setCache(prevState => {
+                return [...prevState, ...intersectingEntries]
+            });
 
-            debounce(async () => {
-                const _cache = await getLatestState(setCache);
-                console.log("调用接口，缓存更新为：", _cache);
-                let content = cache.map(entry => entry.target.textContent).join(" ");
-
-                if (content === "") {
-                    return;
-                }
-
-                console.log(_cache.length, content);
-                setCache([]);
-
-                //@ts-ignore
-                setMessages(preState => [...preState, {
-                    role: "user",
-                    content: "这是一段文章内容：\n\n" + content
-                } as ChatMessage]);
-                setComponents(prevState => [...prevState, <ChatAssistantMessage />]);
-            }, 2000)();
+            setTimeout(() => {
+                doSummarize()
+            }, 3000);
         };
 
         const ob = new IntersectionObserver(callback);
@@ -59,30 +69,6 @@ const ChatBox = () => {
             ob.disconnect();
         };
     }, []);
-
-    // const handleCacheChange = useCallback(
-    //     debounce(() => {
-    //         console.log("调用接口，缓存更新为：", cache);
-    //         let content = cache.map(entry => entry.target.textContent).join(" ");
-    //
-    //         if (content === "") {
-    //             return;
-    //         }
-    //
-    //         console.log(cache.length, content);
-    //         setCache([]);
-    //
-    //         //@ts-ignore
-    //         setMessages(preState => [...preState, {
-    //             role: "user",
-    //             content: "这是一段文章内容：\n\n" + content
-    //         } as ChatMessage]);
-    //         setComponents(prevState => [...prevState, <ChatAssistantMessage />]);
-    //     }, 2000),
-    //     [cache]
-    // );
-    //
-    // useEffect(handleCacheChange, [handleCacheChange]);
 
     const handleKeyPress = async function (event) {
         if (event.key === "Enter") {
