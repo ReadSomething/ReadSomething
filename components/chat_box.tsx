@@ -1,7 +1,7 @@
 import { ChatAssistantMessage, ChatUserMessage } from "~components/chat_messgae";
 import IconChatSend from "react:~/assets/send.svg";
 import IconChatDrag from "react:~/assets/drag.svg";
-import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, {  useContext, useEffect, useRef, useState } from "react";
 import { ChatMessage, ChatMessageContext } from "~provider/chat";
 import Loading from "~components/loading";
 import { debounce } from "lodash";
@@ -12,7 +12,7 @@ const ChatBox = () => {
     let { setMessages, setChatScrollRef, isLoading } = useContext(ChatMessageContext);
     const [components, setComponents] = useState([]);
     const [visitedEntries, setVisitedEntries] = useState([]);
-    const [cache, setCache] = useState([]);
+    const [, setCache] = useState([]);
 
     const doSummarize =  debounce(async () => {
         const _cache = await getLatestState(setCache);
