@@ -16,6 +16,7 @@ interface SettingObject {
     fontFamily?: string;
     translateService?: string;
     themeMode?: ThemeMode;
+    openaiKey?: string;
 }
 
 interface TypeSettingContext {
@@ -25,7 +26,7 @@ interface TypeSettingContext {
 
 export const SettingContext = createContext({} as TypeSettingContext);
 
-const SettingStorageKey = "__READSOMETHING_SETTING_V1";
+const SettingStorageKey = "__READSOMETHING_SETTING_V2";
 
 export default function SettingProvider ({ children }: { children: ReactNode }) {
     const [settingObject, setSettingObject] = useState({} as SettingObject);
@@ -43,7 +44,8 @@ export default function SettingProvider ({ children }: { children: ReactNode }) 
             lineSpacing = EnumLineSpacing.Medium,
             fontFamily = Fonts[4],  // Bookerly
             translateService = EnumTranslateServices.GoogleTranslate,
-            themeMode = ThemeMode.Auto;
+            themeMode = ThemeMode.Auto,
+            openaiKey = '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';
 
         try {
             const setting = JSON.parse(await storage.get(SettingStorageKey));
@@ -55,7 +57,8 @@ export default function SettingProvider ({ children }: { children: ReactNode }) 
                     lineSpacing: _lineSpacing,
                     fontFamily: _fontFamily,
                     translateService: _translateService,
-                    themeMode: _themeMode
+                    themeMode: _themeMode,
+                    openaiKey: _openaiKey
                 } = setting;
 
                 if (_fontSize) fontSize = _fontSize;
@@ -64,12 +67,13 @@ export default function SettingProvider ({ children }: { children: ReactNode }) 
                 if (_fontFamily) fontFamily = _fontFamily;
                 if (_translateService) translateService = _translateService;
                 if (_themeMode) themeMode = _themeMode;
+                if (_openaiKey) openaiKey = _openaiKey;
             }
         } catch (e) {
             // ignore
             console.error(e);
         } finally {
-            await _setData({ fontSize, pageWidth, lineSpacing, fontFamily, translateService, themeMode });
+            await _setData({ fontSize, pageWidth, lineSpacing, fontFamily, translateService, themeMode, openaiKey });
         }
     };
 
