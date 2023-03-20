@@ -406,3 +406,12 @@
     }
   }
 }
+
+.ReadSomething {
+  .rs-openai-chat {
+    p {
+      padding-top: .5em !important;
+      padding-bottom: .5em !important;
+    }
+  }
+}

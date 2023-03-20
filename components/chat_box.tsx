@@ -1,57 +1,110 @@
 import { ChatAssistantMessage, ChatUserMessage } from "~components/chat_messgae";
 import IconChatSend from "react:~/assets/send.svg";
+import IconChatDrag from "react:~/assets/drag.svg";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { ChatMessage, ChatMessageContext } from "~provider/chat";
+import Loading from "~components/loading";
+import { debounce } from "lodash";
+import { getLatestState } from "~utils/state";
 
 const ChatBox = () => {
     const userInput = useRef<HTMLInputElement>(null);
-    const { messages, setMessages } = useContext(ChatMessageContext);
+    let { setMessages, setChatScrollRef, isLoading } = useContext(ChatMessageContext);
     const [components, setComponents] = useState([]);
+    const [visitedEntries, setVisitedEntries] = useState([]);
+    const [cache, setCache] = useState([]);
 
     useEffect(() => {
-        const plasmoRoot = document.querySelectorAll("plasmo-csui")[0].shadowRoot;
-        const plasmoContainer = plasmoRoot.querySelector("#plasmo-shadow-container");
+        const callback = (entries, observer) => {
+            const intersectingEntries = entries
+                .filter(entry => entry.isIntersecting && !visitedEntries.includes(entry))
+                .filter(entry => !entry.target.classList.contains("rs-translated-result"));  // Filter out translated content
 
-        let startMessage = [
-            {
-                role: "system",
-                content: `Please generate a Chinese summary of the following text, return as following html template
-<p>__SUMMARY__</p>
-<p>你可以通过提问来阅读文章，这里是几个建议的问题：<br>Q: __QUESTION__</p>`
-            },
-            {
-                role: "user",
-                content: plasmoContainer.textContent.slice(0, 1000)
-            }
-        ];
-        setMessages(startMessage);
+            if (intersectingEntries.length === 0) return;
 
-        setComponents(prevState => {
-            return [
-                ...prevState,
-                <ChatAssistantMessage placeholder={"<p>嘿！欢迎来到这里，我是你的阅读助手～本文的主要内容如下：</p>"} />
-            ];
-        });
+            intersectingEntries.map(entry => setVisitedEntries(prevState => [...prevState, entry]));
+            setCache(prevState => [...prevState, ...intersectingEntries]);
+
+            debounce(async () => {
+                const _cache = await getLatestState(setCache);
+                console.log("调用接口，缓存更新为：", _cache);
+                let content = cache.map(entry => entry.target.textContent).join(" ");
+
+                if (content === "") {
+                    return;
+                }
+
+                console.log(_cache.length, content);
+                setCache([]);
+
+                //@ts-ignore
+                setMessages(preState => [...preState, {
+                    role: "user",
+                    content: "这是一段文章内容：\n\n" + content
+                } as ChatMessage]);
+                setComponents(prevState => [...prevState, <ChatAssistantMessage />]);
+            }, 2000)();
+        };
+
+        const ob = new IntersectionObserver(callback);
+
+        const paragraphs = Array.from(document.querySelectorAll("plasmo-csui")[0].shadowRoot
+            .querySelector("#readability-page-1")
+            .querySelectorAll("p:not(ul p, ol p), ul:not(ul ul, ol ul), ol:not(ol ol, ul ol)"));
+
+        paragraphs.map(e => ob.observe(e));
+
+        return () => {
+            paragraphs.map(e => ob.unobserve(e));
+            ob.disconnect();
+        };
     }, []);
 
-    const handleKeyPress = function (event) {
+    // const handleCacheChange = useCallback(
+    //     debounce(() => {
+    //         console.log("调用接口，缓存更新为：", cache);
+    //         let content = cache.map(entry => entry.target.textContent).join(" ");
+    //
+    //         if (content === "") {
+    //             return;
+    //         }
+    //
+    //         console.log(cache.length, content);
+    //         setCache([]);
+    //
+    //         //@ts-ignore
+    //         setMessages(preState => [...preState, {
+    //             role: "user",
+    //             content: "这是一段文章内容：\n\n" + content
+    //         } as ChatMessage]);
+    //         setComponents(prevState => [...prevState, <ChatAssistantMessage />]);
+    //     }, 2000),
+    //     [cache]
+    // );
+    //
+    // useEffect(handleCacheChange, [handleCacheChange]);
+
+    const handleKeyPress = async function (event) {
         if (event.key === "Enter") {
-            handleChatSendButtonClick();
+            await handleChatSendButtonClick();
         }
     };
 
-    const handleChatSendButtonClick = function () {
-        if (userInput.current.value === "") {
+    const handleChatSendButtonClick = async function () {
+        const copy = userInput.current.value.slice();
+
+        if (isLoading || copy === "") {
             return;
         }
 
-        const prompt = "Please answer my question with the context: \n\n" + userInput.current.value;
-        setMessages([...messages, { role: "user", content: prompt } as ChatMessage]);
+        const prompt = "Please answer my question with the context: \n\n" + copy;
+        // @ts-ignore
+        setMessages(preState => [...preState, { role: "user", content: prompt } as ChatMessage]);
 
         setComponents(prevState => {
             return [
                 ...prevState,
-                <ChatUserMessage message={userInput.current.value} />,
+                <ChatUserMessage message={copy} />,
                 <ChatAssistantMessage />
             ];
         });
@@ -59,10 +112,21 @@ const ChatBox = () => {
         userInput.current.value = "";
     };
 
-    return <div id={"rs-openai-chat"}
-        className={"py-[10px] overflow-y-auto flex flex-col items-center justify-center text-gray-800 bg-purple-50 shadow-xl"}>
-        <div className="flex flex-col flex-grow w-full h-full max-w-xl rounded-lg">
-            <div id={"rs-openai-answer"} className="flex flex-col flex-grow p-4">
+    return (<div id={"rs-openai-chat"}
+        className={"rs-openai-chat flex flex-col items-center h-full justify-center text-gray-800 bg-purple-50 shadow pb-4 rounded"}
+        style={{ fontSize: "0.9rem", transition: "all 0.2s ease-in-out" }}
+    >
+        <div className={"rs-chat-draggable self-center py-2"}><IconChatDrag style={{ rotate: "90deg" }} /></div>
+        <div ref={ref => setChatScrollRef(ref)}
+            className="flex flex-col flex-grow w-full h-full max-w-xl rounded-lg overflow-y-auto scrollbar-hide px-2">
+            <div id={"rs-openai-answer"} className="flex flex-col flex-grow">
+                <div className="flex w-full">
+                    <div className="flex w-[80%]">
+                        <div className="bg-grey-300 px-2">
+                            <p>嘿！欢迎来到这里，我是你的阅读助手～本文的主要内容如下：</p>
+                        </div>
+                    </div>
+                </div>
                 {
                     components.map((component, index) => {
                         return <div key={index}>{component}</div>;
@@ -70,19 +134,22 @@ const ChatBox = () => {
                 }
             </div>
 
-            <div className="bg-grey-300 p-4">
+            <div className="bg-grey-300 sticky w-full bottom-0 left-0 pt-2">
                 <div className="flex items-center justify-between z-10">
-                    <input ref={userInput} className="flex items-center h-10 w-full rounded px-2 text-sm z-20"
+                    <input ref={userInput}
+                        className="flex items-center h-10 w-full rounded text-sm z-20 focus:outline-none px-2"
                         type="text" autoFocus={true} onKeyDown={handleKeyPress}
-                        placeholder="Ask any question..." />
-                    <button onClick={handleChatSendButtonClick}
-                        className={"outline-none h-10 px-[10px] hover:shadow-md"}>
-                        <IconChatSend />
+                        style={{ transition: "all 0.2s ease-in-out", caretColor: "#a78bfa" }}
+                    />
+
+                    <button onClick={handleChatSendButtonClick} className={"outline-none h-10 px-[10px] bg-white"}>
+                        {isLoading ? <Loading /> : <IconChatSend />}
                     </button>
+
                 </div>
             </div>
         </div>
-    </div>;
+    </div>);
 };
 
-export default ChatBox;
+export default React.memo(ChatBox);

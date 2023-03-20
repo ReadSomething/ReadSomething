@@ -9,6 +9,7 @@ import PageWidthLeft from "data-base64:~assets/page-width-left.svg";
 import PageWidthRight from "data-base64:~assets/page-width-right.svg";
 import IconSetting from "react:~/assets/setting-config.svg";
 import Tooltip from "~components/tooltip";
+import { debounce } from "~utils/debounce";
 
 export enum EnumLineSpacing {
     Small = "1.4em",
@@ -49,20 +50,6 @@ export enum EnumTranslateServices {
     GoogleTranslate = "google_translate",
     TencentTranslate = "tencent_translate",
     OpenaiTranslate = "openai_translate"
-}
-
-export function debounce (func, wait = 200) {
-    let timeout;
-
-    return function () {
-        const self = this;
-
-        if (timeout) {
-            clearTimeout(timeout);
-        }
-
-        timeout = setTimeout(() => func.apply(self, arguments), wait);
-    };
 }
 
 function SettingItem ({ label, children }: { label: string, children: ReactNode }) {
@@ -140,6 +127,19 @@ function TranslateServiceSelect () {
     );
 }
 
+function OpenAIKeyInput () {
+    const { settingObject: { openaiKey }, setSetting } = useContext(SettingContext);
+
+    const handleOpenaiApiKeyChange = debounce(async function (e: React.ChangeEvent<HTMLInputElement>) {
+        await setSetting({ openaiKey: e.target.value });
+    }, 500);
+
+    return (
+        <input type="text" value={openaiKey} onChange={handleOpenaiApiKeyChange}
+            className={"text-[var(--setting-foreground)] text-[16px] outline-none p-[4px] bg-[white]"} />
+    );
+}
+
 export function BasicSetting () {
     const { settingObject: { fontSize, pageWidth }, setSetting } = useContext(SettingContext);
 
@@ -209,6 +209,10 @@ export function BasicSetting () {
                             <VGap size={14} />
                             <SettingItem label={"Translation"}>
                                 <TranslateServiceSelect />
+                            </SettingItem>
+                            <VGap size={14} />
+                            <SettingItem label={"OpenAI Key"}>
+                                <OpenAIKeyInput />
                             </SettingItem>
                         </div>
                     }

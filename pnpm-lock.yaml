@@ -38,6 +38,7 @@ specifiers:
   react-slider: ^2.0.4
   reading-time: ^1.5.0
   stickyfilljs: ^2.1.0
+  tailwind-scrollbar-hide: ^1.1.7
   tailwindcss: ^3.2.4
   typescript: '*'
   xhr2: ^0.2.1
@@ -65,6 +66,7 @@ dependencies:
   react-slider: 2.0.4_react@18.2.0
   reading-time: 1.5.0
   stickyfilljs: 2.1.0
+  tailwind-scrollbar-hide: 1.1.7
   xhr2: 0.2.1
 
 devDependencies:
@@ -7686,6 +7688,10 @@ packages:
       csso: 4.2.0
       picocolors: 1.0.0
       stable: 0.1.8
+    dev: false
+
+  /tailwind-scrollbar-hide/1.1.7:
+    resolution: {integrity: sha512-X324n9OtpTmOMqEgDUEA/RgLrNfBF/jwJdctaPZDzB3mppxJk7TLIDmOreEDm1Bq4R9LSPu4Epf8VSdovNU+iA==}
     dev: false
 
   /tailwindcss/3.2.4_postcss@8.4.21:

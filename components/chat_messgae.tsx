@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { getLatestState } from "~utils/state";
-import { ChatMessageContext } from "~provider/chat";
+import { ChatMessage, ChatMessageContext } from "~provider/chat";
 
 const ChatUserMessage = (props) => {
+    const { chatScrollRef } = React.useContext(ChatMessageContext);
+
+    useEffect(() => {
+        // Auto scroll to bottom
+        if (chatScrollRef !== null) {
+            chatScrollRef.scrollTop = chatScrollRef?.scrollHeight;
+        }
+    }, []);
+
     return (
-        <div className="flex mt-2 space-x-3 max-w-xs ml-auto justify-end w-[80%]">
-            <div>
-                <div className="bg-grey-300 p-2 rounded-l-lg rounded-br-lg">
+        <div className="flex justify-end w-full">
+            <div className="flex justify-end w-[80%]">
+                <div className="bg-grey-300 p-2">
                     <p>{props.message}</p>
                 </div>
             </div>
@@ -16,12 +25,34 @@ const ChatUserMessage = (props) => {
 
 const ChatAssistantMessage = (props) => {
     const [message, setMessage] = useState("");
-    const { messages, setMessages } = React.useContext(ChatMessageContext);
+    const { messages, setMessages, chatScrollRef, isLoading, setIsLoading } = React.useContext(ChatMessageContext);
 
     useEffect(() => {
-        setMessage(props.placeholder || "Loading...");
+        if (isLoading) return;
+
+        setIsLoading(true);
+        setMessage(props.placeholder || "···");
         callOpenAI();
     }, []);
+
+    function handleMessages () {
+        const threshold = 4096 - 512;
+
+        let limitMessages = []
+        let currentLength = 0;
+
+        for (let i = messages.length - 1; i >= 1; i--) {
+            const message = messages[i];
+            currentLength += message?.content?.length;
+
+            if (currentLength > threshold || i === 1) {
+                limitMessages = [messages[0], ...messages.slice(i)];
+                break;
+            }
+        }
+
+        return [...limitMessages];
+    }
 
     const callOpenAI = function () {
         const myHeaders = new Headers();
@@ -31,7 +62,7 @@ const ChatAssistantMessage = (props) => {
         const raw = JSON.stringify({
             "model": "gpt-3.5-turbo-0301",
             "stream": true,
-            "messages": [...messages]
+            "messages": handleMessages()
         });
 
         const requestOptions = {
@@ -68,23 +99,30 @@ const ChatAssistantMessage = (props) => {
                             }
 
                             if (text === "[DONE]") {
+                                setIsLoading(false);
+
                                 let latestMessage = await getLatestState(setMessage);
 
                                 setMessages([...messages, {
                                     role: "assistant",
                                     content: latestMessage
-                                }]);
+                                } as ChatMessage]);
 
                             }
                         }
 
                         setMessage(prevState => {
-                            if (prevState === "Loading...") {
+                            if (prevState === "···") {
                                 prevState = "";
                             }
 
                             return prevState + (chunk || "");
                         });
+
+                        // Auto scroll to bottom
+                        if (chatScrollRef !== null) {
+                            chatScrollRef.scrollTop = chatScrollRef?.scrollHeight;
+                        }
 
                         // read the next chunk
                         readStream();
@@ -94,16 +132,17 @@ const ChatAssistantMessage = (props) => {
                 readStream();
 
             })
-            .catch(error => console.log("error", error));
+            .catch(error => {
+                setIsLoading(false);
+                console.log("error", error);
+            });
 
     };
 
     return (
-        <div className="flex mt-2 space-x-3 max-w-xs w-[80%]">
-            <div>
-                <div className="bg-grey-300 p-2 rounded-r-lg rounded-bl-lg"
-                    dangerouslySetInnerHTML={{ __html: message }}>
-                </div>
+        <div className="flex w-full">
+            <div className="w-[80%] bg-purple-50 border-amber-50">
+                <div className="bg-grey-300 p-2" dangerouslySetInnerHTML={{ __html: message }}></div>
             </div>
         </div>
     );

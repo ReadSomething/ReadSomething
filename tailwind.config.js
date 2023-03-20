@@ -3,5 +3,7 @@ module.exports = {
     mode: "jit",
     darkMode: "class",
     content: ["./**/*.tsx"],
-    plugins: []
+    plugins: [
+        require('tailwind-scrollbar-hide')
+    ]
 }
