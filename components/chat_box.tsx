@@ -11,23 +11,19 @@ const ChatBox = () => {
     const userInput = useRef<HTMLInputElement>(null);
     let { setMessages, setChatScrollRef, isLoading } = useContext(ChatMessageContext);
     const [components, setComponents] = useState([]);
-    const [visitedEntries, setVisitedEntries] = useState([]);
+    const [, setVisitedEntries] = useState([]);
     const [, setCache] = useState([]);
 
     const doSummarize =  debounce(async () => {
         const _cache = await getLatestState(setCache);
-        console.log("调用接口，缓存更新为：", _cache);
         let content = _cache.map(entry => {
             return  entry.target.textContent
         }).join(" ");
-
-        console.log('content: ', content);
 
         if (content === "") {
             return;
         }
 
-        console.log(_cache.length, content);
         setCache([]);
 
         //@ts-ignore
@@ -36,24 +32,24 @@ const ChatBox = () => {
             content: "这是一段文章内容：\n\n" + content
         } as ChatMessage]);
         setComponents(prevState => [...prevState, <ChatAssistantMessage />]);
-    }, 2000);
+    }, 1000);
 
     useEffect(() => {
-        const callback = (entries, observer) => {
+        const callback = async (entries, observer) => {
+            const visited = await getLatestState(setVisitedEntries);
             const intersectingEntries = entries
-                .filter(entry => entry.isIntersecting && !visitedEntries.includes(entry))
+                .filter(entry => entry.isIntersecting && !visited.includes(entry.target))
                 .filter(entry => !entry.target.classList.contains("rs-translated-result"));  // Filter out translated content
 
             if (intersectingEntries.length === 0) return;
 
-            intersectingEntries.map(entry => setVisitedEntries(prevState => [...prevState, entry]));
+            intersectingEntries.map(entry => setVisitedEntries(prevState => [...prevState, entry.target]));
+
             setCache(prevState => {
                 return [...prevState, ...intersectingEntries]
             });
 
-            setTimeout(() => {
-                doSummarize()
-            }, 3000);
+            if (!isLoading) doSummarize();
         };
 
         const ob = new IntersectionObserver(callback);
