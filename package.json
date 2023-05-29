@@ -1,7 +1,7 @@
 {
   "name": "readsomething",
   "displayName": "Read Something",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A browser plugin to assist reading, using AI capabilities to enhance reading efficiency.",
   "author": "zhongyiio",
   "scripts": {
