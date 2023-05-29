@@ -1,6 +1,7 @@
 ## ReadSomething Chrome Extension
 
-[Chrome Install](https://chrome.google.com/webstore/detail/read-something/bcagnbmncmeliaknnhmbkkgackfipoic)
+
+[![](assets/chrome.png)](https://chrome.google.com/webstore/detail/read-something/bcagnbmncmeliaknnhmbkkgackfipoic)
 
 
 ### Getting Started
