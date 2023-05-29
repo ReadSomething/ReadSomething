@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getLatestState } from "~utils/state";
 import { ChatMessage, ChatMessageContext } from "~provider/chat";
+import { SettingContext } from "~provider/setting";
 
 const ChatUserMessage = (props) => {
     const { chatScrollRef } = React.useContext(ChatMessageContext);
@@ -25,6 +26,7 @@ const ChatUserMessage = (props) => {
 
 const ChatAssistantMessage = (props) => {
     const [message, setMessage] = useState("");
+    const { settingObject: { openaiKey } } = React.useContext(SettingContext);
     const { messages, setMessages, chatScrollRef, isLoading, setIsLoading } = React.useContext(ChatMessageContext);
 
     useEffect(() => {
@@ -38,7 +40,7 @@ const ChatAssistantMessage = (props) => {
     function handleMessages () {
         const threshold = 4096 - 512;
 
-        let limitMessages = []
+        let limitMessages = [];
         let currentLength = 0;
 
         for (let i = messages.length - 1; i >= 1; i--) {
@@ -55,9 +57,10 @@ const ChatAssistantMessage = (props) => {
     }
 
     const callOpenAI = function () {
+        // check openaiKey
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("Authorization", "Bearer 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");
+        myHeaders.append("Authorization", `Bearer ${openaiKey}`);
 
         const raw = JSON.stringify({
             "model": "gpt-3.5-turbo-0301",
@@ -78,7 +81,13 @@ const ChatAssistantMessage = (props) => {
                 const stream = response.body;
                 const reader = stream.getReader();
 
-                // read from the stream
+                if (!response.ok) {
+                    setMessage("请检查 API Key 是否正确，「Settings -> OpenAI Key`」");
+                    setIsLoading(false);
+
+                    return
+                }
+
                 function readStream () {
                     reader.read().then(async ({ done, value }) => {
                         if (done) {
@@ -130,11 +139,6 @@ const ChatAssistantMessage = (props) => {
                 }
 
                 readStream();
-
-            })
-            .catch(error => {
-                setIsLoading(false);
-                console.log("error", error);
             });
 
     };

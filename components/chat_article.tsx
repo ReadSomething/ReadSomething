@@ -31,6 +31,7 @@ function ChatArticle () {
 
     return (
         <Rnd
+            id="rs-chat-container"
             ref={e => {
                 this.rnf = e;
             }}

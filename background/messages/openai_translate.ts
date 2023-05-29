@@ -2,15 +2,15 @@ import type { PlasmoMessaging } from "@plasmohq/messaging";
 import { Configuration, OpenAIApi } from "openai";
 import fetchAdapter from "@vespaiach/axios-fetch-adapter";
 
-const handler: PlasmoMessaging.MessageHandler<{ message: string }> = async (req, res) => {
+const handler: PlasmoMessaging.MessageHandler<{ text: string, openaiKey: string }> = async (req, res) => {
     const configuration = new Configuration({
-        apiKey: "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"
+        apiKey: req.body.openaiKey,
     });
     const openai = new OpenAIApi(configuration);
 
     await openai.createCompletion({
         model: "text-davinci-003",
-        prompt: "Translate to Simplified Chinese, returns the HTML tags in the original text:\n\n" + req.body,
+        prompt: "Translate to Simplified Chinese, returns the HTML tags in the original text:\n\n" + req.body.text,
         temperature: 0.7,
         max_tokens: 60,
         top_p: 1.0,

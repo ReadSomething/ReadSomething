@@ -15,7 +15,7 @@ function Translate () {
             entries => {
                 for (const entry of entries) {
                     if (entry.isIntersecting) {
-                        void translateAnchor(entry.target, settingObject.translateService);
+                        void translateAnchor(entry.target, settingObject.translateService, settingObject.openaiKey);
                     } else {
                         // do nothing
                     }

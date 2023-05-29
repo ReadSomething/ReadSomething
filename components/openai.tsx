@@ -13,19 +13,18 @@ function OpenAI () {
 
     const handleOpenaiButtonClick = function () {
         setButtonState(!buttonState);
+        const openai = document.querySelectorAll("plasmo-csui")[0]
+            .shadowRoot
+            .querySelector<HTMLElement>("#rs-chat-container");
 
-        // const openai = document.querySelectorAll("plasmo-csui")[0]
-        //     .shadowRoot
-        //     .querySelector<HTMLElement>("#rs-openai-chat");
-        //
-        // openai.style.display = "block";
+        openai.style.display = !buttonState ? "block" : "none";
 
     };
 
     return (
         <div className={"setting select-none"}>
             <Tooltip message={"OpenAI"}>
-                <button className={"outline-none"}>
+                <button className={"outline-none"} onClick={handleOpenaiButtonClick}>
                     <IconOpenAI />
                 </button>
             </Tooltip>

@@ -99,11 +99,11 @@ function ContainerWrap ({ children }: { children: ReactNode }) {
 function Title ({ title }: { title: string }) {
     const { translateOn } = useContext(ReaderContext);
     const ref = useRef<HTMLHeadingElement>(null);
-    const { settingObject: { translateService } } = useContext(SettingContext);
+    const { settingObject: { translateService, openaiKey } } = useContext(SettingContext);
 
     useEffect(() => {
         if (translateOn && ref && ref.current) {
-            void translateAnchor(ref.current, translateService);
+            void translateAnchor(ref.current, translateService, openaiKey);
         }
     }, [translateOn, ref, ref.current]);
 
