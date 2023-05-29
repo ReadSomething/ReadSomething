@@ -12,8 +12,7 @@ const TRANSLATED_TAG = "rs-translated";
 
 export const TRANSLATED_RESULT = "rs-translated-result";
 
-export const translateAnchor = async function (anchor: Element, translateService: string) {
-
+export const translateAnchor = async function (anchor: Element, translateService: string, openaiKey?: string) {
     if (anchor.getAttribute(TRANSLATED_TAG)) {
         return;
     }
@@ -37,7 +36,7 @@ export const translateAnchor = async function (anchor: Element, translateService
         const message = await sendToBackground({
             // @ts-ignore
             name: translateService,
-            body: translateService === EnumTranslateServices.TencentTranslate ? anchor.textContent : anchor.outerHTML
+            body: buildRequestBody(translateService, anchor, openaiKey)
         });
         console.log(message.message);
         const resp = JSON.parse(message.message);
@@ -58,3 +57,16 @@ export const translateAnchor = async function (anchor: Element, translateService
         console.log(e);
     }
 };
+
+const buildRequestBody = (translateService: string, anchor: Element, openaiKey: string) => {
+    if (translateService === EnumTranslateServices.TencentTranslate) {
+        return anchor.textContent;
+    } else if (translateService === EnumTranslateServices.GoogleTranslate) {
+        return anchor.outerHTML;
+    } else if (translateService === EnumTranslateServices.OpenaiTranslate) {
+        return {
+            "openaiKey": openaiKey,
+            "text": anchor.outerHTML
+        };
+    }
+}

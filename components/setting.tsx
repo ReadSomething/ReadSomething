@@ -9,7 +9,6 @@ import PageWidthLeft from "data-base64:~assets/page-width-left.svg";
 import PageWidthRight from "data-base64:~assets/page-width-right.svg";
 import IconSetting from "react:~/assets/setting-config.svg";
 import Tooltip from "~components/tooltip";
-import { debounce } from "~utils/debounce";
 
 export enum EnumLineSpacing {
     Small = "1.4em",
@@ -129,14 +128,16 @@ function TranslateServiceSelect () {
 
 function OpenAIKeyInput () {
     const { settingObject: { openaiKey }, setSetting } = useContext(SettingContext);
+    const [value, setValue] = React.useState(openaiKey);
 
-    const handleOpenaiApiKeyChange = debounce(async function (e: React.ChangeEvent<HTMLInputElement>) {
-        await setSetting({ openaiKey: e.target.value });
-    }, 500);
+    const handleOpenaiApiKeyChange = function (e: React.ChangeEvent<HTMLInputElement>) {
+        setValue(e.target.value);
+        void setSetting({ openaiKey: e.target.value });
+    }
 
     return (
-        <input type="text" value={openaiKey} onChange={handleOpenaiApiKeyChange}
-            className={"text-[var(--setting-foreground)] text-[16px] outline-none p-[4px] bg-[white]"} />
+        <input type="text" value={value} onChange={handleOpenaiApiKeyChange}
+            className={"text-[var(--setting-foreground)] text-[12px] p-[4px] bg-[white] w-full"} />
     );
 }
 

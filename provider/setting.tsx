@@ -45,7 +45,7 @@ export default function SettingProvider ({ children }: { children: ReactNode }) 
             fontFamily = Fonts[4],  // Bookerly
             translateService = EnumTranslateServices.GoogleTranslate,
             themeMode = ThemeMode.Auto,
-            openaiKey = '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';
+            openaiKey = '';
 
         try {
             const setting = JSON.parse(await storage.get(SettingStorageKey));
