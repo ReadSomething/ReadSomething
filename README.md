@@ -16,3 +16,10 @@ https://github.com/ReadSomething/ReadSomething
 https://chrome.google.com/webstore/detail/read-something/bcagnbmncmeliaknnhmbkkgackfipoic
 
 让读点东西陪伴你的阅读旅程，让你的阅读更加舒适、轻松和愉悦！
+
+
+## 如何使用
+
+在 Chrome Web Store 安装完成后，点击右上角 `扩展程序` 按钮并找到 `Read Something` 即本插件点击 `固定`，操作完成后可以在右上角看到`淡紫色的 📖`图标。
+
+切换到文章页面，点击 📖 按钮进入阅读模式，再次点击 📖 按钮退出阅读模式。
