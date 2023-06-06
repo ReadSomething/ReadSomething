@@ -1,5 +1,5 @@
 import type { MouseEvent, ReactNode } from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Transition } from "@headlessui/react";
 
 interface ToolTipProps {
@@ -10,12 +10,12 @@ interface ToolTipProps {
     margin?: number
 }
 
-export default function Tooltip ({
+const Tooltip = ({
     children,
     maxWidth,
     message,
     margin
-}: ToolTipProps) {
+}: ToolTipProps) => {
     const _maxWidth = maxWidth ?? 'max-content'
     const _margin = margin ?? 10
     const [showContent, setShowContent] = useState(false);
@@ -47,3 +47,5 @@ export default function Tooltip ({
         }
     </div>
 }
+
+export default React.memo(Tooltip);

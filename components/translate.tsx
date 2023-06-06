@@ -6,7 +6,7 @@ import { ReaderContext } from "~provider/reader";
 import Tooltip from "./tooltip";
 import { SettingContext } from "~provider/setting";
 
-function Translate () {
+const Translate = () => {
     const { translateOn, setTranslateOn } = useContext(ReaderContext);
     const { settingObject } = useContext(SettingContext);
 

@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Rnd } from "react-rnd";
 import ChatBox from "~components/chat_box";
 import { throttle } from "lodash";
 import { getLatestState } from "~utils/state";
+import { ReaderContext } from "~provider/reader";
 
 function ChatArticle () {
     const [transition, setTransition] = useState("all 0.2s ease-in-out");
     const [reactivePosition, setReactivePosition] = useState({ reactiveX: 0.7, reactiveY: 0.1 });
     const [scrollTop, setScrollTop] = useState(0);
+    const { chatOn } = useContext(ReaderContext);
 
     useEffect(() => {
         const handleScroll = throttle(async () => {
@@ -88,7 +90,7 @@ function ChatArticle () {
             enableUserSelectHack={false}
             dragHandleClassName={"rs-chat-draggable"}
         >
-            <ChatBox />
+            { chatOn ? <ChatBox /> : null }
         </Rnd>
     );
 

@@ -34,4 +34,5 @@ const ChatMessageProvider = ({ children }) => {
     );
 };
 
-export { ChatMessageContext, ChatMessages, ChatMessage, ChatMessageProvider };
+export type { ChatMessages, ChatMessage };
+export { ChatMessageContext, ChatMessageProvider };

@@ -10,7 +10,6 @@ function Toolbar () {
             <div className="flex justify-end">
                 <OpenAI />
                 <Translate />
-                {/*<Theme />*/}
                 <DownloadMarkdown />
                 <BasicSetting />
             </div>

@@ -1,4 +1,5 @@
-import { ReactNode, createContext, useState } from "react"
+import { createContext, useState } from "react"
+import type { ReactNode } from "react"
 
 export class Article {
     title: string
@@ -19,6 +20,10 @@ interface TypeReaderContext {
     translateOn: boolean
 
     setTranslateOn: (on: boolean) => void
+
+    chatOn: boolean
+
+    setChatOn: (on: boolean) => void
 }
 
 export const ReaderContext = createContext({} as TypeReaderContext)
@@ -33,6 +38,7 @@ export function ReaderProvider ({
     const [settingStatus, setSettingStatus] = useState(false)
     const [_article, setArticle] = useState(article)
     const [translateOn, setTranslateOn] = useState(false)
+    const [chatOn, setChatOn] = useState(false)
 
     return (
         <ReaderContext.Provider
@@ -43,6 +49,8 @@ export function ReaderProvider ({
                 setArticle,
                 translateOn,
                 setTranslateOn,
+                chatOn,
+                setChatOn,
             }}>
             {children}
         </ReaderContext.Provider>

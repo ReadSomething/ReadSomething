@@ -1,23 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext } from "react";
 import IconOpenAI from "react:~/assets/openai.svg";
 import Tooltip from "./tooltip";
-
-// import { sendToBackground } from "@plasmohq/messaging";
+import { ReaderContext } from "~provider/reader";
 
 function OpenAI () {
-    const [buttonState, setButtonState] = useState(true);
-
-    useEffect(() => {
-        handleOpenaiButtonClick();
-    }, []);
+    const { chatOn, setChatOn } = useContext(ReaderContext);
 
     const handleOpenaiButtonClick = function () {
-        setButtonState(!buttonState);
+        setChatOn(!chatOn);
         const openai = document.querySelectorAll("plasmo-csui")[0]
             .shadowRoot
             .querySelector<HTMLElement>("#rs-chat-container");
 
-        openai.style.display = !buttonState ? "block" : "none";
+        openai.style.display = !chatOn ? "block" : "none";
 
     };
 
