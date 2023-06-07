@@ -13,6 +13,7 @@ import ChatArticle from "~components/chat_article";
 import { ScrollProvider } from "~provider/scroll";
 import Scroll from "~components/scroll";
 import { ChatMessageProvider } from "~provider/chat";
+import Prism from "prismjs";
 
 export const getStyle: PlasmoGetStyle = () => {
     const style = document.createElement("style");
@@ -119,6 +120,20 @@ const Main = () => {
         return () => {
             document.body.style.overflow = defaultOverflowStyle;
         };
+    }, []);
+
+    useEffect(() => {
+        const codes = document.querySelectorAll("plasmo-csui")[0].shadowRoot.querySelectorAll("pre code");
+
+        if (codes) {
+            codes.forEach(block => {
+                try {
+                    Prism.highlightElement(block as HTMLElement);
+                } catch (e) {
+                    console.error(e);
+                }
+            })
+        }
     }, []);
 
     const documentClone = document.cloneNode(true);
