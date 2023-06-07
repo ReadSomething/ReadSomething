@@ -2,10 +2,12 @@ import { ChatAssistantMessage, ChatUserMessage } from "~components/chat_messgae"
 import IconChatSend from "react:~/assets/send.svg";
 import IconChatDrag from "react:~/assets/drag.svg";
 import React, {  useContext, useEffect, useRef, useState } from "react";
-import { ChatMessage, ChatMessageContext } from "~provider/chat";
+import { ChatMessageContext } from "~provider/chat";
+import type { ChatMessage } from "~provider/chat";
 import Loading from "~components/loading";
 import { debounce } from "lodash";
 import { getLatestState } from "~utils/state";
+import { CountTokens } from "~utils/token";
 
 const ChatBox = () => {
     const userInput = useRef<HTMLInputElement>(null);
@@ -16,15 +18,26 @@ const ChatBox = () => {
 
     const doSummarize =  debounce(async () => {
         const _cache = await getLatestState(setCache);
-        let content = _cache.map(entry => {
-            return  entry.target.textContent
-        }).join(" ");
+
+        let content = "";
+
+        let i = 0;
+
+        for (; i < _cache.length; i++) {
+            const entry = _cache[i];
+            content += entry.target.textContent;
+
+            // Limit to 1024 token per message
+            if (CountTokens(content) > 1024) {
+                break;
+            }
+        }
+
+        setCache(prevState => prevState.slice(Math.min(i, _cache.length)));
 
         if (content === "") {
             return;
         }
-
-        setCache([]);
 
         //@ts-ignore
         setMessages(preState => [...preState, {
@@ -43,7 +56,7 @@ const ChatBox = () => {
 
             if (intersectingEntries.length === 0) return;
 
-            intersectingEntries.map(entry => setVisitedEntries(prevState => [...prevState, entry.target]));
+            intersectingEntries.map(entry => setVisitedEntries(prevState => [...prevState, entry.target.textContent]));
 
             setCache(prevState => {
                 return [...prevState, ...intersectingEntries]
