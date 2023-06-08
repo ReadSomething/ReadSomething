@@ -137,9 +137,7 @@ const Main = () => {
     }, []);
 
     const documentClone = document.cloneNode(true);
-    const article = new Readability(documentClone as Document, {
-        keepClasses: true
-    }).parse();
+    const article = new Readability(documentClone as Document,  {}).parse();
     const articleUrl = window.location.href;
     const author = article.byline ?? "";
     const authorLink = getMetaContentByProperty("article:author");

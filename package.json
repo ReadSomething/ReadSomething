@@ -1,8 +1,8 @@
 {
   "name": "readsomething",
-  "displayName": "Read Something",
-  "version": "0.0.3",
-  "description": "A browser plugin to assist reading, using AI capabilities to enhance reading efficiency.",
+  "displayName": "读点东西",
+  "version": "0.0.4",
+  "description": "\uD83D\uDCD6 一个开源的 Chrome 插件，可以将网页转成阅读模式，并且内置了 AI 总结、翻译、Markdown 转换等功能。",
   "author": "zhongyiio",
   "scripts": {
     "dev": "plasmo dev",

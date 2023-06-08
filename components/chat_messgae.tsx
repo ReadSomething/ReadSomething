@@ -3,7 +3,7 @@ import { getLatestState } from "~utils/state";
 import { ChatMessageContext } from "~provider/chat";
 import type { ChatMessage } from "~provider/chat";
 import { SettingContext } from "~provider/setting";
-import {CountTokens} from "~utils/token";
+import { CountTokens } from "~utils/token";
 
 const ChatUserMessage = (props) => {
     const { chatScrollRef } = React.useContext(ChatMessageContext);
