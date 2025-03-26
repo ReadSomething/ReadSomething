@@ -1,0 +1,170 @@
+{
+  "extensionName": {
+    "message": "读点东西",
+    "description": "Name of the extension."
+  },
+  "extensionDescription": {
+    "message": "为任何网页文章提供清晰无干扰的阅读体验。",
+    "description": "Description of the extension."
+  },
+  "displaySettings": {
+    "message": "显示设置",
+    "description": "Title for the display settings panel."
+  },
+  "readingTheme": {
+    "message": "阅读主题",
+    "description": "Label for the reading theme selection."
+  },
+  "light": {
+    "message": "明亮",
+    "description": "Light theme option."
+  },
+  "sepia": {
+    "message": "护眼",
+    "description": "Sepia theme option."
+  },
+  "dark": {
+    "message": "暗黑",
+    "description": "Dark theme option."
+  },
+  "paper": {
+    "message": "纸张",
+    "description": "Paper theme option."
+  },
+  "fontSize": {
+    "message": "字号",
+    "description": "Label for font size adjustment."
+  },
+  "font": {
+    "message": "字体",
+    "description": "Label for font selection."
+  },
+  "pageWidth": {
+    "message": "页面宽度",
+    "description": "Label for page width adjustment."
+  },
+  "narrow": {
+    "message": "窄",
+    "description": "Narrow width option."
+  },
+  "standard": {
+    "message": "标准",
+    "description": "Standard width option."
+  },
+  "wide": {
+    "message": "宽",
+    "description": "Wide width option."
+  },
+  "lineSpacing": {
+    "message": "行间距",
+    "description": "Label for line spacing adjustment."
+  },
+  "tight": {
+    "message": "紧凑",
+    "description": "Tight line spacing option."
+  },
+  "normal": {
+    "message": "标准",
+    "description": "Normal line spacing option."
+  },
+  "relaxed": {
+    "message": "宽松",
+    "description": "宽松行间距选项"
+  },
+  "system": {
+    "message": "系统",
+    "description": "系统字体选项"
+  },
+  "currentSize": {
+    "message": "当前字号",
+    "description": "显示当前字体大小标签"
+  },
+  "currentFont": {
+    "message": "当前字体",
+    "description": "Label for displaying current font."
+  },
+  "textAlignment": {
+    "message": "文本对齐",
+    "description": "Label for text alignment options."
+  },
+  "left": {
+    "message": "左对齐",
+    "description": "Left alignment option."
+  },
+  "right": {
+    "message": "右对齐",
+    "description": "Right alignment option."
+  },
+  "center": {
+    "message": "居中",
+    "description": "Center alignment option."
+  },
+  "justify": {
+    "message": "两端对齐",
+    "description": "Justify alignment option."
+  },
+  "recommendedForChinese": {
+    "message": "推荐中文",
+    "description": "Label for fonts recommended for Chinese text."
+  },
+  "recommendedForEnglish": {
+    "message": "推荐英文",
+    "description": "Label for fonts recommended for English text."
+  },
+  "recommendedForBoth": {
+    "message": "通用字体",
+    "description": "Label for fonts recommended for both languages."
+  },
+  "allFonts": {
+    "message": "所有字体",
+    "description": "Label for showing all available fonts."
+  },
+  "chineseFonts": {
+    "message": "中文字体",
+    "description": "Label for Chinese fonts section."
+  },
+  "englishFonts": {
+    "message": "英文字体",
+    "description": "Label for English fonts section."
+  },
+  "detected": {
+    "message": "已检测",
+    "description": "Label for detected language."
+  },
+  "chinese": {
+    "message": "中文",
+    "description": "Chinese language name."
+  },
+  "english": {
+    "message": "英文",
+    "description": "English language name."
+  },
+  "theme": {
+    "message": "主题",
+    "description": "Theme section label."
+  },
+  "extractingArticle": {
+    "message": "提取文章中...",
+    "description": "Message shown when extracting article content."
+  },
+  "couldNotExtract": {
+    "message": "无法提取文章内容",
+    "description": "Error message when article extraction fails."
+  },
+  "closeReaderMode": {
+    "message": "关闭阅读模式",
+    "description": "Label for button to close reader mode."
+  },
+  "close": {
+    "message": "关闭",
+    "description": "Close button label."
+  },
+  "download": {
+    "message": "下载为Markdown",
+    "description": "下载按钮标签"
+  },
+  "downloadMarkdown": {
+    "message": "Markdown",
+    "description": "下载文章为Markdown格式标签"
+  }
+} 

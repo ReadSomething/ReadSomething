@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "ReadLite - 简洁阅读模式",
+  "version": "0.1.0",
+  "description": "一个简单的阅读模式扩展，让网页阅读更加舒适",
+  "action": {
+    "default_title": "ReadLite - 简洁阅读模式",
+    "default_icon": {
+      "16": "assets/icon.png",
+      "48": "assets/icon.png",
+      "128": "assets/icon-128.png"
+    }
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "tabs",
+    "storage",
+    "notifications"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*", "*.js", "*.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+} 

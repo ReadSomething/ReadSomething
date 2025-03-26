@@ -1,0 +1,170 @@
+{
+  "extensionName": {
+    "message": "ReadLite",
+    "description": "Name of the extension."
+  },
+  "extensionDescription": {
+    "message": "Provide a clean, distraction-free reading experience for any article on the web.",
+    "description": "Description of the extension."
+  },
+  "displaySettings": {
+    "message": "Display Settings",
+    "description": "Title for the display settings panel."
+  },
+  "readingTheme": {
+    "message": "Theme",
+    "description": "Label for the reading theme selection."
+  },
+  "light": {
+    "message": "Light",
+    "description": "Light theme option."
+  },
+  "sepia": {
+    "message": "Sepia",
+    "description": "Sepia theme option."
+  },
+  "dark": {
+    "message": "Dark",
+    "description": "Dark theme option."
+  },
+  "paper": {
+    "message": "Paper",
+    "description": "Paper theme option."
+  },
+  "fontSize": {
+    "message": "Font Size",
+    "description": "Label for font size adjustment."
+  },
+  "font": {
+    "message": "Font",
+    "description": "Label for font selection."
+  },
+  "pageWidth": {
+    "message": "Page Width",
+    "description": "Label for page width adjustment."
+  },
+  "narrow": {
+    "message": "Narrow",
+    "description": "Narrow width option."
+  },
+  "standard": {
+    "message": "Standard",
+    "description": "Standard width option."
+  },
+  "wide": {
+    "message": "Wide",
+    "description": "Wide width option."
+  },
+  "lineSpacing": {
+    "message": "Line Spacing",
+    "description": "Label for line spacing adjustment."
+  },
+  "tight": {
+    "message": "Tight",
+    "description": "Tight line spacing option."
+  },
+  "normal": {
+    "message": "Normal",
+    "description": "Normal line spacing option."
+  },
+  "relaxed": {
+    "message": "Relaxed",
+    "description": "Relaxed line spacing option."
+  },
+  "system": {
+    "message": "System",
+    "description": "System font option."
+  },
+  "currentSize": {
+    "message": "Current Size",
+    "description": "Label for displaying current font size."
+  },
+  "currentFont": {
+    "message": "Current Font",
+    "description": "Label for displaying current font."
+  },
+  "textAlignment": {
+    "message": "Text Alignment",
+    "description": "Label for text alignment options."
+  },
+  "left": {
+    "message": "Left",
+    "description": "Left alignment option."
+  },
+  "right": {
+    "message": "Right",
+    "description": "Right alignment option."
+  },
+  "center": {
+    "message": "Center",
+    "description": "Center alignment option."
+  },
+  "justify": {
+    "message": "Justify",
+    "description": "Justify alignment option."
+  },
+  "recommendedForChinese": {
+    "message": "For Chinese",
+    "description": "Label for fonts recommended for Chinese text."
+  },
+  "recommendedForEnglish": {
+    "message": "For English",
+    "description": "Label for fonts recommended for English text."
+  },
+  "recommendedForBoth": {
+    "message": "Universal",
+    "description": "Label for fonts recommended for both languages."
+  },
+  "allFonts": {
+    "message": "All Fonts",
+    "description": "Label for showing all available fonts."
+  },
+  "chineseFonts": {
+    "message": "Chinese Fonts",
+    "description": "Label for Chinese fonts section."
+  },
+  "englishFonts": {
+    "message": "English Fonts",
+    "description": "Label for English fonts section."
+  },
+  "detected": {
+    "message": "Detected",
+    "description": "Label for detected language."
+  },
+  "chinese": {
+    "message": "Chinese",
+    "description": "Chinese language name."
+  },
+  "english": {
+    "message": "English",
+    "description": "English language name."
+  },
+  "theme": {
+    "message": "Theme",
+    "description": "Theme section label."
+  },
+  "extractingArticle": {
+    "message": "Extracting article...",
+    "description": "Message shown when extracting article content."
+  },
+  "couldNotExtract": {
+    "message": "Could not extract article content",
+    "description": "Error message when article extraction fails."
+  },
+  "closeReaderMode": {
+    "message": "Close Reader Mode",
+    "description": "Label for button to close reader mode."
+  },
+  "close": {
+    "message": "Close",
+    "description": "Close button label."
+  },
+  "download": {
+    "message": "Download as Markdown",
+    "description": "Label for download button."
+  },
+  "downloadMarkdown": {
+    "message": "Markdown",
+    "description": "Label for downloading article as Markdown."
+  }
+} 
