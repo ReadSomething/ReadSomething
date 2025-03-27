@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { useReader } from "../context/ReaderContext"
 import { useI18n } from "../hooks/useI18n"
-import { FontOption, fontOptions, widthOptions, spacingOptions } from "../config/i18n/translations"
+import { FontOption, fontOptions, widthOptions, spacingOptions, alignmentOptions } from "../config/i18n/translations"
 import { normalizeLanguageCode, LanguageCode } from "../utils/language"
 import { getLanguageDisplayName } from "../config/languages"
 
@@ -19,11 +19,6 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   const { t, uiLanguage } = useI18n()
   const [windowWidth, setWindowWidth] = useState(window.innerWidth)
   const [detectedLanguage, setDetectedLanguage] = useState<LanguageCode | null>(null)
-  
-  // Get content language from article or fallback to UI language
-  const contentLang = article?.language 
-    ? normalizeLanguageCode(article.language) 
-    : normalizeLanguageCode(uiLanguage);
   
   // Update window width on resize
   useEffect(() => {
@@ -43,15 +38,15 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
       // Normalize the language code
       const normalizedLanguage = normalizeLanguageCode(article.language);
       setDetectedLanguage(normalizedLanguage);
-          }
+    }
   }, [article]);
   
-  // 移除保存contentLanguage到设置的代码
-  // 使用语言检测结果
+  // Removed storing contentLanguage in settings
+  // Just log for debugging purposes
   useEffect(() => {
     if (article?.language) {
-      // 只记录日志，不再保存到设置
-          }
+      // Only log, no longer saving to settings
+    }
   }, [article?.language]);
   
   // Determine if we're on a small screen
@@ -107,7 +102,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     // Basic update - always update the main fontFamily
     const updates: Partial<typeof settings> = { fontFamily };
     
-    // 使用检测到的语言而非设置中的contentLanguage
+    // Use detected language rather than settings.contentLanguage
     const contentLanguage = detectedLanguage || 'en';
     
     // If this is a language-specific font, also update that language's settings
@@ -144,19 +139,19 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     // Update global theme
     const updates: Partial<typeof settings> = { theme };
     
-    // 使用检测到的语言而非设置中的contentLanguage
-    const contentLang = detectedLanguage || 'en';
+    // Use detected language rather than settings.contentLanguage
+    const contentLanguage = detectedLanguage || 'en';
     const languageSettings = settings.languageSettings;
     
-    if (contentLang && languageSettings[contentLang]) {
+    if (contentLanguage && languageSettings[contentLanguage]) {
       const updatedLangSettings = {
-        ...languageSettings[contentLang],
+        ...languageSettings[contentLanguage],
         theme
       };
       
       updates.languageSettings = {
         ...languageSettings,
-        [contentLang]: updatedLangSettings
+        [contentLanguage]: updatedLangSettings
       };
     }
     
@@ -168,19 +163,19 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     // Update global width
     const updates: Partial<typeof settings> = { width };
     
-    // 使用检测到的语言而非设置中的contentLanguage
-    const contentLang = detectedLanguage || 'en';
+    // Use detected language rather than settings.contentLanguage
+    const contentLanguage = detectedLanguage || 'en';
     const languageSettings = settings.languageSettings;
     
-    if (contentLang && languageSettings[contentLang]) {
+    if (contentLanguage && languageSettings[contentLanguage]) {
       const updatedLangSettings = {
-        ...languageSettings[contentLang],
+        ...languageSettings[contentLanguage],
         width
       };
       
       updates.languageSettings = {
         ...languageSettings,
-        [contentLang]: updatedLangSettings
+        [contentLanguage]: updatedLangSettings
       };
     }
     
@@ -197,20 +192,20 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
         lineHeight: option.lineHeight
       };
       
-      // 使用检测到的语言而非设置中的contentLanguage
-      const contentLang = detectedLanguage || 'en';
+      // Use detected language rather than settings.contentLanguage
+      const contentLanguage = detectedLanguage || 'en';
       const languageSettings = settings.languageSettings;
       
-      if (contentLang && languageSettings[contentLang]) {
+      if (contentLanguage && languageSettings[contentLanguage]) {
         const updatedLangSettings = {
-          ...languageSettings[contentLang],
+          ...languageSettings[contentLanguage],
           spacing,
           lineHeight: option.lineHeight
         };
         
         updates.languageSettings = {
           ...languageSettings,
-          [contentLang]: updatedLangSettings
+          [contentLanguage]: updatedLangSettings
         };
       }
       
@@ -218,29 +213,22 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     }
   }
   
-  // Define text alignment options
-  const alignmentOptions = [
-    { label: { en: "Left", zh: "左对齐" }, value: "left" },
-    { label: { en: "Justify", zh: "两端对齐" }, value: "justify" },
-    { label: { en: "Center", zh: "居中" }, value: "center" },
-    { label: { en: "Right", zh: "右对齐" }, value: "right" }
-  ];
-  
   // Handle text alignment change
   const changeTextAlign = (align: "left" | "justify" | "center" | "right") => {
     const newSettings = { ...settings, textAlign: align };
     
     // Check if alignment is content type specific
-    if (contentLang === 'zh' || contentLang === 'en') {
+    const contentLanguage = detectedLanguage || 'en';
+    if (contentLanguage === 'zh' || contentLanguage === 'en') {
       // Update language-specific settings
       const langSettings = {
-        ...settings.languageSettings[contentLang],
+        ...settings.languageSettings[contentLanguage],
         textAlign: align
       };
       
       newSettings.languageSettings = {
         ...settings.languageSettings,
-        [contentLang]: langSettings
+        [contentLanguage]: langSettings
       };
     }
     
@@ -331,41 +319,22 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   
   // Filter fonts to display based on language
   const getDisplayedFonts = () => {
-    // 只使用检测到的语言，不再使用设置中的contentLanguage
-    const contentLanguage = detectedLanguage || 'en'; // 默认英文
+    // Use detected language for filtering appropriate fonts
+    const contentLanguage = detectedLanguage || 'en';
     
-    // Get initial fonts based on content language
-    let fonts;
-    switch (contentLanguage) {
-      case 'zh': // Chinese
-        // Return Chinese recommended fonts
-        fonts = fontOptions.filter(font => 
-          font.recommendFor === 'zh'
-        );
-        break;
-      
-      case 'en': // English
-      default: // Default to English for other languages
-        // Return English recommended fonts
-        fonts = fontOptions.filter(font => 
-          font.recommendFor === 'en'
-        );
-        break;
-    }
-    
-    // Filter out system default font option
-    const filteredFonts = fonts.filter(font => 
-      !font.value.includes('system-ui') && 
-      !font.value.includes('-apple-system') &&
-      !font.label.en.includes('System Default')
-    );
-    
-    // Sort fonts alphabetically based on UI language
-    return filteredFonts.sort((a, b) => {
-      const aName = uiLanguage === 'zh' ? a.label.zh : a.label.en;
-      const bName = uiLanguage === 'zh' ? b.label.zh : b.label.en;
-      return aName.localeCompare(bName, uiLanguage);
-    });
+    // Filter fonts based on content language
+    return fontOptions
+      .filter(font => 
+        // Only show fonts recommended for the detected content language
+        font.recommendFor === contentLanguage 
+      )
+      // Sort fonts alphabetically based on UI language
+      .sort((a, b) => {
+        // Use UI language for sorting, not content language
+        const aName = uiLanguage === 'zh' ? a.label.zh : a.label.en;
+        const bName = uiLanguage === 'zh' ? b.label.zh : b.label.en;
+        return aName.localeCompare(bName);
+      });
   };
   
   // render font option
@@ -373,37 +342,24 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     // Get current font family
     const currentFontFamily = settings.fontFamily;
     
-    // More precise matching logic
+    // Simplified matching logic
     let isActive = false;
     
-    // 1. Exact match (rare, but simplest case)
-    if (currentFontFamily === font.value) {
-      isActive = true;
-    } else {
-      // 2. Extract primary font names (first font in each list)
-      const primaryCurrentFont = currentFontFamily.split(',')[0].replace(/['"]/g, '').trim();
-      const primaryOptionFont = font.value.split(',')[0].replace(/['"]/g, '').trim();
-      
-      // 3. Primary font exact match
-      isActive = primaryCurrentFont === primaryOptionFont;
-      
-      // 4. Special case for Chinese fonts that might have different naming variations
-      if (!isActive && font.recommendFor === 'zh' && detectedLanguage === 'zh') {
-        // Check for specific Chinese fonts by their distinctive names
-        if (primaryOptionFont.includes('Source Han Serif') && primaryCurrentFont.includes('Source Han Serif')) {
-          isActive = true;
-        } else if (primaryOptionFont.includes('Noto Serif SC') && primaryCurrentFont.includes('Noto Serif SC')) {
-          isActive = true;
-        } else if ((primaryOptionFont.includes('思源宋体') || primaryOptionFont.includes('思源宋體')) && 
-                  (primaryCurrentFont.includes('思源宋体') || primaryCurrentFont.includes('思源宋體'))) {
-          isActive = true;
-        }
-      }
-    }
+    // Match the primary font name
+    const primaryCurrentFont = currentFontFamily.split(',')[0].replace(/['"]/g, '').trim();
+    const primaryOptionFont = font.value.split(',')[0].replace(/['"]/g, '').trim();
+    
+    // Check if this font is active
+    isActive = primaryCurrentFont === primaryOptionFont ||
+               (primaryCurrentFont.includes(primaryOptionFont) && primaryOptionFont.length > 3) ||
+               (primaryOptionFont.includes(primaryCurrentFont) && primaryCurrentFont.length > 3);
+    
+    // Get font display name based on UI language
+    const fontDisplayName = uiLanguage === 'zh' ? font.label.zh : font.label.en;
     
     return (
       <button
-        key={uiLanguage === "zh" ? font.label.zh : font.label.en}
+        key={fontDisplayName}
         onClick={() => changeFont(font.value, font.recommendFor)}
         style={{
           border: `1px solid ${isActive ? colors.highlight : colors.border}`,
@@ -433,7 +389,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
           color: isActive ? colors.highlight : colors.text,
           marginBottom: "0px"
         }}>
-          {uiLanguage === "zh" ? font.label.zh : font.label.en}
+          {fontDisplayName}
         </div>
       </button>
     );
@@ -518,19 +474,19 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                 // Update global font size
                 const updates: Partial<typeof settings> = { fontSize: size };
                 
-                // 使用检测到的语言而非设置中的contentLanguage
-                const contentLang = detectedLanguage || 'en';
+                // Use detected language rather than settings.contentLanguage
+                const contentLanguage = detectedLanguage || 'en';
                 const languageSettings = settings.languageSettings;
                 
-                if (contentLang && languageSettings[contentLang]) {
+                if (contentLanguage && languageSettings[contentLanguage]) {
                   const updatedLangSettings = {
-                    ...languageSettings[contentLang],
+                    ...languageSettings[contentLanguage],
                     fontSize: size
                   };
                   
                   updates.languageSettings = {
                     ...languageSettings,
-                    [contentLang]: updatedLangSettings
+                    [contentLanguage]: updatedLangSettings
                   };
                 }
                 
@@ -594,17 +550,17 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
               // Get fonts to display
               const fontsToShow = getDisplayedFonts();
               
-              // 使用检测到的语言而非设置中的contentLanguage
+              // Get content language for title and badge 
               const contentLanguage = detectedLanguage || 'en';
               
-              // Generate title text based on displayed fonts, not content language
+              // Generate title text based on detected language
               let titleText = '';
-              if (fontsToShow[0]?.recommendFor === 'zh') {
-                titleText = t('chineseFonts'); // 显示中文字体的标题
-              } else if (fontsToShow[0]?.recommendFor === 'en') {
-                titleText = t('englishFonts'); // 显示英文字体的标题
+              if (contentLanguage === 'zh') {
+                titleText = t('chineseFonts');
+              } else if (contentLanguage === 'en') {
+                titleText = t('englishFonts');
               } else {
-                titleText = t('allFonts'); // 通用字体标题
+                titleText = t('allFonts');
               }
               
               // Get language display name for the detected badge

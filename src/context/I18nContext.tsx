@@ -1,10 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react'
+import React, { createContext, useContext, useMemo, ReactNode } from 'react'
 import { getBrowserLanguage, getMessage, SupportedLanguage } from '../config/i18n'
 
 interface I18nContextType {
-  language: SupportedLanguage
   uiLanguage: SupportedLanguage
-  setLanguage: (lang: SupportedLanguage) => void
   t: (key: string) => string
 }
 
@@ -15,34 +13,33 @@ interface I18nProviderProps {
 }
 
 export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
-    
-  // Initialize with browser language
-  const [language, setLanguage] = useState<SupportedLanguage>(() => {
-        const browserLang = getBrowserLanguage()
-        return browserLang
-  })
-
-  // Log language changes
-  useEffect(() => {
-      }, [language])
+  // Always use browser language
+  const uiLanguage = getBrowserLanguage()
 
   // Memoize the translation function to prevent unnecessary re-renders
   const t = useMemo(() => {
-        return (key: string) => {
-      const message = getMessage(key, language)
-            return message
+    return (key: string) => {
+      try {
+        const message = getMessage(key, uiLanguage)
+        // If message is empty or undefined, try to get English version as fallback
+        if (!message && uiLanguage !== 'en') {
+          const fallbackMessage = getMessage(key, 'en')
+          return fallbackMessage || key // Return the key itself if all translations fail
+        }
+        return message || key // Return the key itself if translation fails
+      } catch (error) {
+        console.error(`Translation error for key "${key}":`, error)
+        return key // Return the key itself if there's an error
+      }
     }
-  }, [language])
+  }, [uiLanguage])
 
   // Create memoized context value
   const value = useMemo(() => ({
-    language,
-    uiLanguage: language,
-    setLanguage,
+    uiLanguage,
     t
-  }), [language, t])
+  }), [uiLanguage, t])
 
-    
   return (
     <I18nContext.Provider value={value}>
       {children}

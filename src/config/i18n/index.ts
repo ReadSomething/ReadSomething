@@ -33,26 +33,29 @@ export function isLanguageSupported(lang: string): lang is SupportedLanguage {
  * This is the standard way to detect browser language in extensions
  */
 export function getBrowserLanguage(): SupportedLanguage {
-    
-  // Use browser's language setting directly
   try {
     // Use navigator.language to get browser language
     const browserLang = navigator.language || (navigator as any).userLanguage
-        
+    
     // Normalize language code
     const normalizedLang = normalizeLanguageCode(browserLang)
-        
+    
     // Check if supported
     if (isLanguageSupported(normalizedLang)) {
-            return normalizedLang
-    } else {
-          }
+      return normalizedLang
+    }
+    
+    // If the full language code is not supported, try the base language code
+    const baseLang = normalizedLang.split('-')[0]
+    if (isLanguageSupported(baseLang)) {
+      return baseLang
+    }
   } catch (e) {
     console.warn('i18n: Error getting browser language:', e)
   }
   
-  // Default to English
-    return 'en'
+  // Default to English if no supported language is found
+  return 'en'
 }
 
 /**
@@ -60,25 +63,26 @@ export function getBrowserLanguage(): SupportedLanguage {
  * This function mimics the chrome.i18n.getMessage API but works with our internal translation system
  */
 export function getMessage(key: string, language: SupportedLanguage): string {
-    
   try {
-    // Try Chrome i18n first
+    // First try to get from translations object
+    if (translations[language] && translations[language][key]) {
+      return translations[language][key];
+    }
+
+    // Then try Chrome i18n
     if (typeof chrome !== 'undefined' && chrome?.i18n?.getMessage) {
-            const message = chrome.i18n.getMessage(key)
+      const message = chrome.i18n.getMessage(key);
       if (message) {
-                return message
-      } else {
-              }
-    } else {
-          }
+        return message;
+      }
+    }
   } catch (e) {
-    console.warn('i18n: Error getting Chrome i18n message:', e)
+    console.warn('i18n: Error getting message:', e);
   }
   
-  // Fallback to internal translations
-  const translations = getTranslations(language)
-  const message = translations[key] || key
-    return message
+  // Finally fallback to internal translations
+  const internalTranslations = getTranslations(language);
+  return internalTranslations[key] || key;
 }
 
 // Internal translations
@@ -92,7 +96,7 @@ const getTranslations = (language: SupportedLanguage): Record<string, string> =>
         dark: '暗黑',
         sepia: '护眼',
         paper: '纸张',
-        fontSize: '字体大小',
+        fontSize: '字号',
         currentSize: '当前大小',
         fontFamily: '字体',
         pageWidth: '页面宽度',

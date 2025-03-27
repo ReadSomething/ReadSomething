@@ -334,3 +334,11 @@ export const spacingOptions = [
   { value: 'normal' as const, label: { zh: '标准', en: 'Normal' }, lineHeight: 1.6, spacingClass: "normal" },
   { value: 'relaxed' as const, label: { zh: '宽松', en: 'Relaxed' }, lineHeight: 1.8, spacingClass: "relaxed" },
 ]; 
+
+// Define text alignment options
+export const alignmentOptions = [
+  { label: { en: "Left", zh: "左对齐" }, value: "left" },
+  { label: { en: "Justify", zh: "两端对齐" }, value: "justify" },
+  { label: { en: "Center", zh: "居中" }, value: "center" },
+  { label: { en: "Right", zh: "右对齐" }, value: "right" }
+];
