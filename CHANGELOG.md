@@ -9,8 +9,3 @@
 - Customizable reading experience (font, width, theme)
 - Language detection for optimal text display
 - Browser extension integration
-
-### Technical
-- Optimized bundle size
-- Removed unused dependencies
-- Improved performance 

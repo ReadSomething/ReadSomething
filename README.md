@@ -31,7 +31,7 @@ ReadLite is a browser extension focused on user experience, providing clean typo
 ## 🚀 How to Use
 
 1. After installation, browse any page with articles
-2. Click the ReadLite icon in the toolbar or press Alt+R
+2. Click the ReadLite icon in the toolbar
 3. The page will immediately convert to comfortable reading mode
 4. Customize your reading experience through the settings panel
 
