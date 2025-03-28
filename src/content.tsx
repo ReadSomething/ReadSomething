@@ -20,18 +20,30 @@ const ContentScriptUI = () => {
   
   // Toggle reader mode function
   const toggleReaderMode = () => {
-        setIsActive(!isActive)
+    const newState = !isActive;
+    setIsActive(newState);
+    
+    // Notify background script about the state change
+    chrome.runtime.sendMessage({
+      type: "READER_MODE_CHANGED",
+      isActive: newState
+    });
   }
 
   // Listen for messages via custom events
   useEffect(() => {
     // Custom event handler
     const handleCustomEvent = () => {
-            toggleReaderMode();
+      toggleReaderMode();
     };
     
     // Add event listener
     document.addEventListener('READLITE_TOGGLE_INTERNAL', handleCustomEvent);
+    
+    // Notify background script that content script is ready
+    chrome.runtime.sendMessage({
+      type: "CONTENT_SCRIPT_READY"
+    });
     
     return () => {
       document.removeEventListener('READLITE_TOGGLE_INTERNAL', handleCustomEvent);

@@ -5,6 +5,7 @@
 import { Readability } from '@mozilla/readability';
 import DOMPurify from 'dompurify';
 import { franc } from 'franc-min';
+import { normalizeLanguageCode } from './language';
 
 // Article data structure
 export interface Article {
@@ -25,7 +26,9 @@ export interface Article {
 export const detectLanguage = (text: string): string => {
   // Use a reasonable sample size to improve accuracy and performance
   const sampleText = text.slice(0, 1000);
-  return franc(sampleText);
+  const detectedCode = franc(sampleText);
+  // Normalize the detected code to ISO 639-1 standard
+  return normalizeLanguageCode(detectedCode);
 };
 
 /**

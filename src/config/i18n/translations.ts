@@ -1,6 +1,11 @@
 /**
- * Translations for ReadLite
+ * Translations and Font Configurations for ReadLite
  * Following ISO 639-1 language codes for standardization
+ * 
+ * This file is the single source of truth for:
+ * 1. UI translations in multiple languages
+ * 2. Font configurations and options
+ * 3. Layout and display options
  */
 
 // Define the structure of translations for type safety
@@ -183,141 +188,105 @@ export interface FontLabel {
   en: string;
 }
 
-// Font option structure
+/**
+ * Font option structure
+ * Core interface for all font configurations in the application
+ * This replaces the older FontDisplayConfig interface and centralizes all font management
+ */
 export interface FontOption {
-  value: string;
-  label: FontLabel;
-  recommendFor: 'zh' | 'en';
-  description: FontLabel;
-  available?: boolean;
-  languages?: string[]; // Languages this font is suitable for
+  value: string;           // CSS font-family value
+  label: FontLabel;        // Localized display names in different languages
+  compatibleLanguages: string[]; // Languages this font supports, first one is primary
+  available?: boolean;     // Whether this font is available (default: true)
 }
 
-// Font options with multilingual labels
+/**
+ * Font options with multilingual labels
+ * This is the primary source of font configurations used throughout the application
+ * All font-related UI elements should reference this array
+ */
 export const fontOptions: FontOption[] = [
   // Chinese fonts - 优化和扩展中文字体选项
   { 
     value: '"Source Han Sans SC", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif',
     label: { zh: '思源黑体', en: 'Source Han Sans' },
-    description: { zh: '现代清晰的无衬线字体', en: 'Clean modern sans-serif' },
-    recommendFor: 'zh',
-    available: true,
-    languages: ['zh', 'ja', 'ko', 'cmn', 'wuu', 'yue']
+    compatibleLanguages: ['zh', 'ja', 'ko', 'cmn', 'wuu', 'yue'],
+    available: true
   },
   { 
     value: '"Source Han Serif SC", "Noto Serif SC", serif',
     label: { zh: '思源宋体', en: 'Source Han Serif' },
-    description: { zh: '专业中文衬线字体', en: 'Professional Chinese serif' },
-    recommendFor: 'zh',
-    available: true,
-    languages: ['zh', 'ja', 'ko', 'cmn', 'wuu', 'yue']
+    compatibleLanguages: ['zh', 'ja', 'ko', 'cmn', 'wuu', 'yue'],
+    available: true
   },
   { 
     value: '"PingFang SC", "苹方", "-apple-system", sans-serif',
     label: { zh: '苹方', en: 'PingFang' },
-    description: { zh: '苹果设备默认中文字体', en: 'Apple default Chinese font' },
-    recommendFor: 'zh',
-    available: true,
-    languages: ['zh', 'cmn', 'wuu', 'yue']
+    compatibleLanguages: ['zh', 'cmn', 'wuu', 'yue'],
+    available: true
   },
   { 
     value: '"Hiragino Sans GB", "冬青黑体", sans-serif',
     label: { zh: '冬青黑体', en: 'Hiragino Sans GB' },
-    description: { zh: '清晰的现代无衬线字体', en: 'Clear modern sans-serif' },
-    recommendFor: 'zh',
-    available: true,
-    languages: ['zh', 'ja', 'cmn', 'wuu', 'yue']
+    compatibleLanguages: ['zh', 'ja', 'cmn', 'wuu', 'yue'],
+    available: true
   },
   { 
     value: '"Microsoft YaHei", "微软雅黑", sans-serif',
     label: { zh: '微软雅黑', en: 'Microsoft YaHei' },
-    description: { zh: 'Windows系统默认中文字体', en: 'Windows default Chinese font' },
-    recommendFor: 'zh',
-    available: true,
-    languages: ['zh', 'cmn', 'wuu', 'yue']
+    compatibleLanguages: ['zh', 'cmn', 'wuu', 'yue'],
+    available: true
   },
   // 添加新的中文字体选项
   { 
     value: '"Songti SC", "STSong", serif',
     label: { zh: '宋体', en: 'Songti' },
-    description: { zh: '传统中文宋体', en: 'Traditional Chinese serif' },
-    recommendFor: 'zh',
-    available: true,
-    languages: ['zh', 'cmn', 'wuu', 'yue']
+    compatibleLanguages: ['zh', 'cmn', 'wuu', 'yue'],
+    available: true
   },
   
   // English fonts - optimized and expanded
   { 
     value: '"Georgia", serif',
     label: { zh: 'Georgia', en: 'Georgia' },
-    description: { zh: '经典网页衬线字体', en: 'Classic web serif font' },
-    recommendFor: 'en',
-    available: true,
-    languages: ['en', 'fr', 'de', 'es', 'it', 'ru']
+    compatibleLanguages: ['en', 'fr', 'de', 'es', 'it', 'ru'],
+    available: true
   },
   { 
     value: '"Palatino", "Palatino Linotype", serif',
     label: { zh: 'Palatino', en: 'Palatino' },
-    description: { zh: '经典优雅的衬线字体', en: 'Classic elegant serif' },
-    recommendFor: 'en',
-    available: true,
-    languages: ['en', 'fr', 'de', 'es', 'it', 'ru']
+    compatibleLanguages: ['en', 'fr', 'de', 'es', 'it', 'ru'],
+    available: true
   },
   { 
     value: '"Bookerly", Georgia, serif',
     label: { zh: 'Bookerly', en: 'Bookerly' },
-    description: { zh: 'Kindle默认阅读字体', en: 'Kindle default reading font' },
-    recommendFor: 'en',
-    available: true,
-    languages: ['en', 'fr', 'de', 'es', 'it', 'ru']
+    compatibleLanguages: ['en', 'fr', 'de', 'es', 'it', 'ru'],
+    available: true
   },
   { 
     value: '"Times New Roman", "Times", serif',
     label: { zh: 'Times New Roman', en: 'Times New Roman' },
-    description: { zh: '传统经典衬线字体', en: 'Traditional classic serif' },
-    recommendFor: 'en',
-    available: true,
-    languages: ['en', 'fr', 'de', 'es', 'it', 'ru']
+    compatibleLanguages: ['en', 'fr', 'de', 'es', 'it', 'ru'],
+    available: true
   },
   { 
     value: '"Arial", "Helvetica", sans-serif',
     label: { zh: 'Arial', en: 'Arial' },
-    description: { zh: '通用无衬线字体', en: 'Common sans-serif font' },
-    recommendFor: 'en',
-    available: true,
-    languages: ['en', 'fr', 'de', 'es', 'it', 'ru']
+    compatibleLanguages: ['en', 'fr', 'de', 'es', 'it', 'ru'],
+    available: true
   },
   { 
     value: '"Literata", Georgia, serif',
     label: { zh: 'Literata', en: 'Literata' },
-    description: { zh: 'Google Play Books阅读字体', en: 'Google Books reading font' },
-    recommendFor: 'en',
-    available: true,
-    languages: ['en', 'fr', 'de', 'es', 'it', 'ru']
+    compatibleLanguages: ['en', 'fr', 'de', 'es', 'it', 'ru'],
+    available: true
   },
   { 
     value: '"Merriweather", Georgia, serif',
     label: { zh: 'Merriweather', en: 'Merriweather' },
-    description: { zh: '宽敞现代的衬线字体', en: 'Spacious modern serif' },
-    recommendFor: 'en',
-    available: true,
-    languages: ['en', 'fr', 'de', 'es', 'it', 'ru']
-  },
-  { 
-    value: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-    label: { zh: '系统默认', en: 'System Default' },
-    description: { zh: '使用系统默认字体', en: 'Uses your system default font' },
-    recommendFor: 'zh',
-    available: true,
-    languages: ['en', 'zh', 'ja', 'ko', 'fr', 'de', 'es', 'it', 'ru', 'cmn', 'wuu', 'yue']
-  },
-  { 
-    value: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-    label: { zh: '系统默认', en: 'System Default' },
-    description: { zh: '使用系统默认字体', en: 'Uses your system default font' },
-    recommendFor: 'en',
-    available: true,
-    languages: ['en', 'zh', 'ja', 'ko', 'fr', 'de', 'es', 'it', 'ru', 'cmn', 'wuu', 'yue']
+    compatibleLanguages: ['en', 'fr', 'de', 'es', 'it', 'ru'],
+    available: true
   }
 ];
 

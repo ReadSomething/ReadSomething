@@ -5,12 +5,42 @@
 // Define common language codes with ISO 639-1/639-2 standards
 export type LanguageCode = 'zh' | 'en' | 'ja' | 'ko' | 'fr' | 'de' | 'es' | 'it' | 'ru' | string;
 
-// Map for converting any language code to standard format
-const LANGUAGE_CODE_MAP: Record<string, LanguageCode> = {
-  // Chinese variants
-  'cmn': 'zh',   // Mandarin
+// Mapping from franc-min ISO 639-3 codes to ISO 639-1
+const FRANC_CODE_MAP: Record<string, LanguageCode> = {
+  'cmn': 'zh',   // Mandarin Chinese
   'wuu': 'zh',   // Wu Chinese
   'yue': 'zh',   // Cantonese
+  'eng': 'en',   // English
+  'jpn': 'ja',   // Japanese
+  'kor': 'ko',   // Korean
+  'fra': 'fr',   // French
+  'deu': 'de',   // German
+  'spa': 'es',   // Spanish
+  'ita': 'it',   // Italian
+  'rus': 'ru',   // Russian
+  'por': 'pt',   // Portuguese
+  'nld': 'nl',   // Dutch
+  'swe': 'sv',   // Swedish
+  'ara': 'ar',   // Arabic
+  'hin': 'hi',   // Hindi
+  'ben': 'bn',   // Bengali
+  'ind': 'id',   // Indonesian
+  'ell': 'el',   // Greek
+  'tur': 'tr',   // Turkish
+  'pol': 'pl',   // Polish
+  'ukr': 'uk',   // Ukrainian
+  'ron': 'ro',   // Romanian
+  'vie': 'vi',   // Vietnamese
+  'tha': 'th',   // Thai
+  'ces': 'cs',   // Czech
+  'hun': 'hu',   // Hungarian
+  'bul': 'bg',   // Bulgarian
+  'arb': 'ar',   // Standard Arabic
+};
+
+// Mapping for regional variants and other code formats
+const REGION_CODE_MAP: Record<string, LanguageCode> = {
+  // Chinese variants
   'zh-CN': 'zh', // Simplified Chinese
   'zh-TW': 'zh', // Traditional Chinese
   'zh-HK': 'zh', // Hong Kong Chinese
@@ -20,15 +50,12 @@ const LANGUAGE_CODE_MAP: Record<string, LanguageCode> = {
   'en-GB': 'en', // British English
   'en-CA': 'en', // Canadian English
   'en-AU': 'en', // Australian English
-  
-  // Other languages
-  'jpn': 'ja',   // Japanese
-  'kor': 'ko',   // Korean
-  'fra': 'fr',   // French
-  'deu': 'de',   // German
-  'spa': 'es',   // Spanish
-  'ita': 'it',   // Italian
-  'rus': 'ru',   // Russian
+};
+
+// Combined map for all language code transformations
+const LANGUAGE_CODE_MAP: Record<string, LanguageCode> = {
+  ...FRANC_CODE_MAP,
+  ...REGION_CODE_MAP
 };
 
 // Default language when no detection is available

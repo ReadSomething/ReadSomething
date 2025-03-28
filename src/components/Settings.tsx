@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react"
 import { useReader } from "../context/ReaderContext"
 import { useI18n } from "../hooks/useI18n"
 import { FontOption, fontOptions, widthOptions, spacingOptions, alignmentOptions } from "../config/i18n/translations"
-import { normalizeLanguageCode, LanguageCode } from "../utils/language"
+import { LanguageCode } from "../utils/language"
 import { getLanguageDisplayName } from "../config/languages"
 
 interface SettingsProps {
@@ -35,9 +35,8 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   // Detect article language using the language property from parser
   useEffect(() => {
     if (article?.language) {
-      // Normalize the language code
-      const normalizedLanguage = normalizeLanguageCode(article.language);
-      setDetectedLanguage(normalizedLanguage);
+      // Language code is already normalized in detectLanguage function
+      setDetectedLanguage(article.language as LanguageCode);
     }
   }, [article]);
   
@@ -98,16 +97,16 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   const colors = getColors()
   
   // Update font family with language-specific handling
-  const changeFont = (fontFamily: string, recommendFor: string) => {
+  const changeFont = (fontFamily: string) => {
     // Basic update - always update the main fontFamily
     const updates: Partial<typeof settings> = { fontFamily };
     
     // Use detected language rather than settings.contentLanguage
     const contentLanguage = detectedLanguage || 'en';
     
-    // If this is a language-specific font, also update that language's settings
-    if (recommendFor === 'zh' && contentLanguage === 'zh') {
-      // For Chinese fonts, also update zh font settings
+    // Update language-specific settings based on content language only
+    if (contentLanguage === 'zh') {
+      // For Chinese content, update zh font settings
       const updatedZhSettings = {
         ...settings.languageSettings.zh,
         fontFamily
@@ -117,8 +116,8 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
         ...settings.languageSettings,
         zh: updatedZhSettings
       };
-    } else if (recommendFor === 'en' && contentLanguage === 'en') {
-      // For English fonts, also update en font settings
+    } else if (contentLanguage === 'en') {
+      // For English content, update en font settings
       const updatedEnSettings = {
         ...settings.languageSettings.en,
         fontFamily
@@ -321,12 +320,14 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   const getDisplayedFonts = () => {
     // Use detected language for filtering appropriate fonts
     const contentLanguage = detectedLanguage || 'en';
+
+    console.log("contentLanguage", contentLanguage)
     
     // Filter fonts based on content language
     return fontOptions
       .filter(font => 
-        // Only show fonts recommended for the detected content language
-        font.recommendFor === contentLanguage 
+        // Show fonts that support the detected content language
+        font.compatibleLanguages.includes(contentLanguage)
       )
       // Sort fonts alphabetically based on UI language
       .sort((a, b) => {
@@ -360,7 +361,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     return (
       <button
         key={fontDisplayName}
-        onClick={() => changeFont(font.value, font.recommendFor)}
+        onClick={() => changeFont(font.value)}
         style={{
           border: `1px solid ${isActive ? colors.highlight : colors.border}`,
           backgroundColor: isActive ? 
@@ -384,7 +385,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
       >
         <div style={{
           fontFamily: font.value,
-          fontSize: font.recommendFor === 'zh' ? "17px" : "16px",
+          fontSize: font.compatibleLanguages[0] === 'zh' ? "17px" : "16px",
           fontWeight: "500",
           color: isActive ? colors.highlight : colors.text,
           marginBottom: "0px"

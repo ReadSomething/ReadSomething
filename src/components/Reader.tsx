@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from "react"
 import { useReader } from "../context/ReaderContext"
 import Settings from "../components/Settings"
 import Controls from "../components/Controls"
-import { normalizeLanguageCode, LanguageCode } from "../utils/language"
 import { useI18n } from "../hooks/useI18n"
-
+import { LanguageCode } from "../utils/language"
 /**
  * Main Reader component
  * Displays the article in a clean, readable format
@@ -21,8 +20,8 @@ const Reader = () => {
   // Detect article language and set corresponding styles
   useEffect(() => {
     if (article && article.language) {
-      const normalizedLanguage = normalizeLanguageCode(article.language)
-      setDetectedLanguage(normalizedLanguage)
+      // Language code is already normalized in detectLanguage function
+      setDetectedLanguage(article.language as LanguageCode)
     }
   }, [article?.language]);
   
@@ -214,11 +213,23 @@ const Reader = () => {
     textAlign: settings.textAlign,
   };
   
+  // Handle closing reader mode
+  const handleClose = () => {
+    // Notify background script about state change before exiting
+    chrome.runtime.sendMessage({
+      type: "READER_MODE_CHANGED",
+      isActive: false
+    });
+    
+    // Create and dispatch the close event
+    document.dispatchEvent(new CustomEvent('READLITE_TOGGLE_INTERNAL'));
+  };
+  
   return (
     <>
       <Controls 
         onToggleSettings={toggleSettings} 
-        onClose={closeReader}
+        onClose={handleClose}
         theme={settings.theme} 
         article={article}
       />

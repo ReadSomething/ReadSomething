@@ -3,21 +3,33 @@
  * Handles icon clicks and executes content script function
  */
 
-// Track which tabs have content scripts loaded
-const tabsWithContentScript = new Set<number>();
-
-// Track active state of the extension
-let isActive = false;
+// Track which tabs have reader mode active
+const activeTabsMap = new Map<number, boolean>();
 
 // Colors based on the purple book icon
-const BADGE_BACKGROUND_COLOR: [number, number, number, number] = [177, 156, 217, 255]; // #B19CD9 - Lavender purple (original icon color)
+const ACTIVE_COLOR: [number, number, number, number] = [177, 156, 217, 255]; // #B19CD9 - Lavender purple (original icon color)
+const INACTIVE_COLOR: [number, number, number, number] = [216, 216, 240, 255]; // #D8D8F0 - Light gray-purple
 
-// Listen for content script ready messages
+// Listen for messages from content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Ensure we have a tab ID
+  if (!sender.tab?.id) return false;
+  
+  const tabId = sender.tab.id;
     
   // Mark tab as having content script ready
-  if (message.type === "CONTENT_SCRIPT_READY" && sender.tab?.id) {
-    tabsWithContentScript.add(sender.tab.id);
+  if (message.type === "CONTENT_SCRIPT_READY") {
+    sendResponse({ received: true });
+    return true;
+  }
+  
+  // Handle reader mode state changes
+  if (message.type === "READER_MODE_CHANGED") {
+    // Update our state tracking
+    activeTabsMap.set(tabId, message.isActive);
+    
+    // Update the icon for this specific tab
+    updateIconState(tabId, message.isActive);
     sendResponse({ received: true });
     return true;
   }
@@ -25,98 +37,68 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return false;
 });
 
-// Listen for tab updates to track when content scripts are loaded
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  // When tab is fully loaded, we can assume content script is injected
-  if (changeInfo.status === "complete") {
-    // Wait a bit to ensure content script has initialized
-    setTimeout(() => {
-      tabsWithContentScript.add(tabId);
-    }, 500);
-  }
-});
-
-// Remove tab from tracking when closed
-chrome.tabs.onRemoved.addListener((tabId) => {
-  tabsWithContentScript.delete(tabId);
-});
-
-// Function to toggle reader mode in a tab
-async function toggleReaderMode(tabId: number) {
-    
-  try {
-    // Send message to content script
-    const response = await chrome.tabs.sendMessage(tabId, {
-      type: "TOGGLE_READER_MODE",
-      from: "background"
-    });
-      } catch (error) {
-    console.error("Error sending message to content script:", error);
-    
-    // Check if the error is because content script isn't ready
-    if (error instanceof Error && error.message.includes("receiving end does not exist")) {
-            
-      try {
-        // Reload the tab to ensure content script is injected
-        await chrome.tabs.reload(tabId);
-        
-        // Wait for page to load and then try again
-        setTimeout(async () => {
-          try {
-            const retryResponse = await chrome.tabs.sendMessage(tabId, {
-              type: "TOGGLE_READER_MODE",
-              from: "background-retry"
-            });
-                      } catch (retryError) {
-            console.error("Failed to toggle reader mode after reload:", retryError);
-          }
-        }, 2000);
-      } catch (reloadError) {
-        console.error("Failed to reload tab:", reloadError);
-      }
-    }
-  }
-}
-
 /**
- * Update the extension icon state
- * @param active - Whether the extension is active
+ * Update the extension icon state for a specific tab
+ * @param tabId - The ID of the tab to update
+ * @param active - Whether reader mode is active
  */
-function updateIconState(active: boolean) {
+function updateIconState(tabId: number, active: boolean) {
   if (active) {
-    // For active state: use "on" text with a compact badge
-    chrome.action.setBadgeText({ text: "ON" });
+    // For active state: use "ON" text with a compact badge
+    chrome.action.setBadgeText({ 
+      tabId: tabId,
+      text: "ON" 
+    });
     
     // Use the lavender purple color that matches the icon
     chrome.action.setBadgeBackgroundColor({ 
-      color: BADGE_BACKGROUND_COLOR 
+      tabId: tabId,
+      color: ACTIVE_COLOR 
     });
     
     // Make badge text smaller and more compact
-    chrome.action.setBadgeTextColor({ color: "#FFFFFF" });
+    chrome.action.setBadgeTextColor({ 
+      tabId: tabId,
+      color: "#FFFFFF" 
+    });
   } else {
     // For inactive state: clear the badge completely
-    chrome.action.setBadgeText({ text: "" });
+    chrome.action.setBadgeText({ 
+      tabId: tabId,
+      text: "" 
+    });
   }
-  
-  // Store the current state
-  isActive = active;
 }
+
+// Handle tab switching to update the icon state correctly
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  const tabId = activeInfo.tabId;
+  const isActive = activeTabsMap.get(tabId) || false;
+  
+  // Update icon state for the newly activated tab
+  updateIconState(tabId, isActive);
+});
 
 // Listen for extension icon clicks
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab.id) return;
   
-  // Toggle the active state
-  isActive = !isActive;
+  const tabId = tab.id;
   
-  // Update the icon to reflect the new state
-  updateIconState(isActive);
+  // Toggle the state for this tab
+  const currentState = activeTabsMap.get(tabId) || false;
+  const newState = !currentState;
+  
+  // Update our tracking
+  activeTabsMap.set(tabId, newState);
+  
+  // Update the icon
+  updateIconState(tabId, newState);
   
   try {
     // Execute script to dispatch the custom event directly
     await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
+      target: { tabId: tabId },
       func: () => {
         // Create and dispatch the event directly
         document.dispatchEvent(new CustomEvent('READLITE_TOGGLE_INTERNAL'));
@@ -128,5 +110,7 @@ chrome.action.onClicked.addListener(async (tab) => {
   }
 });
 
-// Initialize icon state on extension load
-updateIconState(isActive); 
+// Handle tab removal to clean up our state tracking
+chrome.tabs.onRemoved.addListener((tabId) => {
+  activeTabsMap.delete(tabId);
+}); 

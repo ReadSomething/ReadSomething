@@ -8,10 +8,7 @@
  */
 
 import { translations } from './translations';
-import { normalizeLanguageCode, LanguageCode } from '../../utils/language';
-
-// Re-export LanguageCode type
-export type { LanguageCode };
+import { normalizeLanguageCode } from '../../utils/language';
 
 // Define supported languages
 export type SupportedLanguage = 'en' | 'zh'

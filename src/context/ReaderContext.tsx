@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, ReactNode, useContext, useCallback } from "react"
+import { LanguageCode } from "../utils/language"
 import { useArticle } from "../hooks/useArticle"
-import { normalizeLanguageCode, LanguageCode } from "../utils/language"
 import { useStoredSettings } from "../hooks/useStoredSettings"
 
 // Language-specific settings type
@@ -150,12 +150,7 @@ export const ReaderProvider: React.FC<ReaderProviderProps> = ({ children }) => {
       try {
         const extractedArticle = await extractArticle()
         if (extractedArticle) {
-          // Normalize language if present
-          if (extractedArticle.language) {
-            const normalizedLang = normalizeLanguageCode(extractedArticle.language);
-            extractedArticle.language = normalizedLang;
-                                  }
-          
+          // Language is already normalized in detectLanguage function
           setArticle(extractedArticle)
           setError(null)
         } else {
