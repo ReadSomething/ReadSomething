@@ -6,13 +6,19 @@
 // Track which tabs have content scripts loaded
 const tabsWithContentScript = new Set<number>();
 
+// Track active state of the extension
+let isActive = false;
+
+// Colors based on the purple book icon
+const BADGE_BACKGROUND_COLOR: [number, number, number, number] = [177, 156, 217, 255]; // #B19CD9 - Lavender purple (original icon color)
+
 // Listen for content script ready messages
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     
   // Mark tab as having content script ready
   if (message.type === "CONTENT_SCRIPT_READY" && sender.tab?.id) {
     tabsWithContentScript.add(sender.tab.id);
-        sendResponse({ received: true });
+    sendResponse({ received: true });
     return true;
   }
   
@@ -72,22 +78,55 @@ async function toggleReaderMode(tabId: number) {
   }
 }
 
+/**
+ * Update the extension icon state
+ * @param active - Whether the extension is active
+ */
+function updateIconState(active: boolean) {
+  if (active) {
+    // For active state: use "on" text with a compact badge
+    chrome.action.setBadgeText({ text: "ON" });
+    
+    // Use the lavender purple color that matches the icon
+    chrome.action.setBadgeBackgroundColor({ 
+      color: BADGE_BACKGROUND_COLOR 
+    });
+    
+    // Make badge text smaller and more compact
+    chrome.action.setBadgeTextColor({ color: "#FFFFFF" });
+  } else {
+    // For inactive state: clear the badge completely
+    chrome.action.setBadgeText({ text: "" });
+  }
+  
+  // Store the current state
+  isActive = active;
+}
+
 // Listen for extension icon clicks
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab.id) return;
   
-    
+  // Toggle the active state
+  isActive = !isActive;
+  
+  // Update the icon to reflect the new state
+  updateIconState(isActive);
+  
   try {
     // Execute script to dispatch the custom event directly
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: () => {
-                // Create and dispatch the event directly
+        // Create and dispatch the event directly
         document.dispatchEvent(new CustomEvent('READLITE_TOGGLE_INTERNAL'));
       }
     });
     
-      } catch (error) {
+  } catch (error) {
     console.error("Error executing script:", error);
   }
-}); 
+});
+
+// Initialize icon state on extension load
+updateIconState(isActive); 
