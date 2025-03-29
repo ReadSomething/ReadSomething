@@ -66,34 +66,6 @@ npm run build
 yarn build
 ```
 
-### Testing
-
-```bash
-npm run test
-# or
-yarn test
-```
-
-## 📁 Project Structure
-
-```
-read-lite/
-├── public/                    # Static assets
-│   ├── assets/                # Icons and images
-│   └── manifest.json          # Extension config
-├── src/
-│   ├── background/            # Background scripts
-│   ├── content/               # Content scripts
-│   ├── popup/                 # Popup UI
-│   ├── components/            # React components
-│   ├── hooks/                 # Custom React Hooks
-│   ├── utils/                 # Utility functions
-│   ├── locales/               # Localization
-│   ├── styles/                # Global styles
-│   └── types/                 # Type definitions
-└── tests/                     # Unit tests
-```
-
 ## 📄 License
 
 MIT
