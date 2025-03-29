@@ -23,7 +23,8 @@
     "plasmo": "^0.90.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "turndown": "^7.2.0"
+    "turndown": "^7.2.0",
+    "turndown-plugin-gfm": "^1.0.2"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.312",

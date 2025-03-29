@@ -1,4 +1,5 @@
 import TurndownService from 'turndown';
+import * as turndownPluginGfm from 'turndown-plugin-gfm';
 
 /**
  * Export utilities for article content
@@ -47,6 +48,9 @@ export const htmlToMarkdown = (html: string): string => {
     codeBlockStyle: 'fenced',
     emDelimiter: '*'
   });
+  
+  // Add GitHub Flavored Markdown support
+  turndownService.use(turndownPluginGfm.gfm);
   
   // Configure turndown to handle some HTML elements better
   turndownService.addRule('imageWithAttributes', {
