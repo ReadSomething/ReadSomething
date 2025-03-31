@@ -1,0 +1,324 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #fff;
+  overflow: hidden;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+  height: 100vh;
+  width: 100%;
+}
+
+html {
+  height: 100%;
+  width: 100%;
+}
+
+#app {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidepanel-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-interface-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Input field styles */
+input[type="text"], textarea {
+  margin: 0;
+  box-sizing: border-box;
+  border: none;
+  font-size: 14px;
+  padding: 8px 12px;
+  outline: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Slim scrollbar */
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ccc;
+}
+
+/* Custom Cursor-style chat input container */
+.cursor-chat-input-container {
+  animation: fade-in 0.2s ease-in-out;
+}
+
+/* Select dropdown styles */
+.model-selector select {
+  padding: 6px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 12px;
+  background-color: white;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.model-selector select:hover {
+  border-color: #BB9CD8;
+}
+
+.model-selector select:focus {
+  border-color: #BB9CD8;
+  box-shadow: 0 0 0 1px rgba(187, 156, 216, 0.2);
+}
+
+/* Code blocks in messages */
+pre {
+  background-color: #f5f5f5;
+  padding: 8px 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 8px 0;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+code {
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Message animations */
+@keyframes message-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Markdown Styles */
+.message-content {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.message-content h1,
+.message-content h2,
+.message-content h3,
+.message-content h4,
+.message-content h5,
+.message-content h6 {
+  margin: 16px 0 8px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.message-content h1 { font-size: 1.5em; }
+.message-content h2 { font-size: 1.3em; }
+.message-content h3 { font-size: 1.2em; }
+
+.message-content p {
+  margin: 8px 0;
+}
+
+.message-content ul,
+.message-content ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.message-content li {
+  margin: 4px 0;
+}
+
+.message-content blockquote {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 4px solid #ddd;
+  background-color: rgba(0, 0, 0, 0.05);
+  font-style: italic;
+}
+
+.message-content pre {
+  margin: 8px 0;
+  padding: 12px;
+  background-color: #f6f8fa;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.message-content code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-size: 0.9em;
+  padding: 2px 4px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+}
+
+.message-content pre code {
+  padding: 0;
+  background-color: transparent;
+}
+
+.message-content table {
+  margin: 8px 0;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.message-content th,
+.message-content td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.message-content th {
+  background-color: #f6f8fa;
+  font-weight: 600;
+}
+
+.message-content a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.message-content a:hover {
+  text-decoration: underline;
+}
+
+/* Code block syntax highlighting */
+.message-content pre code {
+  display: block;
+  overflow-x: auto;
+  padding: 16px;
+  color: #24292e;
+  background: #f6f8fa;
+  border-radius: 6px;
+}
+
+/* Inline code */
+.message-content :not(pre) > code {
+  color: #24292e;
+  background: rgba(27, 31, 35, 0.05);
+  border-radius: 3px;
+  font-size: 85%;
+  padding: 0.2em 0.4em;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+}
+
+/* Lists */
+.message-content ul,
+.message-content ol {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.message-content li {
+  margin: 4px 0;
+}
+
+/* Task lists */
+.message-content .task-list-item {
+  list-style-type: none;
+  padding-left: 24px;
+}
+
+.message-content .task-list-item-checkbox {
+  margin-right: 8px;
+}
+
+/* Tables */
+.message-content table {
+  border-spacing: 0;
+  border-collapse: collapse;
+  margin: 16px 0;
+  width: 100%;
+}
+
+.message-content table th,
+.message-content table td {
+  padding: 6px 13px;
+  border: 1px solid #dfe2e5;
+}
+
+.message-content table tr {
+  background-color: #fff;
+  border-top: 1px solid #c6cbd1;
+}
+
+.message-content table tr:nth-child(2n) {
+  background-color: #f6f8fa;
+}
+
+/* Horizontal rule */
+.message-content hr {
+  height: 0.25em;
+  padding: 0;
+  margin: 24px 0;
+  background-color: #e1e4e8;
+  border: 0;
+}
+
+/* Images */
+.message-content img {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Task lists */
+.message-content .task-list-item {
+  list-style-type: none;
+  padding-left: 24px;
+}
+
+.message-content .task-list-item-checkbox {
+  margin-right: 8px;
+}
+
+/* Strikethrough */
+.message-content del {
+  text-decoration: line-through;
+}
+
+/* Emoji */
+.message-content .emoji {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  vertical-align: middle;
+} 
