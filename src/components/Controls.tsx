@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { exportAsMarkdown } from "../utils/export"
 import { Article } from "../utils/parser"
 import { useI18n } from "../hooks/useI18n"
@@ -12,10 +12,73 @@ interface ControlsProps {
 
 /**
  * Reader controls component
- * Provides buttons for settings and closing the reader
+ * Provides buttons for settings, AI assistant and closing the reader
  */
 const Controls: React.FC<ControlsProps> = ({ onToggleSettings, onClose, theme, article }) => {
   const { t } = useI18n();
+  const [isAiActive, setIsAiActive] = useState(false);
+  
+  // AI button active style with purple background
+  const aiActiveStyle: React.CSSProperties = {
+    backgroundColor: "#BB9CD8", // Matching badge and icon color
+    color: "white"
+  };
+  
+  // Toggle AI Assistant side panel
+  const toggleAIAssistant = () => {
+    // Use the opposite of current state to determine the action
+    const shouldOpen = !isAiActive;
+    
+    // Send the appropriate message based on whether we're opening or closing
+    if (shouldOpen) {
+      // Open the side panel
+      chrome.runtime.sendMessage({ type: 'OPEN_SIDEPANEL' });
+    } else {
+      // Close the side panel
+      chrome.runtime.sendMessage({ type: 'CLOSE_SIDEPANEL' });
+    }
+    
+    // Update the local state immediately for responsive UI
+    setIsAiActive(shouldOpen);
+  };
+  
+  // Listen for side panel visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'SIDEPANEL_VISIBILITY_CHANGED') {
+        setIsAiActive(event.data.isVisible);
+      }
+    };
+    
+    window.addEventListener('message', handleVisibilityChange);
+    
+    return () => {
+      window.removeEventListener('message', handleVisibilityChange);
+    };
+  }, []);
+  
+  // Handle download as Markdown
+  const handleMarkdownDownload = (e: React.MouseEvent) => {
+    // Stop event propagation immediately
+    e.nativeEvent.stopImmediatePropagation();
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // Use setTimeout with 0 delay to break out of the current event loop
+    // This helps avoid conflicts with other scripts
+    setTimeout(() => {
+      if (article && article.title && article.content) {
+        try {
+          // Call the export function in a separate try-catch
+          exportAsMarkdown(article.title, article.content);
+        } catch (error) {
+          console.error("Export to Markdown failed:", error);
+        }
+      } else {
+        console.error("Cannot export Markdown: Missing article data");
+      }
+    }, 0);
+  };
   
   // Get button styles based on theme
   const getStylesByTheme = () => {
@@ -54,6 +117,10 @@ const Controls: React.FC<ControlsProps> = ({ onToggleSettings, onClose, theme, a
             backgroundColor: "#444",
             color: "white"
           },
+          aiButton: {
+            ...baseButtonStyle,
+            ...(isAiActive ? aiActiveStyle : { backgroundColor: "#444", color: "white" })
+          },
           downloadMenu: {
             backgroundColor: "#333",
             color: "white",
@@ -87,6 +154,10 @@ const Controls: React.FC<ControlsProps> = ({ onToggleSettings, onClose, theme, a
             ...baseButtonStyle,
             backgroundColor: "#e8d9c0",
             color: "#5b4636"
+          },
+          aiButton: {
+            ...baseButtonStyle,
+            ...(isAiActive ? aiActiveStyle : { backgroundColor: "#e8d9c0", color: "#5b4636" })
           },
           downloadMenu: {
             backgroundColor: "#f9f1e3",
@@ -122,6 +193,10 @@ const Controls: React.FC<ControlsProps> = ({ onToggleSettings, onClose, theme, a
             backgroundColor: "#EFEFEF",
             color: "#000000"
           },
+          aiButton: {
+            ...baseButtonStyle,
+            ...(isAiActive ? aiActiveStyle : { backgroundColor: "#EFEFEF", color: "#000000" })
+          },
           downloadMenu: {
             backgroundColor: "#F7F7F7",
             color: "#000000",
@@ -156,6 +231,10 @@ const Controls: React.FC<ControlsProps> = ({ onToggleSettings, onClose, theme, a
             backgroundColor: "white",
             color: "#333"
           },
+          aiButton: {
+            ...baseButtonStyle,
+            ...(isAiActive ? aiActiveStyle : { backgroundColor: "white", color: "#333" })
+          },
           downloadMenu: {
             backgroundColor: "white",
             color: "#333",
@@ -173,33 +252,10 @@ const Controls: React.FC<ControlsProps> = ({ onToggleSettings, onClose, theme, a
     }
   }
   
-  // Handle download as Markdown
-  const handleMarkdownDownload = (e: React.MouseEvent) => {
-    // Stop event propagation immediately
-    e.nativeEvent.stopImmediatePropagation();
-    e.stopPropagation();
-    e.preventDefault();
-    
-    // Use setTimeout with 0 delay to break out of the current event loop
-    // This helps avoid conflicts with other scripts
-    setTimeout(() => {
-      if (article && article.title && article.content) {
-        try {
-          // Call the export function in a separate try-catch
-          exportAsMarkdown(article.title, article.content);
-        } catch (error) {
-          console.error("Export to Markdown failed:", error);
-        }
-      } else {
-        console.error("Cannot export Markdown: Missing article data");
-      }
-    }, 0);
-  };
-  
   const styles = getStylesByTheme()
   
   return (
-    <div style={{
+    <div className="reader-toolbar" style={{
       position: "fixed",
       top: "20px",
       right: "20px",
@@ -208,6 +264,20 @@ const Controls: React.FC<ControlsProps> = ({ onToggleSettings, onClose, theme, a
       zIndex: 2147483647,
       ...styles.container
     }}>
+
+      {/* AI Assistant Button */}
+      <button
+        style={styles.aiButton}
+        aria-label={isAiActive ? t('closeAIAssistant') || "Close AI Assistant" : t('openAIAssistant') || "Open AI Assistant"}
+        title={isAiActive ? t('closeAIAssistant') || "Close AI Assistant" : t('openAIAssistant') || "Open AI Assistant"}
+        onClick={toggleAIAssistant}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
+      {/* Download Button */}
       <button
         style={styles.downloadButton}
         aria-label={t('download')}
@@ -220,7 +290,7 @@ const Controls: React.FC<ControlsProps> = ({ onToggleSettings, onClose, theme, a
           <path d="M20 15V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
-      
+
       {/* Settings Button */}
       <button
         onClick={onToggleSettings}

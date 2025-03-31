@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, ReactNode } from 'react'
-import { getBrowserLanguage, getMessage, SupportedLanguage } from '../config/i18n'
+import { getBrowserLanguage, getMessage, SupportedLanguage } from '../utils/i18n'
 
 interface I18nContextType {
   uiLanguage: SupportedLanguage

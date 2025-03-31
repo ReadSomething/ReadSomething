@@ -16,13 +16,22 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\""
   },
   "dependencies": {
+    "@chatscope/chat-ui-kit-react": "^2.0.3",
+    "@chatscope/chat-ui-kit-styles": "^1.4.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@mozilla/readability": "^0.6.0",
+    "@mui/icons-material": "^7.0.1",
+    "@mui/material": "^7.0.1",
     "@plasmohq/storage": "^1.9.0",
     "dompurify": "^3.0.6",
     "franc-min": "^6.2.0",
     "plasmo": "^0.90.3",
+    "portkey-ai": "^1.7.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-markdown": "8.0.7",
+    "remark-gfm": "3.0.1",
     "turndown": "^7.2.0",
     "turndown-plugin-gfm": "^1.0.2"
   },
@@ -30,8 +39,8 @@
     "@types/chrome": "^0.0.312",
     "@types/dompurify": "^3.0.5",
     "@types/jest": "^29.5.11",
-    "@types/react": "^18.2.43",
-    "@types/react-dom": "^18.2.17",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
     "@types/turndown": "^5.0.5",
     "eslint": "^8.55.0",
     "jest": "^29.7.0",
@@ -47,7 +56,8 @@
       "activeTab",
       "scripting",
       "tabs",
-      "storage"
+      "storage",
+      "sidePanel"
     ],
     "host_permissions": [
       "<all_urls>"
@@ -58,6 +68,9 @@
     "background": {
       "service_worker": "background.js",
       "type": "module"
+    },
+    "side_panel": {
+      "default_path": "sidepanel.html"
     }
   }
 }

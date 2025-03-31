@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react"
 import { useReader } from "../context/ReaderContext"
 import { useI18n } from "../hooks/useI18n"
-import { FontOption, fontOptions, widthOptions, spacingOptions, alignmentOptions } from "../config/i18n/translations"
+import { FontOption, fontOptions, widthOptions, spacingOptions, alignmentOptions } from "../config/ui"
 import { LanguageCode } from "../utils/language"
-import { getLanguageDisplayName } from "../config/languages"
+import { getLanguageDisplayName } from "../utils/i18n"
 
 interface SettingsProps {
   onClose: () => void;

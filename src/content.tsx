@@ -3,6 +3,7 @@ import type { PlasmoCSConfig } from "plasmo"
 import { ReaderProvider } from "./context/ReaderContext"
 import { I18nProvider } from "./context/I18nContext"
 import Reader from "./components/Reader"
+import { createRoot } from "react-dom/client"
 
 // Content script configuration
 export const config: PlasmoCSConfig = {
@@ -13,6 +14,18 @@ export const config: PlasmoCSConfig = {
 // Set the content script world directly (won't be included in manifest)
 // @ts-ignore - This is a Plasmo-specific configuration
 export const world = "ISOLATED"
+
+// Type definitions for messages
+type BackgroundMessage = {
+  type: string;
+  isVisible?: boolean;
+};
+
+// Function to open the AI Assistant side panel
+const openAIAssistant = () => {
+  // Send message to background script to open side panel
+  chrome.runtime.sendMessage({ type: 'OPEN_SIDEPANEL' });
+};
 
 // Content Script UI Component
 const ContentScriptUI = () => {
@@ -45,8 +58,33 @@ const ContentScriptUI = () => {
       type: "CONTENT_SCRIPT_READY"
     });
     
+    // Listen for messages from background script
+    const handleBackgroundMessages = (
+      message: BackgroundMessage, 
+      sender: chrome.runtime.MessageSender, 
+      sendResponse: (response?: any) => void
+    ) => {
+      // Handle sidepanel visibility changes
+      if (message.type === 'SIDEPANEL_VISIBILITY_CHANGED') {
+        // Dispatch a custom event that the DOM can listen to
+        window.postMessage({
+          type: 'SIDEPANEL_VISIBILITY_CHANGED',
+          isVisible: message.isVisible
+        }, '*');
+        
+        // Send response that we received the message
+        sendResponse({ received: true });
+        return true;
+      }
+      return false;
+    };
+    
+    // Add message listener
+    chrome.runtime.onMessage.addListener(handleBackgroundMessages);
+    
     return () => {
       document.removeEventListener('READLITE_TOGGLE_INTERNAL', handleCustomEvent);
+      chrome.runtime.onMessage.removeListener(handleBackgroundMessages);
     };
   }, [isActive]);
   
@@ -80,7 +118,5 @@ const ContentScriptUI = () => {
     </div>
   )
 }
-
-// Log that the content script has loaded
 
 export default ContentScriptUI 

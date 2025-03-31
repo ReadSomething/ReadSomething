@@ -4,4 +4,4 @@ import { useI18n as useI18nContext } from '../context/I18nContext'
 export const useI18n = useI18nContext
 
 // Export types from the context for convenience
-export type { SupportedLanguage } from '../config/i18n'
+export type { SupportedLanguage } from '../utils/i18n'
