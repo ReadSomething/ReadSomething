@@ -1,56 +1,83 @@
 import React, { createContext, useContext, useMemo, ReactNode } from 'react'
 import { getBrowserLanguage, getMessage, SupportedLanguage } from '../utils/i18n'
 
+// --- Types ---
+
 interface I18nContextType {
-  uiLanguage: SupportedLanguage
-  t: (key: string) => string
+  uiLanguage: SupportedLanguage; // The language used for the extension's UI
+  t: (key: string) => string; // Translation function
 }
 
-const I18nContext = createContext<I18nContextType | null>(null)
+// --- Context Definition ---
+
+const I18nContext = createContext<I18nContextType | null>(null);
+
+// --- Provider Component ---
 
 interface I18nProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
+/**
+ * Provides internationalization context (UI language and translation function).
+ */
 export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
-  // Always use browser language
-  const uiLanguage = getBrowserLanguage()
+  const LOG_PREFIX = "[I18nProvider]";
 
-  // Memoize the translation function to prevent unnecessary re-renders
+  // Determine the UI language based on browser/OS settings
+  const uiLanguage = getBrowserLanguage();
+  console.log(`${LOG_PREFIX} Determined UI language: ${uiLanguage}`);
+
+  // Memoize the translation function `t` to optimize performance.
+  // It depends only on the `uiLanguage`.
   const t = useMemo(() => {
-    return (key: string) => {
+    return (key: string): string => {
       try {
-        const message = getMessage(key, uiLanguage)
-        // If message is empty or undefined, try to get English version as fallback
+        // 1. Attempt to get translation in the detected UI language
+        const message = getMessage(key, uiLanguage);
+        
+        // 2. If not found and language is not English, try English as a fallback
         if (!message && uiLanguage !== 'en') {
-          const fallbackMessage = getMessage(key, 'en')
-          return fallbackMessage || key // Return the key itself if all translations fail
+          console.warn(`${LOG_PREFIX} Translation not found for key "${key}" in language "${uiLanguage}". Falling back to English.`);
+          const fallbackMessage = getMessage(key, 'en');
+          // 3. If English fallback also fails, return the key itself
+          return fallbackMessage || key; 
         }
-        return message || key // Return the key itself if translation fails
-      } catch (error) {
-        console.error(`Translation error for key "${key}":`, error)
-        return key // Return the key itself if there's an error
-      }
-    }
-  }, [uiLanguage])
 
-  // Create memoized context value
+        // 4. If found in original language, or if English was the original language and failed, return message or key
+        return message || key; 
+      } catch (error) {
+        console.error(`${LOG_PREFIX} Translation error for key "${key}" (lang: ${uiLanguage}):`, error);
+        // 5. Return the key in case of any unexpected errors during translation
+        return key; 
+      }
+    };
+  }, [uiLanguage, LOG_PREFIX]); // Added LOG_PREFIX to dependency array although it's constant
+
+  // Memoize the context value object
   const value = useMemo(() => ({
     uiLanguage,
-    t
-  }), [uiLanguage, t])
+    t,
+  }), [uiLanguage, t]);
 
   return (
     <I18nContext.Provider value={value}>
       {children}
     </I18nContext.Provider>
-  )
-}
+  );
+};
 
-export const useI18n = () => {
-  const context = useContext(I18nContext)
+// --- Hook ---
+
+/**
+ * Hook to consume the I18n context.
+ * Provides the UI language and the translation function `t`.
+ */
+export const useI18n = (): I18nContextType => {
+  const context = useContext(I18nContext);
   if (!context) {
-    throw new Error('useI18n must be used within an I18nProvider')
+    // This error prevents using the hook outside of the provider tree
+    throw new Error('useI18n must be used within an I18nProvider');
   }
-  return context
-} 
+  return context;
+}; 

@@ -1,220 +1,124 @@
 /**
  * i18n Utility Functions
  * 
- * This module provides utility functions for internationalization support:
- * - Language detection and normalization
- * - Message translation
- * - Browser language detection
+ * Provides functions for browser language detection, translation retrieval (via chrome.i18n),
+ * and getting language display names.
  */
 
-import { LanguageCode, normalizeLanguageCode } from './language';
-import { translations } from '../config/ui';
-import { languageDisplayConfigs } from '../config/ui';
+import {
+  LanguageCode,
+  normalizeLanguageCode,
+  SUPPORTED_LANGUAGES as ALL_SUPPORTED_LANGUAGES, // Import the comprehensive list
+  isLanguageSupported // Import the checker function
+} from './language';
+// Keep config import for display names/titles, assuming this data isn't in _locales
+import { languageDisplayConfigs } from '../config/ui'; 
 
-// Define supported languages
-export type SupportedLanguage = 'en' | 'zh'
+const LOG_PREFIX = "[i18nUtil]";
 
-// Export supported languages array for use in UI
-export const SUPPORTED_LANGUAGES: readonly SupportedLanguage[] = ['en', 'zh'] as const
-
+// --- Functions --- 
 
 /**
- * Get localized display name for a language
- * @param langCode Language code to get display name for
- * @param uiLanguage Current UI language
- * @returns Localized display name for the language
+ * Get localized display name for a language code.
+ * Uses configuration from `languageDisplayConfigs`.
+ * @param langCode Language code to get display name for (e.g., 'en', 'zh').
+ * @param uiLanguage Current UI language code (used to select the display name language).
+ * @returns Localized display name for the language, or the code itself as fallback.
  */
 export function getLanguageDisplayName(langCode: LanguageCode, uiLanguage: LanguageCode): string {
-  // Find the language config
   const config = languageDisplayConfigs.find(config => config.code === langCode);
   
   if (config) {
-    // Return the localized display name or fallback
-    return config.displayNames[uiLanguage] ||
-           config.displayNames['en'] ||
-           config.fallback ||
+    // Return the localized display name, fallback to English, then code
+    return config.displayNames[uiLanguage] || 
+           config.displayNames['en'] || 
+           config.fallback || 
            langCode;
   }
   
   // If no config found, return the language code
+  console.warn(`${LOG_PREFIX} No display name config found for language code: ${langCode}`);
   return langCode;
 }
 
 /**
- * Get font section title based on content language
- * @param contentLanguage Detected content language
- * @param uiLanguage Current UI language
- * @returns Localized font section title
+ * Get localized font section title based on content language.
+ * Uses configuration from `languageDisplayConfigs`.
+ * @param contentLanguage Detected content language code.
+ * @param uiLanguage Current UI language code.
+ * @returns Localized font section title (e.g., "Chinese Fonts") or a generated fallback.
  */
 export function getFontSectionTitle(contentLanguage: LanguageCode, uiLanguage: LanguageCode): string {
-  // Find the language config
   const config = languageDisplayConfigs.find(config => config.code === contentLanguage);
   
-  if (config && config.fontSectionTitle) {
-    // Return the localized font section title or fallback
-    return config.fontSectionTitle[uiLanguage] ||
-           config.fontSectionTitle['en'] ||
+  if (config?.fontSectionTitle) {
+    // Return the localized font section title, fallback to English, then generate default
+    return config.fontSectionTitle[uiLanguage] || 
+           config.fontSectionTitle['en'] || 
            `${getLanguageDisplayName(contentLanguage, uiLanguage)} Fonts`;
   }
   
   // If no specific title found, construct one from the language name
-  return `${getLanguageDisplayName(contentLanguage, uiLanguage)} Fonts`;
+  const defaultTitle = `${getLanguageDisplayName(contentLanguage, uiLanguage)} Fonts`;
+  console.warn(`${LOG_PREFIX} No specific font section title found for language: ${contentLanguage}. Using default: "${defaultTitle}"`);
+  return defaultTitle;
 }
 
 /**
- * Check if a language is supported by the application
+ * Get the browser's preferred UI language, normalized and validated against supported languages.
+ * Uses the comprehensive list from language.ts.
+ * @returns A supported LanguageCode (defaults to 'en').
  */
-export function isLanguageSupported(lang: string): lang is SupportedLanguage {
-    const normalizedLang = normalizeLanguageCode(lang)
-    const isSupported = SUPPORTED_LANGUAGES.includes(normalizedLang as SupportedLanguage)
-    return isSupported
-}
-
-/**
- * Get browser's UI language or fall back to default
- * This is the standard way to detect browser language in extensions
- */
-export function getBrowserLanguage(): SupportedLanguage {
+export function getBrowserLanguage(): LanguageCode {
+  let detectedLang: LanguageCode = 'en'; // Default
   try {
-    // Use navigator.language to get browser language
-    const browserLang = navigator.language || (navigator as any).userLanguage
-    
-    // Normalize language code
-    const normalizedLang = normalizeLanguageCode(browserLang)
-    
-    // Check if supported
-    if (isLanguageSupported(normalizedLang)) {
-      return normalizedLang
-    }
-    
-    // If the full language code is not supported, try the base language code
-    const baseLang = normalizedLang.split('-')[0]
-    if (isLanguageSupported(baseLang)) {
-      return baseLang
+    const browserLang = navigator.language || (navigator as any).userLanguage;
+    if (browserLang) {
+      const normalizedLang = normalizeLanguageCode(browserLang);
+      
+      // Use the imported isLanguageSupported checker
+      if (isLanguageSupported(normalizedLang)) {
+        detectedLang = normalizedLang;
+      } else {
+        // Try base language code if regional variant wasn't supported
+        const baseLang = normalizedLang.split('-')[0];
+        if (isLanguageSupported(baseLang)) {
+          detectedLang = baseLang;
+        }
+      }
     }
   } catch (e) {
-    console.warn('i18n: Error getting browser language:', e)
+    console.warn(`${LOG_PREFIX} Error detecting browser language:`, e);
   }
-  
-  // Default to English if no supported language is found
-  return 'en'
-}
-
-// Internal translations
-export function getTranslations(language: SupportedLanguage): Record<string, string> {
-  switch (language) {
-    case 'zh':
-      return {
-        displaySettings: '显示设置',
-        readingTheme: '阅读主题',
-        light: '明亮',
-        dark: '暗黑',
-        sepia: '护眼',
-        paper: '纸张',
-        fontSize: '字号',
-        currentSize: '当前大小',
-        fontFamily: '字体',
-        pageWidth: '页面宽度',
-        narrow: '窄',
-        medium: '中等',
-        wide: '宽',
-        textAlignment: '文本对齐',
-        left: '左对齐',
-        justify: '两端对齐',
-        center: '居中',
-        right: '右对齐',
-        lineSpacing: '行间距',
-        compact: '紧凑',
-        comfortable: '舒适',
-        relaxed: '宽松',
-        close: '关闭',
-        download: '下载',
-        detected: '检测到',
-        extractingArticle: '正在提取文章...',
-        couldNotExtract: '无法提取文章内容'
-      }
-    default:
-      return {
-        displaySettings: 'Display Settings',
-        readingTheme: 'Reading Theme',
-        light: 'Light',
-        dark: 'Dark',
-        sepia: 'Sepia',
-        paper: 'Paper',
-        fontSize: 'Font Size',
-        currentSize: 'Current Size',
-        fontFamily: 'Font Family',
-        pageWidth: 'Page Width',
-        narrow: 'Narrow',
-        medium: 'Medium',
-        wide: 'Wide',
-        textAlignment: 'Text Alignment',
-        left: 'Left',
-        justify: 'Justify',
-        center: 'Center',
-        right: 'Right',
-        lineSpacing: 'Line Spacing',
-        compact: 'Compact',
-        comfortable: 'Comfortable',
-        relaxed: 'Relaxed',
-        close: 'Close',
-        download: 'Download',
-        detected: 'Detected',
-        extractingArticle: 'Extracting article...',
-        couldNotExtract: 'Could not extract article content'
-      }
-  }
+  console.log(`${LOG_PREFIX} Using UI language: ${detectedLang}`);
+  return detectedLang;
 }
 
 /**
- * Get a translated string by key
- * This function mimics the chrome.i18n.getMessage API but works with our internal translation system
+ * Get a translated string using the standard chrome.i18n API.
+ * Requires the key to be defined in `public/_locales/[lang]/messages.json`.
+ * 
+ * @param key The translation key (must match messages.json).
+ * @returns The translated string, or the key itself if not found.
  */
-export function getMessage(key: string, language: SupportedLanguage): string {
+export function getMessage(key: string): string {
   try {
-    // First try to get from translations object
-    if (translations[language] && translations[language][key]) {
-      return translations[language][key];
-    }
-
-    // Then try Chrome i18n
     if (typeof chrome !== 'undefined' && chrome?.i18n?.getMessage) {
       const message = chrome.i18n.getMessage(key);
+      // chrome.i18n.getMessage returns empty string if key not found
       if (message) {
         return message;
+      } else {
+        console.warn(`${LOG_PREFIX} Translation key "${key}" not found in messages.json.`);
+        return key; // Return key if Chrome API returns empty string
       }
+    } else {
+      // Fallback if chrome.i18n is not available (e.g., testing environment)
+      console.warn(`${LOG_PREFIX} chrome.i18n.getMessage not available. Returning key "${key}".`);
+      return key;
     }
   } catch (e) {
-    console.warn('i18n: Error getting message:', e);
+    console.error(`${LOG_PREFIX} Error calling chrome.i18n.getMessage for key "${key}":`, e);
+    return key; // Return key on error
   }
-  
-  // Finally fallback to internal translations
-  const internalTranslations = getTranslations(language);
-  return internalTranslations[key] || key;
-}
-
-/**
- * Helper to convert from simple language code to chrome.i18n language code
- * This is useful when working with both the browser's built-in i18n and our custom system
- */
-export function toExtensionLanguageCode(lang: SupportedLanguage): string {
-    // Chrome extensions use language codes like en_US or zh_CN
-  // We could map our simple codes to their corresponding extension codes
-  const extensionCodeMap: Record<SupportedLanguage, string> = {
-    'en': 'en',
-    'zh': 'zh_CN'
-  };
-  
-  const code = extensionCodeMap[lang];
-  return code;
-}
-
-/**
- * Initializes the i18n system
- * Call this function at application startup
- */
-export function initI18n(): SupportedLanguage {
-  // Get the browser language or use default
-  const detectedLanguage = getBrowserLanguage();
-  return detectedLanguage;
 } 

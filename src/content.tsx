@@ -3,7 +3,8 @@ import type { PlasmoCSConfig } from "plasmo"
 import { ReaderProvider } from "./context/ReaderContext"
 import { I18nProvider } from "./context/I18nContext"
 import Reader from "./components/Reader"
-import { createRoot } from "react-dom/client"
+
+// --- Config --- 
 
 // Content script configuration
 export const config: PlasmoCSConfig = {
@@ -15,84 +16,113 @@ export const config: PlasmoCSConfig = {
 // @ts-ignore - This is a Plasmo-specific configuration
 export const world = "ISOLATED"
 
-// Type definitions for messages
+// --- Types --- 
+
+// Define types for messages this script might receive or send
+// Based on types used in background.ts
+interface ReaderModeChangedMessage { type: 'READER_MODE_CHANGED'; isActive: boolean; }
+interface ContentScriptReadyMessage { type: 'CONTENT_SCRIPT_READY'; }
+
+// Type for messages potentially received from background (currently none handled)
 type BackgroundMessage = {
   type: string;
-  isVisible?: boolean;
+  // Add other potential properties if messages are handled in the future
+  [key: string]: any; 
 };
 
-// Function to open the AI Assistant side panel
-const openAIAssistant = () => {
-  // Send message to background script to open side panel
-  chrome.runtime.sendMessage({ type: 'OPEN_SIDEPANEL' });
-};
+// --- Component --- 
 
-// Content Script UI Component
+/**
+ * Content Script UI Component
+ * Injected into the page, manages the reader mode state, and renders the Reader UI.
+ */
 const ContentScriptUI = () => {
   const [isActive, setIsActive] = useState(false)
-  
-  // Toggle reader mode function
+  const LOG_PREFIX = "[ContentScriptUI]";
+
+  /**
+   * Toggles the reader mode state and notifies the background script.
+   */
   const toggleReaderMode = () => {
-    const newState = !isActive;
-    setIsActive(newState);
-    
-    // Notify background script about the state change
-    chrome.runtime.sendMessage({
-      type: "READER_MODE_CHANGED",
-      isActive: newState
+    console.log(`${LOG_PREFIX} Toggling reader mode...`);
+    setIsActive(prevState => {
+      const newState = !prevState;
+      console.log(`${LOG_PREFIX} Reader mode is now: ${newState ? 'Active' : 'Inactive'}`);
+      // Notify background script about the state change
+      chrome.runtime.sendMessage<ReaderModeChangedMessage>({ 
+        type: "READER_MODE_CHANGED", 
+        isActive: newState 
+      }).catch(error => {
+        console.warn(`${LOG_PREFIX} Failed to send READER_MODE_CHANGED message:`, error);
+      });
+      return newState;
     });
   }
 
-  // Listen for messages via custom events
+  // Set up listeners and initial communication
   useEffect(() => {
-    // Custom event handler
-    const handleCustomEvent = () => {
+    /**
+     * Handles the custom event dispatched by the background script 
+     * (via executeScript) to toggle the reader UI.
+     */
+    const handleInternalToggleEvent = () => {
+      console.log(`${LOG_PREFIX} Received internal toggle event.`);
       toggleReaderMode();
     };
     
-    // Add event listener
-    document.addEventListener('READLITE_TOGGLE_INTERNAL', handleCustomEvent);
+    document.addEventListener('READLITE_TOGGLE_INTERNAL', handleInternalToggleEvent);
     
-    // Notify background script that content script is ready
-    chrome.runtime.sendMessage({
-      type: "CONTENT_SCRIPT_READY"
-    });
+    // Notify background script that this content script instance is ready
+    console.log(`${LOG_PREFIX} Sending CONTENT_SCRIPT_READY message.`);
+    chrome.runtime.sendMessage<ContentScriptReadyMessage>({ type: "CONTENT_SCRIPT_READY" })
+      .catch(error => {
+        console.warn(`${LOG_PREFIX} Failed to send CONTENT_SCRIPT_READY message:`, error);
+      });
     
-    // Listen for messages from background script
+    /**
+     * Handles messages received directly from the background script.
+     * Currently, no messages are processed here, but the listener structure remains.
+     */
     const handleBackgroundMessages = (
       message: BackgroundMessage, 
       sender: chrome.runtime.MessageSender, 
       sendResponse: (response?: any) => void
-    ) => {
-      // Handle sidepanel visibility changes
-      if (message.type === 'SIDEPANEL_VISIBILITY_CHANGED') {
-        // Dispatch a custom event that the DOM can listen to
-        window.postMessage({
-          type: 'SIDEPANEL_VISIBILITY_CHANGED',
-          isVisible: message.isVisible
-        }, '*');
-        
-        // Send response that we received the message
-        sendResponse({ received: true });
-        return true;
-      }
-      return false;
+    ): boolean => { // Explicitly return boolean
+      // Example: Check for a hypothetical future message type
+      // if (message.type === 'SOME_FUTURE_ACTION') {
+      //   console.log("Received SOME_FUTURE_ACTION", message);
+      //   sendResponse({ received: true });
+      //   return true; 
+      // }
+      return false; // Indicate message not handled asynchronously
     };
     
-    // Add message listener
+    // Add the message listener
     chrome.runtime.onMessage.addListener(handleBackgroundMessages);
     
+    // Cleanup function for when the component unmounts or dependencies change
     return () => {
-      document.removeEventListener('READLITE_TOGGLE_INTERNAL', handleCustomEvent);
-      chrome.runtime.onMessage.removeListener(handleBackgroundMessages);
+      console.log(`${LOG_PREFIX} Cleaning up listeners.`);
+      document.removeEventListener('READLITE_TOGGLE_INTERNAL', handleInternalToggleEvent);
+      // Check if the listener exists before trying to remove it (good practice)
+      if (chrome.runtime?.onMessage?.hasListener(handleBackgroundMessages)) {
+          chrome.runtime.onMessage.removeListener(handleBackgroundMessages);
+      }
     };
-  }, [isActive]);
+  }, []); // Empty dependency array: Run only on mount and unmount
   
-  // If not active, don't render anything
+  // --- Rendering --- 
+
+  // Do not render the UI if reader mode is inactive
   if (!isActive) {
-    return null
+    // Ensure the body class is removed if we become inactive
+    // This might be redundant if Reader component handles it, but good safety.
+    document.documentElement.classList.remove('plasmo-csui-active');
+    return null;
   }
   
+  // Add class to html element when active to disable page scroll
+  document.documentElement.classList.add('plasmo-csui-active');
     
   return (
     <div className="plasmo-csui-container" style={{
@@ -105,7 +135,7 @@ const ContentScriptUI = () => {
       overflow: "hidden"
     }}>
       <style>{`
-        /* Only keep essential styles for container functionality */
+        /* Apply overflow: hidden directly to html when reader is active */
         html.plasmo-csui-active {
           overflow: hidden !important;
         }
@@ -119,4 +149,4 @@ const ContentScriptUI = () => {
   )
 }
 
-export default ContentScriptUI 
+export default ContentScriptUI

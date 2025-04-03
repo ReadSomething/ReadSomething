@@ -4,144 +4,206 @@ import Settings from "../components/Settings"
 import Controls from "../components/Controls"
 import { useI18n } from "../hooks/useI18n"
 import { LanguageCode } from "../utils/language"
+
 /**
  * Main Reader component
- * Displays the article in a clean, readable format
+ * Displays the article in a clean, readable format with controls and settings.
  */
 const Reader = () => {
   const { article, settings, isLoading, error, closeReader } = useReader()
   const [showSettings, setShowSettings] = useState(false)
   const [detectedLanguage, setDetectedLanguage] = useState<LanguageCode>('en')
   const readerContentRef = useRef<HTMLDivElement>(null)
+  const LOG_PREFIX = "[Reader]";
   
   // Get translations function
   const { t } = useI18n()
   
-  // Detect article language and set corresponding styles
+  // --- Effects ---
+
+  // Detect article language when article data is available
   useEffect(() => {
-    if (article && article.language) {
+    if (article?.language) {
       // Language code is already normalized in detectLanguage function
-      setDetectedLanguage(article.language as LanguageCode)
+      const lang = article.language as LanguageCode;
+      console.log(`${LOG_PREFIX} Detected article language: ${lang}`);
+      setDetectedLanguage(lang);
     }
   }, [article?.language]);
   
-  // Apply language-specific settings
-  useEffect(() => {
-    const contentLang = detectedLanguage;
-    
-    // Get language-specific settings if available
-    const langSettings = settings.languageSettings[contentLang];
-    if (langSettings) {
-      // Customize the content language settings here
-    }
-  }, [detectedLanguage, settings.languageSettings]);
-  
-  // Handle special code block structure
+  // Apply specific DOM transformations after content rendering
   useEffect(() => {
     if (!readerContentRef.current || !article) return;
     
-    // Find code blocks with the special structure
-    const codeBlocks = readerContentRef.current.querySelectorAll('pre + div');
+    console.log(`${LOG_PREFIX} Applying post-render DOM adjustments (e.g., code block labels).`);
     
-    codeBlocks.forEach(langDiv => {
-      const pre = langDiv.previousElementSibling as HTMLPreElement;
-      if (!pre || pre.tagName !== 'PRE') return;
+    // --- Code Block Language Label Handling ---
+    // NOTE: This manipulates the DOM directly after React renders.
+    // This is necessary because the HTML structure for code blocks 
+    // (often <pre> followed by a <div> with language) comes from an external 
+    // source (markdown conversion/HTML extraction) and needs adjustment for styling.
+    // Ideally, the HTML generation step would create the desired structure directly.
+    try {
+      const codeBlocks = readerContentRef.current.querySelectorAll('pre + div');
+      console.log(`${LOG_PREFIX} Found ${codeBlocks.length} potential code block language divs.`);
       
-      // Position the pre element as relative if not already
-      if (window.getComputedStyle(pre).position !== 'relative') {
-        pre.style.position = 'relative';
-      }
-      
-      // Check if there's language info in the div
-      const langSpan = langDiv.querySelector('p > span');
-      if (langSpan && langSpan.textContent) {
-        // Create a language label and position it in the pre
-        const langLabel = document.createElement('div');
-        langLabel.className = 'code-lang-label';
-        langLabel.textContent = langSpan.textContent;
+      codeBlocks.forEach((langDiv, index) => {
+        const pre = langDiv.previousElementSibling as HTMLPreElement;
+        // Ensure the previous sibling is indeed a <pre> tag
+        if (!pre || pre.tagName !== 'PRE') return;
         
-        // Check if label already exists
-        const existingLabel = pre.querySelector('.code-lang-label');
-        if (!existingLabel) {
-          pre.appendChild(langLabel);
+        // Check for language info within the div (often inside <p><span>)
+        const langSpan = langDiv.querySelector('p > span, span'); // Check common structures
+        if (langSpan?.textContent) {
+          const langName = langSpan.textContent.trim();
+          console.log(`${LOG_PREFIX} Processing code block ${index} with language: ${langName}`);
+          
+          // Ensure <pre> can contain the absolutely positioned label
+          if (window.getComputedStyle(pre).position === 'static') {
+            pre.style.position = 'relative';
+          }
+          
+          // Check if label already exists to prevent duplicates
+          const existingLabel = pre.querySelector('.code-lang-label');
+          if (!existingLabel) {
+            const langLabel = document.createElement('div');
+            langLabel.className = 'code-lang-label';
+            langLabel.textContent = langName;
+            pre.appendChild(langLabel);
+            console.log(`${LOG_PREFIX} Added language label '${langName}' to code block ${index}.`);
+          } else {
+            // Optionally update existing label text if needed
+            // existingLabel.textContent = langName; 
+          }
+          
+          // Hide the original language div as we've created a better label
+          (langDiv as HTMLElement).style.display = 'none';
+        } else {
+          console.log(`${LOG_PREFIX} No language span found in div following code block ${index}.`);
         }
-        
-        // Hide the original language div as we've created a proper label
-        (langDiv as HTMLElement).style.display = 'none';
-      }
-    });
-  }, [article]);
+      });
+    } catch (domError) {
+      console.error(`${LOG_PREFIX} Error during code block DOM manipulation:`, domError);
+    }
+
+  }, [article]); // Rerun when article content changes
   
-  // All hooks must be called unconditionally at the top level
-  // Debug useEffect to log when settings panel visibility changes
-  useEffect(() => {
-      }, [showSettings]);
-  
-  // Toggle settings panel
+  // --- Event Handlers ---
+
+  /**
+   * Toggles the visibility of the settings panel.
+   */
   const toggleSettings = () => {
-    setShowSettings(!showSettings);
+    console.log(`${LOG_PREFIX} Toggling settings panel.`);
+    setShowSettings(prev => !prev);
   }
   
-  // Determine container style based on theme
+  /**
+   * Closes the reader view by notifying the background script and dispatching 
+   * the internal toggle event (handled by content.tsx).
+   */
+  const handleClose = () => {
+    console.log(`${LOG_PREFIX} Closing reader.`);
+    // Notify background script about state change before exiting
+    chrome.runtime.sendMessage({
+      type: "READER_MODE_CHANGED",
+      isActive: false
+    }).catch(error => console.warn("Failed to send READER_MODE_CHANGED message:", error));
+    
+    // Dispatch the internal event to trigger removal in content.tsx
+    document.dispatchEvent(new CustomEvent('READLITE_TOGGLE_INTERNAL'));
+  };
+
+  // --- Styling --- 
+
+  /**
+   * Returns the base container style object based on the current theme.
+   */
   const getContainerStyle = () => {
     switch (settings.theme) {
-      case "dark":
-        return {
-          backgroundColor: "#202020",
-          color: "#E0E0E0"
-        }
-      case "sepia":
-        return {
-          backgroundColor: "#F2E8D7",
-          color: "#594A38"
-        }
-      case "paper":
-        return {
-          backgroundColor: "#F7F7F7",
-          color: "#333333"
-        }
-      default:
-        return {
-          backgroundColor: "#FFFFFF",
-          color: "#2C2C2E"
-        }
+      case "dark": return { backgroundColor: "#202020", color: "#E0E0E0" };
+      case "sepia": return { backgroundColor: "#F2E8D7", color: "#594A38" };
+      case "paper": return { backgroundColor: "#F7F7F7", color: "#333333" };
+      default: return { backgroundColor: "#FFFFFF", color: "#2C2C2E" }; // light
     }
-  }
+  };
   
-  // Get theme-based link styles
-  const getLinkStyles = () => {
-    switch (settings.theme) {
+  /**
+   * Generates CSS rules for link colors based on the theme.
+   * To be injected into a <style> tag.
+   */
+  const generateThemeCss = () => {
+    const theme = settings.theme;
+    let css = ``;
+    
+    // Base link styles
+    css += `
+      [data-theme="${theme}"] a { text-decoration: none; }
+      [data-theme="${theme}"] a:hover { text-decoration: underline; }
+    `;
+
+    // Theme-specific colors
+    switch (theme) {
       case "dark":
-        return `
-          a { color: #7BB0FF; }
-          a:visited { color: #AF9CEF; }
-          a:hover { color: #99CCFF; text-decoration: underline; }
-          a:active { color: #5C9AFF; }
+        css += `
+          [data-theme="dark"] a { color: #7BB0FF; }
+          [data-theme="dark"] a:visited { color: #AF9CEF; }
+          [data-theme="dark"] a:hover { color: #99CCFF; }
+          [data-theme="dark"] a:active { color: #5C9AFF; }
         `;
+        break;
       case "sepia":
-        return `
-          a { color: #9D633C; }
-          a:visited { color: #7A582F; }
-          a:hover { color: #B37544; text-decoration: underline; }
-          a:active { color: #86532F; }
+        css += `
+          [data-theme="sepia"] a { color: #9D633C; }
+          [data-theme="sepia"] a:visited { color: #7A582F; }
+          [data-theme="sepia"] a:hover { color: #B37544; }
+          [data-theme="sepia"] a:active { color: #86532F; }
         `;
+        break;
       case "paper":
-        return `
-          a { color: #505050; }
-          a:visited { color: #707070; }
-          a:hover { color: #303030; text-decoration: underline; }
-          a:active { color: #252525; }
+        css += `
+          [data-theme="paper"] a { color: #505050; }
+          [data-theme="paper"] a:visited { color: #707070; }
+          [data-theme="paper"] a:hover { color: #303030; }
+          [data-theme="paper"] a:active { color: #252525; }
         `;
+        break;
       default: // light
-        return `
-          a { color: #0077CC; }
-          a:visited { color: #6B40BD; }
-          a:hover { color: #0055AA; text-decoration: underline; }
-          a:active { color: #004488; }
+        css += `
+          [data-theme="light"] a { color: #0077CC; }
+          [data-theme="light"] a:visited { color: #6B40BD; }
+          [data-theme="light"] a:hover { color: #0055AA; }
+          [data-theme="light"] a:active { color: #004488; }
         `;
+        break;
     }
+
+    // Add styles for code block language label
+    css += `
+      .code-lang-label {
+        position: absolute;
+        top: 0;
+        right: 8px; 
+        padding: 1px 5px;
+        font-size: 0.75em;
+        color: ${settings.theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.5)'};
+        background-color: ${settings.theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'};
+        border-radius: 3px;
+        pointer-events: none; /* Don't interfere with selecting text */
+        z-index: 1; /* Ensure it's above code content */
+      }
+      pre {
+        position: relative; /* Needed for absolute positioning of label */
+        /* Add some padding to prevent label overlap with code */
+        padding-top: 2em !important; 
+      }
+    `;
+
+    return css;
   }
-  
+
+  // --- Conditional Rendering --- 
+
   // Handle loading state
   if (isLoading) {
     return (
@@ -171,8 +233,8 @@ const Reader = () => {
     )
   }
   
-  // Handle no article extracted
-  if (!article) {
+  // Handle error state (article not extracted or other errors)
+  if (!article || error) {
     return (
       <div style={{
         display: "flex",
@@ -195,38 +257,34 @@ const Reader = () => {
               <path d="M9 9L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <p style={{ color: "currentColor" }}>{t('couldNotExtract')}</p>
+          <p style={{ color: "currentColor" }}>{error || t('couldNotExtract')}</p>
         </div>
       </div>
     )
   }
   
-  // Adjust width based on settings
+  // --- Main Render --- 
+
+  // Adjust content width based on settings
   const readingWidth = settings.width;
-  
-  // Calculate content style with line height
   const containerStyle = getContainerStyle();
-  const contentStyle = {
+  
+  // Base styles for the content area
+  const contentStyle: React.CSSProperties = {
     lineHeight: settings.lineHeight.toString(),
     fontSize: `${settings.fontSize}px`,
     fontFamily: settings.fontFamily,
     textAlign: settings.textAlign,
-  };
-  
-  // Handle closing reader mode
-  const handleClose = () => {
-    // Notify background script about state change before exiting
-    chrome.runtime.sendMessage({
-      type: "READER_MODE_CHANGED",
-      isActive: false
-    });
-    
-    // Create and dispatch the close event
-    document.dispatchEvent(new CustomEvent('READLITE_TOGGLE_INTERNAL'));
+    maxWidth: `${settings.width}px`,
+    margin: '40px auto', // Add top/bottom margin
+    paddingBottom: '100px' // Ensure space at the bottom
   };
   
   return (
     <>
+      {/* Inject theme-specific styles */}
+      <style dangerouslySetInnerHTML={{ __html: generateThemeCss() }} />
+
       <Controls 
         onToggleSettings={toggleSettings} 
         onClose={handleClose}
@@ -240,486 +298,44 @@ const Reader = () => {
         />
       )}
       
-      <div style={{
-        width: "100%",
-        minHeight: "100vh",
-        padding: "20px",
-        boxSizing: "border-box",
-        overflow: "auto",
-        height: "100vh",
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 2147483640,
-        ...containerStyle
-      }}>
-        <style>{`
-          .reader-content img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 1em auto;
-          }
-          
-          /* Content language specific styles */
-          /* Chinese paragraph styles */
-          .reader-content[data-content-lang="zh"] p {
-            margin: 0 0 1em 0;
-            text-indent: 0;
-            letter-spacing: 0;
-          }
-          
-          /* Apply justified text for Chinese with appropriate settings */
-          .reader-content[data-content-lang="zh"][data-text-align="justify"] p {
-            text-align: justify;
-            text-justify: inter-ideographic; /* Chinese text justification */
-          }
-          
-          /* Chinese punctuation handling */
-          .reader-content[data-content-lang="zh"] {
-            /* Ensure Chinese uses full-width punctuation */
-            --punctuation-width: 1em;
-            hanging-punctuation: first allow-end; /* Allow punctuation to hang */
-          }
-          
-          /* Punctuation handling when at the end of a line */
-          .reader-content[data-content-lang="zh"] p {
-            overflow-wrap: break-word;
-            word-break: normal;
-          }
-          
-          /* Handle English and numbers */
-          .reader-content[data-content-lang="zh"] code,
-          .reader-content[data-content-lang="zh"] kbd,
-          .reader-content[data-content-lang="zh"] pre,
-          .reader-content[data-content-lang="zh"] samp {
-            font-family: 'JetBrains Mono', 'Fira Code', 'Source Code Pro', 'Menlo', monospace;
-          }
-          
-          /* Optimize Chinese/English mixed text */
-          .reader-content[data-content-lang="zh"] * {
-            /* Consider using JS to dynamically add spaces between Chinese and English, like pangu.js */
-            text-justify-trim: punctuation; /* Trim punctuation space */
-          }
-          
-          /* No indent for first paragraph after headings in Chinese */
-          .reader-content[data-content-lang="zh"] h1 + p, 
-          .reader-content[data-content-lang="zh"] h2 + p, 
-          .reader-content[data-content-lang="zh"] h3 + p, 
-          .reader-content[data-content-lang="zh"] h4 + p, 
-          .reader-content[data-content-lang="zh"] h5 + p, 
-          .reader-content[data-content-lang="zh"] h6 + p {
-            text-indent: 0;
-          }
-          
-          /* Chinese blockquote styling optimization */
-          .reader-content[data-content-lang="zh"] blockquote {
-            padding: 0.5em 1em 0.5em 2em;
-            position: relative;
-            background-color: rgba(0, 0, 0, 0.03);
-          }
-          
-          /* Chinese list spacing */
-          .reader-content[data-content-lang="zh"] ul,
-          .reader-content[data-content-lang="zh"] ol {
-            margin-bottom: 1.2em;
-            padding-left: 2em; /* Increase list indentation */
-          }
-          
-          .reader-content[data-content-lang="zh"] li {
-            margin-bottom: 0.5em;
-            text-indent: 0; /* Ensure list items are not indented */
-          }
-          
-          /* Chinese table optimization */
-          .reader-content[data-content-lang="zh"] table {
-            font-size: 0.95em;
-            width: 100%;
-            margin: 1.5em 0;
-            border-collapse: collapse;
-          }
-          
-          .reader-content[data-content-lang="zh"] th,
-          .reader-content[data-content-lang="zh"] td {
-            padding: 0.75em;
-            text-align: left;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-          }
-          
-          .reader-content[data-content-lang="zh"] th {
-            font-weight: bold;
-            background-color: rgba(0, 0, 0, 0.05);
-          }
-          
-          /* Adapt to dark theme tables */
-          .reader-content[data-theme="dark"][data-content-lang="zh"] th,
-          .reader-content[data-theme="dark"][data-content-lang="zh"] td {
-            border-color: rgba(255, 255, 255, 0.1);
-          }
-          
-          .reader-content[data-theme="dark"][data-content-lang="zh"] th {
-            background-color: rgba(255, 255, 255, 0.05);
-          }
-          
-          /* Override default em styling for Chinese */
-          .reader-content[data-content-lang="zh"] em {
-            font-style: normal;
-            font-weight: bold; /* Use bold instead of italic */
-            text-emphasis: dot; /* Optional: Use emphasis mark */
-            text-emphasis-position: under; /* Emphasis mark position */
-          }
-          
-          /* Highlight text */
-          .reader-content[data-content-lang="zh"] strong {
-            font-weight: bold;
-            /* Optional: Add background color to emphasized text */
-            background-color: rgba(255, 255, 0, 0.1);
-            padding: 0 0.1em;
-          }
-          
-          /* Use a more appropriate paragraph spacing */
-          .reader-content[data-content-lang="zh"] p + p {
-            margin-top: 0.75em;
-          }
-          
-          /* Title and content spacing */
-          .reader-content[data-content-lang="zh"] h1,
-          .reader-content[data-content-lang="zh"] h2,
-          .reader-content[data-content-lang="zh"] h3,
-          .reader-content[data-content-lang="zh"] h4,
-          .reader-content[data-content-lang="zh"] h5,
-          .reader-content[data-content-lang="zh"] h6 {
-            margin-bottom: 1em;
-          }
-          
-          /* List styling improvement */
-          .reader-content[data-content-lang="zh"] li {
-            list-style-position: outside;
-            text-indent: 0;
-          }
-          
-          /* English/default paragraph styles */
-          .reader-content[data-content-lang="en"] p,
-          .reader-content:not([data-content-lang="zh"]) p {
-            margin: 0 0 1.2em 0;
-            text-indent: 0;
-          }
-          
-          /* Apply hyphenation for justified English text */
-          .reader-content[data-content-lang="en"][data-text-align="justify"] p {
-            hyphens: auto;
-            -webkit-hyphens: auto;
-            -ms-hyphens: auto;
-          }
-          
-          /* English list spacing */
-          .reader-content[data-content-lang="en"] ul,
-          .reader-content[data-content-lang="en"] ol,
-          .reader-content:not([data-content-lang="zh"]) ul,
-          .reader-content:not([data-content-lang="zh"]) ol {
-            margin-bottom: 1.2em;
-            padding-left: 1.8em;
-          }
-          
-          .reader-content[data-content-lang="en"] li,
-          .reader-content:not([data-content-lang="zh"]) li {
-            margin-bottom: 0.6em;
-          }
-          
-          /* Generic heading margins */
-          .reader-content h1, 
-          .reader-content h2, 
-          .reader-content h3, 
-          .reader-content h4, 
-          .reader-content h5, 
-          .reader-content h6 {
-            margin-top: 1.5em;
-            margin-bottom: 0.8em;
-            line-height: 1.3;
-          }
-          
-          /* Specific heading styles */
-          .reader-content h1 {
-            font-size: 2em;
-            font-weight: 700;
-            margin-top: 0;
-          }
-          
-          .reader-content h2 {
-            font-size: 1.5em;
-            font-weight: 600;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            padding-bottom: 0.3em;
-          }
-          
-          .reader-content h3 {
-            font-size: 1.25em;
-            font-weight: 600;
-          }
-          
-          .reader-content h4 {
-            font-size: 1.1em;
-            font-weight: 600;
-          }
-          
-          /* Dark theme heading border */
-          .reader-content[data-theme="dark"] h2 {
-            border-bottom-color: rgba(255, 255, 255, 0.2);
-          }
-          
-          /* Sepia theme heading border */
-          .reader-content[data-theme="sepia"] h2 {
-            border-bottom-color: rgba(89, 74, 56, 0.2);
-          }
-          
-          /* Paper theme heading border */
-          .reader-content[data-theme="paper"] h2 {
-            border-bottom-color: rgba(51, 51, 51, 0.15);
-          }
-          
-          /* Horizontal rules */
-          .reader-content hr {
-            height: 1px;
-            background-color: rgba(0, 0, 0, 0.1);
-            border: none;
-            margin: 2em 0;
-          }
-          
-          /* Dark theme horizontal rule */
-          .reader-content[data-theme="dark"] hr {
-            background-color: rgba(255, 255, 255, 0.2);
-          }
-          
-          /* Blockquotes */
-          .reader-content blockquote {
-            margin: 1.5em 0;
-            padding: 0.5em 1.2em;
-            border-left: 4px solid #ddd;
-            background-color: rgba(0, 0, 0, 0.03);
-            border-radius: 0 3px 3px 0;
-          }
-          
-          /* Dark theme blockquotes */
-          .reader-content[data-theme="dark"] blockquote {
-            border-left-color: #666;
-            background-color: rgba(255, 255, 255, 0.05);
-          }
-          
-          /* Sepia theme blockquotes */
-          .reader-content[data-theme="sepia"] blockquote {
-            border-left-color: #d0ba98;
-            background-color: rgba(89, 74, 56, 0.05);
-          }
-          
-          /* Paper theme blockquotes */
-          .reader-content[data-theme="paper"] blockquote {
-            border-left-color: #ccc;
-            background-color: rgba(0, 0, 0, 0.03);
-          }
-          
-          /* Simple code block styles */
-          .reader-content pre {
-            position: relative;
-            margin: 1.5em 0;
-            padding: 1em;
-            overflow-x: auto;
-            background-color: rgba(0, 0, 0, 0.03);
-            border-radius: 6px;
-            white-space: pre;
-            word-wrap: normal;
-            -webkit-overflow-scrolling: touch;
-            max-width: 100%;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-          }
-          
-          /* Dark theme support for code blocks */
-          .reader-content[data-theme="dark"] pre {
-            background-color: #2B2B2B;
-            border: 1px solid #666;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-          }
-          
-          /* Sepia theme support for code blocks */
-          .reader-content[data-theme="sepia"] pre {
-            background-color: rgba(89, 74, 56, 0.03);
-            border-color: rgba(89, 74, 56, 0.1);
-          }
-          
-          /* Paper theme support for code blocks */
-          .reader-content[data-theme="paper"] pre {
-            background-color: rgba(51, 51, 51, 0.02);
-            border-color: rgba(51, 51, 51, 0.1);
-          }
-          
-          /* Code inside pre */
-          .reader-content pre > code {
-            display: block;
-            padding: 0;
-            font-family: 'JetBrains Mono', 'Fira Code', 'Source Code Pro', 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace;
-            font-size: 0.85em;
-            line-height: 1.5;
-            tab-size: 2;
-            -moz-tab-size: 2;
-            color: #24292e;
-            letter-spacing: 0.2px;
-          }
-          
-          /* Dark theme support for code text */
-          .reader-content[data-theme="dark"] pre > code {
-            color: #F8F8F2;
-          }
-          
-          /* Sepia theme support for code text */
-          .reader-content[data-theme="sepia"] pre > code {
-            color: #594a38;
-          }
-          
-          /* Paper theme support for code text */
-          .reader-content[data-theme="paper"] pre > code {
-            color: #333333;
-          }
-          
-          /* Support for span elements inside code blocks */
-          .reader-content pre > code span {
-            font-family: inherit;
-            line-height: inherit;
-            font-size: inherit;
-          }
-          
-          /* Inline code */
-          .reader-content :not(pre) > code {
-            padding: 0.2em 0.4em;
-            background-color: rgba(0, 0, 0, 0.05);
-            border-radius: 3px;
-            font-family: 'JetBrains Mono', 'Fira Code', 'Source Code Pro', 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace;
-            font-size: 0.8em;
-            white-space: nowrap;
-            color: #24292e;
-            letter-spacing: 0.2px;
-          }
-          
-          /* Dark theme support for inline code */
-          .reader-content[data-theme="dark"] :not(pre) > code {
-            background-color: #3A3A3A;
-            color: #F8F8F2;
-            border: 1px solid #666;
-          }
-          
-          /* Sepia theme support for inline code */
-          .reader-content[data-theme="sepia"] :not(pre) > code {
-            background-color: rgba(89, 74, 56, 0.05);
-            color: #594a38;
-          }
-          
-          /* Paper theme support for inline code */
-          .reader-content[data-theme="paper"] :not(pre) > code {
-            background-color: rgba(51, 51, 51, 0.05);
-            color: #333333;
-          }
-          
-          /* Code language label */
-          .code-lang-label {
-            position: absolute;
-            top: 0;
-            right: 0;
-            padding: 0.3em 0.6em;
-            font-size: 0.75em;
-            color: #fff;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 0 6px 0 6px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            text-transform: uppercase;
-            z-index: 1;
-            letter-spacing: 0.5px;
-          }
-          
-          /* Dark theme support for code language label */
-          .reader-content[data-theme="dark"] .code-lang-label {
-            background: #505050;
-            color: #FFFFFF;
-            border: 1px solid #777;
-            font-weight: bold;
-          }
-          
-          /* Sepia theme support for code language label */
-          .reader-content[data-theme="sepia"] .code-lang-label {
-            background: rgba(89, 74, 56, 0.5);
-          }
-          
-          /* Paper theme support for code language label */
-          .reader-content[data-theme="paper"] .code-lang-label {
-            background: rgba(51, 51, 51, 0.5);
-          }
-          
-          /* Fix for mobile devices */
-          @media (max-width: 768px) {
-            .reader-content pre {
-              padding: 0.8em;
-              font-size: 0.85em;
-              margin: 1em 0;
-            }
-            
-            .code-lang-label {
-              font-size: 0.7em;
-              padding: 0.2em 0.4em;
-            }
-          }
-          
-          ${getLinkStyles()}
-        `}</style>
-        
-        <div style={{
-          maxWidth: `${readingWidth}px`,
-          margin: "0 auto",
-          padding: "20px 0 40px",
-          overflow: "visible" /* Ensures no cutting of shadows/decorations */
-        }}>
-          {/* Article Content */}
-          <div 
-            className="reader-content"
-            data-theme={settings.theme}
-            data-content-lang={detectedLanguage}
-            data-text-align={settings.textAlign}
-            style={{
-              padding: "0 20px", 
-              width: "100%", 
-              maxWidth: settings.width + "px", 
-              margin: "0 auto",
-              ...contentStyle
-            }}
-            ref={readerContentRef}
-          >
+      {/* Main scrollable container */}
+      <div 
+        style={{
+          width: "100%",
+          minHeight: "100vh",
+          padding: "20px", // Base padding around the content area
+          boxSizing: "border-box",
+          overflowY: "auto", // Changed from overflow:auto to allow only vertical scroll
+          height: "100vh",
+          position: "fixed", // Use fixed positioning for the overlay
+          top: 0,
+          left: 0,
+          ...containerStyle // Apply theme background/color
+        }}
+        data-theme={settings.theme} // Set data-theme for CSS targeting
+      >
+        {/* Article content area */}
+        <div 
+          ref={readerContentRef} 
+          style={contentStyle}
+          className={`reader-content lang-${detectedLanguage}`}
+        >
+          {article.title && (
             <h1 style={{ 
-              fontSize: detectedLanguage === 'zh' ? "2.2rem" : "2rem", 
-              lineHeight: "1.3", 
-              marginBottom: "1rem",
-              fontWeight: "bold"
+              fontSize: `${Math.max(24, settings.fontSize * 1.5)}px`, 
+              fontWeight: 'bold',
+              marginBottom: '1.5em' 
             }}>
               {article.title}
             </h1>
-            
-            {/* Article metadata if available */}
-            {(article.author || article.date || article.siteName) && (
-              <div style={{ 
-                marginBottom: "2rem", 
-                color: "#666",
-                fontSize: "0.9rem",
-                opacity: 0.8 
-              }}>
-                {article.author && <span>{article.author}</span>}
-                {article.author && article.date && <span> • </span>}
-                {article.date && <span>{article.date}</span>}
-                {(article.author || article.date) && article.siteName && <span> • </span>}
-                {article.siteName && <span>{article.siteName}</span>}
-              </div>
-            )}
-            
-            <div 
-              dangerouslySetInnerHTML={{ __html: article.content }} 
-            />
-          </div>
+          )}
+          {/* 
+            Render article content using dangerouslySetInnerHTML.
+            IMPORTANT: Assumes article.content has been sanitized 
+            during the extraction/parsing process BEFORE reaching this component.
+            Failure to sanitize can lead to XSS vulnerabilities.
+           */}
+          <div dangerouslySetInnerHTML={{ __html: article.content || "" }} />
         </div>
       </div>
     </>

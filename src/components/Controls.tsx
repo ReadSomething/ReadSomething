@@ -3,6 +3,8 @@ import { exportAsMarkdown } from "../utils/export"
 import { Article } from "../utils/parser"
 import { useI18n } from "../hooks/useI18n"
 
+// --- Types & Interfaces ---
+
 interface ControlsProps {
   onToggleSettings: () => void;
   onClose: () => void;
@@ -10,297 +12,182 @@ interface ControlsProps {
   article: Article;
 }
 
+// Simplified structure for theme-specific styles (menu styles removed)
+interface ThemeStyles {
+  container: React.CSSProperties;
+  settingsButton: React.CSSProperties;
+  closeButton: React.CSSProperties;
+  downloadButton: React.CSSProperties;
+  aiButton: React.CSSProperties;
+}
+
+// --- Constants ---
+
+const BASE_BUTTON_STYLE: React.CSSProperties = {
+  width: "40px",
+  height: "40px",
+  borderRadius: "50%",
+  border: "none",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+  transition: "transform 0.15s ease, box-shadow 0.15s ease",
+  position: "relative", // Added for potential pseudo-elements or indicators
+};
+
+// --- Component --- 
+
 /**
  * Reader controls component
- * Provides buttons for settings, AI assistant and closing the reader
+ * Provides floating action buttons for settings, download (Markdown), AI assistant, and closing the reader.
  */
 const Controls: React.FC<ControlsProps> = ({ onToggleSettings, onClose, theme, article }) => {
   const { t } = useI18n();
-  const [isAiActive, setIsAiActive] = useState(false);
-  
-  // AI button active style with purple background
-  const aiActiveStyle: React.CSSProperties = {
-    backgroundColor: "#BB9CD8", // Matching badge and icon color
-    color: "white"
-  };
-  
-  // Toggle AI Assistant side panel
+  // Removed isDownloadMenuOpen state
+  const LOG_PREFIX = "[Controls]";
+
+  // --- Event Handlers ---
+
+  /** Opens the AI Assistant side panel by sending a message to the background script. */
   const toggleAIAssistant = () => {
-    // Use the opposite of current state to determine the action
-    const shouldOpen = !isAiActive;
-    
-    // Send the appropriate message based on whether we're opening or closing
-    if (shouldOpen) {
-      // Open the side panel
-      chrome.runtime.sendMessage({ type: 'OPEN_SIDEPANEL' });
-    } else {
-      // Close the side panel
-      chrome.runtime.sendMessage({ type: 'CLOSE_SIDEPANEL' });
-    }
-    
-    // Update the local state immediately for responsive UI
-    setIsAiActive(shouldOpen);
+    console.log(`${LOG_PREFIX} Sending OPEN_SIDEPANEL message.`);
+    chrome.runtime.sendMessage({ type: 'OPEN_SIDEPANEL' })
+      .catch(error => console.warn(`${LOG_PREFIX} Failed to send OPEN_SIDEPANEL message:`, error));
   };
   
-  // Listen for side panel visibility changes
-  useEffect(() => {
-    const handleVisibilityChange = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'SIDEPANEL_VISIBILITY_CHANGED') {
-        setIsAiActive(event.data.isVisible);
-      }
-    };
-    
-    window.addEventListener('message', handleVisibilityChange);
-    
-    return () => {
-      window.removeEventListener('message', handleVisibilityChange);
-    };
-  }, []);
-  
-  // Handle download as Markdown
+  /** Handles the download button click, exporting the article as Markdown. */
   const handleMarkdownDownload = (e: React.MouseEvent) => {
-    // Stop event propagation immediately
-    e.nativeEvent.stopImmediatePropagation();
-    e.stopPropagation();
-    e.preventDefault();
-    
-    // Use setTimeout with 0 delay to break out of the current event loop
-    // This helps avoid conflicts with other scripts
-    setTimeout(() => {
-      if (article && article.title && article.content) {
-        try {
-          // Call the export function in a separate try-catch
-          exportAsMarkdown(article.title, article.content);
-        } catch (error) {
-          console.error("Export to Markdown failed:", error);
-        }
-      } else {
-        console.error("Cannot export Markdown: Missing article data");
-      }
-    }, 0);
-  };
-  
-  // Get button styles based on theme
-  const getStylesByTheme = () => {
-    const baseButtonStyle: React.CSSProperties = {
-      width: "40px",
-      height: "40px",
-      borderRadius: "50%",
-      border: "none",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      cursor: "pointer",
-      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
-      transition: "transform 0.15s ease, box-shadow 0.15s ease"
+    console.log(`${LOG_PREFIX} Handling Markdown download request.`);
+    // Stop propagation if called from button event
+    if (e) {
+      e.stopPropagation(); 
+      e.preventDefault();
     }
     
-    // Change button contrast based on theme
+    // TODO: Add visual feedback (e.g., button loading state)
+    if (article?.title && article.content) {
+      try {
+        exportAsMarkdown(article.title, article.content);
+        console.log(`${LOG_PREFIX} Markdown export initiated for: ${article.title}`);
+        // TODO: Add success feedback
+      } catch (error) {
+        console.error(`${LOG_PREFIX} Export to Markdown failed:`, error);
+        // TODO: Add error feedback
+      }
+    } else {
+      console.error(`${LOG_PREFIX} Cannot export Markdown: Missing article title or content.`);
+      // TODO: Add feedback for missing data
+    }
+  };
+
+  // Removed toggleDownloadMenu function
+  // Removed useEffect for closing download menu
+
+  // --- Styling --- 
+
+  /**
+   * Generates the style objects for UI elements based on the current theme.
+   */
+  const getStylesByTheme = (): ThemeStyles => {
+    // Define theme-specific color palettes and overrides
+    let buttonBg = "white";
+    let buttonColor = "#333";
+
     switch (theme) {
       case "dark":
-        return {
-          container: {
-            backgroundColor: "transparent"
-          },
-          settingsButton: {
-            ...baseButtonStyle,
-            backgroundColor: "#444",
-            color: "white"
-          },
-          closeButton: {
-            ...baseButtonStyle,
-            backgroundColor: "#444",
-            color: "white"
-          },
-          downloadButton: {
-            ...baseButtonStyle,
-            backgroundColor: "#444",
-            color: "white"
-          },
-          aiButton: {
-            ...baseButtonStyle,
-            ...(isAiActive ? aiActiveStyle : { backgroundColor: "#444", color: "white" })
-          },
-          downloadMenu: {
-            backgroundColor: "#333",
-            color: "white",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
-            border: "1px solid #555"
-          },
-          downloadMenuItem: {
-            color: "white",
-            backgroundColor: "transparent",
-            hover: {
-              backgroundColor: "#555"
-            }
-          }
-        }
+        buttonBg = "#444";
+        buttonColor = "white";
+        break;
       case "sepia":
-        return {
-          container: {
-            backgroundColor: "transparent"
-          },
-          settingsButton: {
-            ...baseButtonStyle,
-            backgroundColor: "#e8d9c0",
-            color: "#5b4636"
-          },
-          closeButton: {
-            ...baseButtonStyle,
-            backgroundColor: "#e8d9c0",
-            color: "#5b4636"
-          },
-          downloadButton: {
-            ...baseButtonStyle,
-            backgroundColor: "#e8d9c0",
-            color: "#5b4636"
-          },
-          aiButton: {
-            ...baseButtonStyle,
-            ...(isAiActive ? aiActiveStyle : { backgroundColor: "#e8d9c0", color: "#5b4636" })
-          },
-          downloadMenu: {
-            backgroundColor: "#f9f1e3",
-            color: "#5b4636",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-            border: "1px solid #e0d0b1"
-          },
-          downloadMenuItem: {
-            color: "#5b4636",
-            backgroundColor: "transparent",
-            hover: {
-              backgroundColor: "#f0e5d3"
-            }
-          }
-        }
+        buttonBg = "#e8d9c0";
+        buttonColor = "#5b4636";
+        break;
       case "paper":
-        return {
-          container: {
-            backgroundColor: "transparent"
-          },
-          settingsButton: {
-            ...baseButtonStyle,
-            backgroundColor: "#EFEFEF",
-            color: "#000000"
-          },
-          closeButton: {
-            ...baseButtonStyle,
-            backgroundColor: "#EFEFEF",
-            color: "#000000"
-          },
-          downloadButton: {
-            ...baseButtonStyle,
-            backgroundColor: "#EFEFEF",
-            color: "#000000"
-          },
-          aiButton: {
-            ...baseButtonStyle,
-            ...(isAiActive ? aiActiveStyle : { backgroundColor: "#EFEFEF", color: "#000000" })
-          },
-          downloadMenu: {
-            backgroundColor: "#F7F7F7",
-            color: "#000000",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-            border: "1px solid #E0E0E0"
-          },
-          downloadMenuItem: {
-            color: "#000000",
-            backgroundColor: "transparent",
-            hover: {
-              backgroundColor: "#EFEFEF"
-            }
-          }
-        }
-      default:
-        return {
-          container: {
-            backgroundColor: "transparent"
-          },
-          settingsButton: {
-            ...baseButtonStyle,
-            backgroundColor: "white",
-            color: "#333"
-          },
-          closeButton: {
-            ...baseButtonStyle,
-            backgroundColor: "white",
-            color: "#333"
-          },
-          downloadButton: {
-            ...baseButtonStyle,
-            backgroundColor: "white",
-            color: "#333"
-          },
-          aiButton: {
-            ...baseButtonStyle,
-            ...(isAiActive ? aiActiveStyle : { backgroundColor: "white", color: "#333" })
-          },
-          downloadMenu: {
-            backgroundColor: "white",
-            color: "#333",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-            border: "1px solid #EFEFEF"
-          },
-          downloadMenuItem: {
-            color: "#333",
-            backgroundColor: "transparent",
-            hover: {
-              backgroundColor: "#F7F7F7"
-            }
-          }
-        }
+        buttonBg = "#EFEFEF";
+        buttonColor = "#000000";
+        break;
     }
+
+    // Construct the full styles object using base styles and overrides
+    const commonButtonStyle = { 
+        ...BASE_BUTTON_STYLE, 
+        backgroundColor: buttonBg, 
+        color: buttonColor 
+    };
+    
+    return {
+      container: {
+        backgroundColor: "transparent"
+      },
+      settingsButton: commonButtonStyle,
+      closeButton: commonButtonStyle,
+      downloadButton: commonButtonStyle,
+      aiButton: commonButtonStyle,
+      // Removed downloadMenu and downloadMenuItem styles
+    };
   }
   
-  const styles = getStylesByTheme()
+  const styles = getStylesByTheme();
+
+  // Removed getMenuItemStyle function
   
+  // --- Render --- 
+
   return (
-    <div className="reader-toolbar" style={{
+    // Main container for the controls, positioned fixed
+    <div style={{
       position: "fixed",
       top: "20px",
       right: "20px",
       display: "flex",
+      flexDirection: "row", // Changed back to row layout
       gap: "12px",
-      zIndex: 2147483647,
-      ...styles.container
-    }}>
-
-      {/* AI Assistant Button */}
-      <button
-        style={styles.aiButton}
-        aria-label={isAiActive ? t('closeAIAssistant') || "Close AI Assistant" : t('openAIAssistant') || "Open AI Assistant"}
-        title={isAiActive ? t('closeAIAssistant') || "Close AI Assistant" : t('openAIAssistant') || "Open AI Assistant"}
-        onClick={toggleAIAssistant}
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </button>
-
-      {/* Download Button */}
-      <button
-        style={styles.downloadButton}
-        aria-label={t('download')}
-        title={t('download')}
-        onClick={handleMarkdownDownload}
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 15L12 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M8 11L12 15L16 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M20 15V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </button>
-
+      zIndex: 2147483647, // High z-index to stay on top
+      ...styles.container 
+     }} 
+     className="reader-controls"
+    >
       {/* Settings Button */}
-      <button
+      <button 
         onClick={onToggleSettings}
         style={styles.settingsButton}
-        aria-label="Settings"
-        title="Settings"
+        aria-label={t('settings')}
+        title={t('settings')}
       >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8.325 2.317C8.751 0.561 11.249 0.561 11.675 2.317C11.7389 2.5808 11.8642 2.82578 12.0407 3.032C12.2172 3.23822 12.4399 3.39985 12.6907 3.50375C12.9414 3.60764 13.2132 3.65085 13.4838 3.62987C13.7544 3.60889 14.0162 3.5243 14.248 3.383C15.791 2.443 17.558 4.209 16.618 5.753C16.4769 5.98466 16.3924 6.24634 16.3715 6.51677C16.3506 6.78721 16.3938 7.05877 16.4975 7.30938C16.6013 7.55999 16.7627 7.78258 16.9687 7.95905C17.1747 8.13553 17.4194 8.26091 17.683 8.325C19.439 8.751 19.439 11.249 17.683 11.675C17.4192 11.7389 17.1742 11.8642 16.968 12.0407C16.7618 12.2172 16.6001 12.4399 16.4963 12.6907C16.3924 12.9414 16.3491 13.2132 16.3701 13.4838C16.3911 13.7544 16.4757 14.0162 16.617 14.248C17.557 15.791 15.791 17.558 14.247 16.618C14.0153 16.4769 13.7537 16.3924 13.4832 16.3715C13.2128 16.3506 12.9412 16.3938 12.6906 16.4975C12.44 16.6013 12.2174 16.7627 12.0409 16.9687C11.8645 17.1747 11.7391 17.4194 11.675 17.683C11.249 19.439 8.751 19.439 8.325 17.683C8.26108 17.4192 8.13578 17.1742 7.95929 16.968C7.7828 16.7618 7.56011 16.6001 7.30935 16.4963C7.05859 16.3924 6.78683 16.3491 6.51621 16.3701C6.24559 16.3911 5.98375 16.4757 5.752 16.617C4.209 17.557 2.442 15.791 3.382 14.247C3.5231 14.0153 3.60755 13.7537 3.62848 13.4832C3.6494 13.2128 3.60624 12.9412 3.50247 12.6906C3.3987 12.44 3.23726 12.2174 3.03127 12.0409C2.82529 11.8645 2.58056 11.7391 2.317 11.675C0.561 11.249 0.561 8.751 2.317 8.325C2.5808 8.26108 2.82578 8.13578 3.032 7.95929C3.23822 7.7828 3.39985 7.56011 3.50375 7.30935C3.60764 7.05859 3.65085 6.78683 3.62987 6.51621C3.60889 6.24559 3.5243 5.98375 3.383 5.752C2.443 4.209 4.209 2.442 5.753 3.382C6.753 4.011 8.049 3.696 8.325 2.317Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M10 13C11.6569 13 13 11.6569 13 10C13 8.34315 11.6569 7 10 7C8.34315 7 7 8.34315 7 10C7 11.6569 8.34315 13 10 13Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        {/* Settings Icon SVG */}
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M22 12H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M4 12H2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 4V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 22V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M19.0708 4.92969L17.6566 6.3439" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M6.34337 17.6569L4.92915 19.0711" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M19.0708 19.0711L17.6566 17.6569" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M6.34337 6.3439L4.92915 4.92969" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </button>
+      
+      {/* Download Button (Direct Markdown Download) */}
+      {/* Removed outer div wrapper */}
+      <button 
+        onClick={handleMarkdownDownload} // Changed onClick handler
+        style={styles.downloadButton}
+        aria-label={t('downloadAsMarkdown')} // Updated aria-label
+        title={t('downloadAsMarkdown')} // Updated title
+        // Removed aria-haspopup and aria-expanded
+      >
+        {/* Download Icon SVG */}
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3L12 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M16 12L12 16L8 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M21 12L21 20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22L5 22C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20L3 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </button>
+      {/* Removed Dropdown Menu JSX */}
+      
+      {/* AI Assistant Button */}
+      <button
+        onClick={toggleAIAssistant}
+        style={styles.aiButton}
+        aria-label={t('aiAssistant')}
+        title={t('aiAssistant')}
+      >
+        {/* New AI Icon SVG (Robot Head) */}
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 8V4H8"/>
+          <rect x="4" y="8" width="16" height="12" rx="2"/>
+          <path d="M8 12h8"/>
+          <path d="M16 8V4h4"/>
+          <circle cx="12" cy="14" r="1"/> 
         </svg>
       </button>
       
@@ -308,12 +195,11 @@ const Controls: React.FC<ControlsProps> = ({ onToggleSettings, onClose, theme, a
       <button
         onClick={onClose}
         style={styles.closeButton}
-        aria-label="Close"
-        title="Close"
+        aria-label={t('close')}
+        title={t('close')}
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M1 1L13 13M1 13L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
+        {/* Close Icon SVG */}
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L13 13M1 13L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
     </div>
   )

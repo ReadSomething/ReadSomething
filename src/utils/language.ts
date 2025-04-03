@@ -2,8 +2,19 @@
  * Language detection utility functions
  */
 
+// --- Types ---
+
 // Define common language codes with ISO 639-1/639-2 standards
+// Using `string` allows flexibility but primarily aims for ISO 639-1.
 export type LanguageCode = 'zh' | 'en' | 'ja' | 'ko' | 'fr' | 'de' | 'es' | 'it' | 'ru' | string;
+
+// --- Constants ---
+
+// Languages explicitly supported by the extension's features (e.g., UI translations, specific font handling)
+export const SUPPORTED_LANGUAGES: LanguageCode[] = ['zh', 'en', 'ja', 'ko', 'fr', 'de', 'es', 'it', 'ru'];
+
+// Default language when no detection is available or normalization fails
+export const DEFAULT_LANGUAGE: LanguageCode = 'en';
 
 // Mapping from franc-min ISO 639-3 codes to ISO 639-1
 const FRANC_CODE_MAP: Record<string, LanguageCode> = {
@@ -58,57 +69,60 @@ const LANGUAGE_CODE_MAP: Record<string, LanguageCode> = {
   ...REGION_CODE_MAP
 };
 
-// Default language when no detection is available
-export const DEFAULT_LANGUAGE: LanguageCode = 'en';
+// --- Functions ---
 
 /**
- * Normalizes any language code to a standard format
+ * Normalizes any language code to a standard format (preferring ISO 639-1).
+ * Handles common variations like ISO 639-3 or regional codes.
  * 
- * @param code The raw language code from detection
- * @returns A normalized language code (ISO 639-1 where possible)
+ * @param code The raw language code from detection (e.g., 'eng', 'en-US', 'zh-CN').
+ * @returns A normalized language code ('en', 'zh') or the original code if no mapping exists.
  */
 export function normalizeLanguageCode(code?: string | null): LanguageCode {
   if (!code) return DEFAULT_LANGUAGE;
   
-  // Check if code exists in our map
-  if (code in LANGUAGE_CODE_MAP) {
-    return LANGUAGE_CODE_MAP[code];
+  const lowerCode = code.toLowerCase(); // Normalize case for map lookup
+  
+  // 1. Check combined map (covers specific ISO 639-3 and common regional variants)
+  if (lowerCode in LANGUAGE_CODE_MAP) {
+    return LANGUAGE_CODE_MAP[lowerCode];
   }
   
-  // If code is a variant (contains a hyphen), extract the base code
-  if (code.includes('-')) {
-    const baseCode = code.split('-')[0];
+  // 2. If code contains a region/script subtag (e.g., 'en-us', 'zh-hant'), extract the base code
+  if (lowerCode.includes('-')) {
+    const baseCode = lowerCode.split('-')[0];
+    // Optional: Could check if baseCode is a known 2-letter code here
     return baseCode as LanguageCode;
   }
   
-  // If it's already a standard code or unknown, return as is
-  return code as LanguageCode;
+  // 3. If it's already a standard code (e.g., 'en', 'ja') or an unknown/unmapped code,
+  // return it directly. Assume 2/3 letter codes without hyphens are base codes.
+  return lowerCode as LanguageCode; 
 }
 
 /**
- * Checks if a language code represents Chinese
+ * Checks if a language code represents Chinese (simplified or traditional).
  * 
- * @param code The language code to check
- * @returns boolean indicating if the language is Chinese
+ * @param code The language code to check.
+ * @returns boolean indicating if the language is determined to be Chinese.
  */
 export function isChineseLanguage(code?: string | null): boolean {
   if (!code) return false;
-  
-  // Normalize first
+  // Normalize first to handle variants like 'cmn', 'yue', 'zh-CN', 'zh-TW'
   const normalizedCode = normalizeLanguageCode(code);
-  
-  // Check if it's Chinese
+  // Check if the normalized code is 'zh'
   return normalizedCode === 'zh';
 }
 
 /**
- * Checks if a language is supported
+ * Checks if a language code is in the list of explicitly supported languages
+ * for specific features within the extension.
  * 
- * @param code The language code to check
- * @returns boolean indicating if the language is supported
+ * @param code The language code to check.
+ * @returns boolean indicating if the language is listed in SUPPORTED_LANGUAGES.
  */
 export function isLanguageSupported(code: LanguageCode): boolean {
-  // Add languages that your app fully supports
-  const SUPPORTED_LANGUAGES: LanguageCode[] = ['zh', 'en', 'ja', 'ko', 'fr', 'de', 'es', 'it', 'ru'];
-  return SUPPORTED_LANGUAGES.includes(code);
+  // Normalize the input code before checking against the supported list
+  const normalizedCode = normalizeLanguageCode(code);
+  return SUPPORTED_LANGUAGES.includes(normalizedCode);
 } 

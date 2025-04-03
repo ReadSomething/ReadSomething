@@ -6,339 +6,378 @@
 // Background service worker for the ReadLite extension
 import llmModule from './utils/llm';
 
+// --- Constants ---
+
 // Enable the side panel when extension is installed
 chrome.runtime.onInstalled.addListener(() => {
-  // Configure side panel to NOT open when user clicks on extension icon
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
 });
 
 // Track which tabs have reader mode active
 const activeTabsMap = new Map<number, boolean>();
-// Track which tabs have side panel open
-const sidePanelActiveMap = new Map<number, boolean>();
 
-// Colors for the extension icon
-// For active state - Purple like the icon
-const ACTIVE_COLOR: [number, number, number, number] = [187, 156, 216, 255]; // #BB9CD8 - Light purple like the icon
-// For inactive state - Light gray-purple
-const INACTIVE_COLOR: [number, number, number, number] = [216, 216, 240, 255]; // #D8D8F0 - Light gray-purple
-// Text color for badge
-const BADGE_TEXT_COLOR: [number, number, number, number] = [255, 255, 255, 255]; // White text
+// Colors for the extension icon (Used by updateIconState)
+const ACTIVE_COLOR: [number, number, number, number] = [187, 156, 216, 255]; // #BB9CD8
+const INACTIVE_COLOR: [number, number, number, number] = [216, 216, 240, 255]; // #D8D8F0
+const BADGE_TEXT_COLOR: [number, number, number, number] = [255, 255, 255, 255]; // White
 
-// Message types for communication between content script and service worker
-type MessageType = 
-  | { type: 'TOGGLE_READER_MODE' }
-  | { type: 'OPEN_SIDEPANEL' }
-  | { type: 'CLOSE_SIDEPANEL' }
-  | { type: 'CONTENT_SCRIPT_READY' }
-  | { type: 'READER_MODE_CHANGED', isActive: boolean }
-  | { type: 'LLM_API_REQUEST', data: { method: string, params: any[] } };
+// --- Types --- 
 
-// Handle messages from content script
-chrome.runtime.onMessage.addListener((message: MessageType, sender, sendResponse) => {
-  // Handle LLM API requests from sidepanel
-  if ('type' in message && message.type === 'LLM_API_REQUEST' && 'data' in message) {
-    console.log(`[DEBUG] background: Received LLM API request for method: "${message.data.method}"`);
-    
-    const { method, params } = message.data;
-    console.log(`[DEBUG] background: Processing method "${method}"`);
-    
-    // Special handling for streaming methods
-    if (method === 'generateTextStream') {
-      if (
-        llmModule && 
-        typeof llmModule === 'object' && 
-        'generateTextStream' in llmModule && 
-        typeof (llmModule as any).generateTextStream === 'function'
-      ) {
-        // Get the sender.id to send back the stream chunks to the correct context
-        const senderId = sender.id || '';
-        const senderTabId = sender.tab?.id;
-        
-        try {
-          // Extract prompt and options from params
-          const [prompt, options] = params as [string, any];
-          
-          console.log(`[DEBUG] background: Setting up stream handler for ${prompt.substring(0, 30)}...`);
-          
-          // Add stream:true to options if not already set
-          const streamOptions = { 
-            ...options,
-            stream: true 
-          };
-          
-          // Create a callback to send chunks back to the client
-          const streamHandler = (chunk: string) => {
-            if (!chunk) {
-              console.log(`[DEBUG] background: Empty chunk received, skipping`);
-              return; // Skip empty chunks
-            }
-            
-            try {
-              // Log the chunk for debugging (but limit the size)
-              const truncatedChunk = chunk.length > 30 ? chunk.substring(0, 30) + '...' : chunk;
-              console.log(`[DEBUG] background: Sending stream chunk: "${truncatedChunk}"`);
-              
-              // Send message to client
-              chrome.runtime.sendMessage({
-                type: 'LLM_STREAM_CHUNK',
-                data: { chunk }
-              }).catch(error => {
-                if (chrome.runtime.lastError) {
-                  console.error(`[ERROR] background: Runtime error sending chunk: ${chrome.runtime.lastError.message}`);
-                } else {
-                  console.error(`[ERROR] background: Error sending stream chunk: ${error instanceof Error ? error.message : String(error)}`);
-                }
-              });
-            } catch (error) {
-              console.error(`[ERROR] background: Error in stream handler: ${error instanceof Error ? error.message : String(error)}`);
-            }
-          };
-          
-          // Call the streaming method with our chunk handler
-          console.log(`[DEBUG] background: Starting streaming process for prompt: "${prompt.substring(0, 30)}..."`);
-          
-          let streamCompleted = false;
-          
-          (llmModule as any).generateTextStream(prompt, streamHandler, streamOptions)
-            .then(() => {
-              streamCompleted = true;
-              console.log(`[DEBUG] background: Streaming completed successfully`);
-              sendResponse({ success: true });
-            })
-            .catch((error: Error) => {
-              console.error(`[ERROR] background: Streaming failed: ${error.message}`);
-              console.error(error);
-              sendResponse({ success: false, error: error.message });
-            });
-          
-          // Set a safety timeout to ensure sendResponse is called
-          setTimeout(() => {
-            if (!streamCompleted) {
-              console.warn(`[WARN] background: Stream safety timeout triggered after 30 seconds`);
-              sendResponse({ 
-                success: false, 
-                error: 'Stream timed out after 30 seconds without completing' 
-              });
-            }
-          }, 30000);
-        } catch (error) {
-          console.error(`[ERROR] background: Error in stream setup: ${error instanceof Error ? error.message : String(error)}`);
-          console.error(error);
-          sendResponse({ 
-            success: false, 
-            error: error instanceof Error ? error.message : String(error)
-          });
-        }
-      } else {
-        console.error(`[ERROR] background: Streaming method not found in LLM module`);
-        sendResponse({ 
-          success: false, 
-          error: `Method generateTextStream not found in LLM API` 
-        });
-      }
-      
-      return true; // Indicates response will be sent asynchronously
-    }
-    
-    // Regular (non-streaming) API methods
-    if (
-      llmModule && 
-      typeof llmModule === 'object' && 
-      method in llmModule && 
-      typeof (llmModule as any)[method] === 'function'
-    ) {
-      console.log(`[DEBUG] background: Method "${method}" found in LLM module`);
-      // Call the requested API method
-      try {
-        console.log(`[DEBUG] background: Calling LLM method "${method}" with params:`, params);
-        const apiMethod = (llmModule as any)[method];
-        apiMethod(...(params || []))
-          .then((result: any) => {
-            console.log(`[DEBUG] background: LLM API call successful`);
-            sendResponse({ success: true, data: result });
-          })
-          .catch((error: Error) => {
-            console.error(`[ERROR] background: LLM API call failed: ${error.message}`);
-            sendResponse({ success: false, error: error.message });
-          });
-      } catch (error) {
-        console.error(`[ERROR] background: Error executing LLM method: ${error instanceof Error ? error.message : String(error)}`);
-        sendResponse({ 
-          success: false, 
-          error: error instanceof Error ? error.message : String(error)
-        });
-      }
-    } else {
-      console.error(`[ERROR] background: Method "${method}" not found in LLM module`);
-      sendResponse({ 
-        success: false, 
-        error: `Method ${method} not found in LLM API` 
-      });
-    }
-    
+// Define specific payload interfaces for messages
+interface ToggleReaderModeMessage { type: 'TOGGLE_READER_MODE'; }
+interface OpenSidepanelMessage { type: 'OPEN_SIDEPANEL'; }
+interface ContentScriptReadyMessage { type: 'CONTENT_SCRIPT_READY'; }
+interface ReaderModeChangedMessage { type: 'READER_MODE_CHANGED'; isActive: boolean; }
+interface LlmApiRequestData {
+  method: string;
+  params: any[]; // Keep params flexible for now, but method is required
+}
+interface LlmApiRequestMessage { type: 'LLM_API_REQUEST'; data: LlmApiRequestData; }
+
+// Union type for all messages handled by the main listener
+type BackgroundMessage = 
+  | ToggleReaderModeMessage
+  | OpenSidepanelMessage
+  | ContentScriptReadyMessage
+  | ReaderModeChangedMessage
+  | LlmApiRequestMessage;
+
+// --- Main Message Listener --- 
+
+/**
+ * Handles incoming messages from content scripts and the side panel.
+ */
+chrome.runtime.onMessage.addListener((message: BackgroundMessage, sender, sendResponse) => {
+  const LOG_PREFIX = "[Background:onMessage]";
+  
+  // Handle LLM API requests specifically
+  if (message.type === 'LLM_API_REQUEST') {
+    // Type guard ensures message.data exists here
+    handleLlmApiRequest(message.data, sender, sendResponse);
     return true; // Indicates response will be sent asynchronously
   }
 
-  // Ensure we have a tab ID
-  if (!sender.tab?.id) return false;
-   
-  const tabId = sender.tab.id;
-
-  // Mark tab as having content script ready
-  if ('type' in message && message.type === "CONTENT_SCRIPT_READY") {
-    sendResponse({ received: true });
-    return true;
+  // Other messages require a tab ID from the sender
+  const tabId = sender.tab?.id;
+  if (!tabId) {
+    console.warn(`${LOG_PREFIX} Received message type "${message.type}" without sender tab ID. Ignoring.`);
+    return false; // No further processing, no async response
   }
    
-  // Handle reader mode state changes
-  if ('type' in message && message.type === "READER_MODE_CHANGED" && 'isActive' in message) {
-    // Update our state tracking
-    activeTabsMap.set(tabId, message.isActive);
-     
-    // Update the icon for this specific tab
-    updateIconState(tabId, message.isActive);
-    sendResponse({ received: true });
-    return true;
+  // Handle different message types from content scripts
+  switch (message.type) {
+    case 'CONTENT_SCRIPT_READY':
+      handleContentScriptReady(sender, sendResponse);
+      return true; // Async response possible
+    case 'READER_MODE_CHANGED':
+      // Type guard ensures message.isActive exists
+      handleReaderModeChanged(message.isActive, tabId, sendResponse);
+      return true; // Async response possible
+    case 'TOGGLE_READER_MODE':
+      handleToggleReaderMode(sender.tab);
+      break; // Synchronous or no response needed
+    case 'OPEN_SIDEPANEL':
+      openSidePanel(sender.tab);
+      break; // Synchronous or no response needed
+    default:
+      // Optional: Handle unknown message types if necessary
+      // console.warn(`${LOG_PREFIX} Received unknown message type:`, message);
+      return false;
   }
 
-  // Handle different message types
-  if ('type' in message) {
-    switch (message.type) {
-      case 'TOGGLE_READER_MODE':
-        handleToggleReaderMode(sender.tab);
-        break;
-      case 'OPEN_SIDEPANEL':
-        openSidePanel(sender.tab);
-        break;
-      case 'CLOSE_SIDEPANEL':
-        closeSidePanel(sender.tab);
-        break;
-    }
-  }
-
-  // Required to use sendResponse asynchronously
-  return true;
+  // Return true if any path might use sendResponse asynchronously later,
+  // otherwise return false or undefined for synchronous handling.
+  // The switch cases handle returns, default is false.
+  return false; 
 });
 
-// Update the extension icon based on reader mode state
-function updateIconState(tabId: number, isActive: boolean) {
-  const color = isActive ? ACTIVE_COLOR : INACTIVE_COLOR;
-  
-  // Set the badge color
-  chrome.action.setBadgeBackgroundColor({
-    tabId: tabId,
-    color: color
-  });
+// --- LLM API Handling ---
 
-  // Set badge text color (white for better contrast)
-  chrome.action.setBadgeTextColor({
-    tabId: tabId,
-    color: BADGE_TEXT_COLOR
-  });
+/**
+ * Routes LLM API requests to the appropriate handler (streaming or regular).
+ */
+function handleLlmApiRequest(data: LlmApiRequestData, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
+  const LOG_PREFIX = "[Background:LLM]";
+  console.log(`${LOG_PREFIX} Received request for method: "${data.method}"`);
   
-  // Set the badge text (ON when active, empty when inactive)
-  chrome.action.setBadgeText({
-    tabId: tabId,
-    text: isActive ? "ON" : ""
-  });
+  // Use 'as any' for dynamic access, but add type checks
+  const moduleToCheck = llmModule as any; 
+
+  if (data.method === 'generateTextStream' && typeof moduleToCheck?.generateTextStream === 'function') {
+    // Pass the actual function reference
+    handleStreamingRequest(moduleToCheck.generateTextStream, data.params, sender, sendResponse);
+  } else if (typeof moduleToCheck?.[data.method] === 'function') {
+    // Pass the method name and the function reference
+    handleRegularApiRequest(data.method, moduleToCheck[data.method], data.params, sendResponse);
+  } else {
+    console.error(`${LOG_PREFIX} Method "${data.method}" not found or not a function in LLM module.`);
+    sendResponse({ success: false, error: `Method ${data.method} not found in LLM API` });
+  }
 }
 
-// Listen for tab updates to reset icons as needed
+/**
+ * Handles streaming LLM API requests.
+ */
+function handleStreamingRequest(
+  // Explicitly type the expected function signature
+  streamMethod: (prompt: string, streamHandler: (chunk: string) => void, options?: any) => Promise<void>,
+  params: any[], 
+  sender: chrome.runtime.MessageSender, 
+  // Nullable type to indicate if sendResponse has been used (e.g., by timeout)
+  sendResponse: ((response?: any) => void) | null 
+) {
+  const LOG_PREFIX = "[Background:LLM:Stream]";
+  let localSendResponse = sendResponse; // Create a local copy to modify
+
+  try {
+    const [prompt, options] = params as [string, any];
+    console.log(`${LOG_PREFIX} Setting up stream handler for prompt starting with: "${prompt?.substring(0, 30)}..."`);
+    
+    const streamOptions = { ...options, stream: true };
+    
+    // Callback to send chunks back to the requesting context
+    const streamHandler = (chunk: string) => {
+      try {
+        // Check if the extension context (chrome.runtime) is still valid before sending
+        if (!chrome.runtime?.id) { 
+          console.warn(`${LOG_PREFIX} Extension context invalid, cannot send stream chunk.`);
+          // TODO: Consider attempting to cancel the ongoing stream if context becomes invalid.
+          return; 
+        }
+        
+        // Send chunk back to the runtime (which could be sidepanel or other contexts)
+        chrome.runtime.sendMessage({
+          type: 'LLM_STREAM_CHUNK',
+          data: { chunk },
+          timestamp: Date.now() // Keep timestamp for potential ordering checks client-side
+        }).catch(error => {
+          // Catch errors during sending (e.g., if receiver closes)
+          const errorMessage = chrome.runtime.lastError?.message || (error instanceof Error ? error.message : 'Unknown send error');
+          console.warn(`${LOG_PREFIX} Runtime error sending chunk: ${errorMessage}`);
+          // TODO: Consider cancelling the stream here if sending fails repeatedly.
+        });
+      } catch (error) {
+        console.error(`${LOG_PREFIX} Error inside stream handler: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+    
+    console.log(`${LOG_PREFIX} Starting streaming process.`);
+    let streamCompleted = false;
+    
+    // Safety timeout: If the stream promise doesn't resolve/reject within 30s,
+    // send a failure response. This handles cases where the stream might hang indefinitely.
+    const timeoutId = setTimeout(() => {
+      if (!streamCompleted) {
+        console.warn(`${LOG_PREFIX} Stream safety timeout triggered after 30 seconds.`);
+        if (localSendResponse) {
+            localSendResponse({ success: false, error: 'Stream timed out after 30 seconds' });
+            localSendResponse = null; // Mark response as sent
+        } 
+      }
+    }, 30000);
+
+    streamMethod(prompt, streamHandler, streamOptions)
+      .then(() => {
+        streamCompleted = true;
+        clearTimeout(timeoutId); // Clear the safety timeout
+        console.log(`${LOG_PREFIX} Streaming completed successfully.`);
+        if (localSendResponse) { // Check if timeout already responded
+            localSendResponse({ success: true });
+        } else {
+            console.log(`${LOG_PREFIX} Stream completed, but response already sent by timeout.`);
+        }
+      })
+      .catch((error: Error) => {
+        streamCompleted = true; 
+        clearTimeout(timeoutId); // Clear the safety timeout
+        console.error(`${LOG_PREFIX} Streaming failed: ${error.message}`);
+        console.error(error); // Log the full error object
+        if (localSendResponse) { // Check if timeout already responded
+            localSendResponse({ success: false, error: error.message });
+        } else {
+             console.log(`${LOG_PREFIX} Stream failed, but response already sent by timeout.`);
+        }
+      });
+
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Error during stream setup: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(error); // Log the full error object
+    if (localSendResponse) {
+        localSendResponse({ success: false, error: error instanceof Error ? error.message : String(error) });
+    }
+  }
+}
+
+/**
+ * Handles regular (non-streaming) LLM API requests.
+ */
+function handleRegularApiRequest(
+  method: string,
+  // Explicitly type the expected function signature
+  apiMethod: (...args: any[]) => Promise<any>,
+  params: any[], 
+  sendResponse: (response?: any) => void
+) {
+  const LOG_PREFIX = "[Background:LLM:Regular]";
+  console.log(`${LOG_PREFIX} Calling method "${method}"`);
+  try {
+    apiMethod(...(params || []))
+      .then((result: any) => {
+        console.log(`${LOG_PREFIX} Call to "${method}" successful.`);
+        sendResponse({ success: true, data: result });
+      })
+      .catch((error: Error) => {
+        console.error(`${LOG_PREFIX} Call to "${method}" failed: ${error.message}`);
+        console.error(error); // Log the full error object
+        sendResponse({ success: false, error: error.message });
+      });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Error executing method "${method}": ${error instanceof Error ? error.message : String(error)}`);
+    console.error(error); // Log the full error object
+    sendResponse({ success: false, error: error instanceof Error ? error.message : String(error) });
+  }
+}
+
+// --- Content Script & Tab State Handling ---
+
+/**
+ * Handles the CONTENT_SCRIPT_READY message.
+ */
+function handleContentScriptReady(sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) {
+  console.log(`[Background] Content script ready in tab: ${sender.tab?.id}`);
+  sendResponse({ received: true });
+}
+
+/**
+ * Handles the READER_MODE_CHANGED message from the content script.
+ * Updates the internal state map and the browser action icon.
+ */
+function handleReaderModeChanged(isActive: boolean, tabId: number, sendResponse: (response?: any) => void) {
+  console.log(`[Background] Reader mode changed in tab ${tabId}: ${isActive}`);
+  activeTabsMap.set(tabId, isActive);
+  updateIconState(tabId, isActive);
+  sendResponse({ received: true });
+}
+
+/**
+ * Updates the browser action icon (badge) for a specific tab based on reader mode state.
+ */
+function updateIconState(tabId: number, isActive: boolean) {
+  const LOG_PREFIX = "[Background:Icon]";
+  try {
+    const color = isActive ? ACTIVE_COLOR : INACTIVE_COLOR;
+    const text = isActive ? "ON" : "";
+
+    chrome.action.setBadgeBackgroundColor({ tabId: tabId, color: color });
+    chrome.action.setBadgeTextColor({ tabId: tabId, color: BADGE_TEXT_COLOR });
+    chrome.action.setBadgeText({ tabId: tabId, text: text });
+    // console.log(`${LOG_PREFIX} Updated icon for tab ${tabId}: ${text}`); // Optional: for debugging
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to update icon for tab ${tabId}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * Opens the side panel for the given tab.
+ */
+function openSidePanel(tab?: chrome.tabs.Tab) {
+  const LOG_PREFIX = "[Background:SidePanel]";
+  if (!tab?.id) {
+    console.warn(`${LOG_PREFIX} Attempted to open side panel without valid tab.`);
+    return;
+  }
+  
+  console.log(`${LOG_PREFIX} Requesting to open side panel for tab ${tab.id}`);
+  chrome.sidePanel.open({ tabId: tab.id })
+    .then(() => {
+      console.log(`${LOG_PREFIX} Side panel opened successfully for tab ${tab.id}.`);
+    })
+    .catch(error => {
+      console.error(`${LOG_PREFIX} Failed to open side panel for tab ${tab.id}: ${error instanceof Error ? error.message : String(error)}`);
+    });
+}
+
+/**
+ * Sends a command to the content script to toggle the reader mode view.
+ */
+async function handleToggleReaderMode(tab?: chrome.tabs.Tab) {
+  const LOG_PREFIX = "[Background:ReaderToggle]";
+  if (!tab?.id) {
+    console.warn(`${LOG_PREFIX} Attempted to toggle reader mode without valid tab.`);
+    return;
+  }
+  
+  console.log(`${LOG_PREFIX} Requesting toggle in tab ${tab.id}`);
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => {
+        // This custom event is listened for by the content script (content.tsx)
+        document.dispatchEvent(new CustomEvent('READLITE_TOGGLE_INTERNAL'));
+      }
+    });
+    console.log(`${LOG_PREFIX} Toggle script executed for tab ${tab.id}.`);
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to execute toggle script for tab ${tab.id}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+// --- Browser Event Listeners ---
+
+/**
+ * Listens for tab updates (e.g., page loads) to reset the icon state.
+ */
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  // When a tab is fully loaded
+  // When a tab finishes loading, reset its icon to default (inactive)
+  // The content script will send READER_MODE_CHANGED if it activates reader mode.
   if (changeInfo.status === 'complete') {
-    // Set the icon to inactive for this tab by default
-    // The content script will message us if reader mode is active
+    console.log(`[Background] Tab ${tabId} updated (status: complete), resetting icon.`);
     updateIconState(tabId, false);
   }
 });
 
-// Send a message to the content script about the side panel visibility
-function sendSidePanelVisibilityMessage(tabId: number, isVisible: boolean) {
-  chrome.tabs.sendMessage(tabId, {
-    type: 'SIDEPANEL_VISIBILITY_CHANGED',
-    isVisible: isVisible
-  }).catch((error: Error) => {
-    // Error handling silently
-  });
-}
-
-// Open side panel in the current tab
-function openSidePanel(tab?: chrome.tabs.Tab) {
-  if (tab?.id) {
-    chrome.sidePanel.open({ tabId: tab.id }).then(() => {
-      // Mark the side panel as open for this tab
-      sidePanelActiveMap.set(tab.id!, true);
-      
-      // Notify the content script about the side panel visibility change
-      sendSidePanelVisibilityMessage(tab.id!, true);
-    }).catch((error: Error) => {
-      // Error handling silently
-    });
+/**
+ * Listens for tab removal to clean up the state map.
+ */
+chrome.tabs.onRemoved.addListener((tabId) => {
+  console.log(`[Background] Tab ${tabId} removed, cleaning up state.`);
+  if (activeTabsMap.has(tabId)) {
+      activeTabsMap.delete(tabId);
   }
-}
-
-// Close side panel in the current tab
-function closeSidePanel(tab?: chrome.tabs.Tab) {
-  if (tab?.id) {
-    try {
-      // Since chrome.sidePanel.close() doesn't exist, we need a workaround
-      // We can try to change the panel state via chrome.sidePanel.setOptions
-      chrome.sidePanel.setOptions({
-        tabId: tab.id,
-        path: 'empty.html', // Use an empty page to simulate closing
-        enabled: false
-      }).then(() => {
-        // After "closing", reset to the original side panel
-        chrome.sidePanel.setOptions({
-          tabId: tab.id,
-          path: 'sidepanel.html',
-          enabled: true
-        });
-        
-        // Mark the side panel as closed for this tab
-        sidePanelActiveMap.set(tab.id!, false);
-        
-        // Notify the content script about the side panel visibility change
-        sendSidePanelVisibilityMessage(tab.id!, false);
-      }).catch((error: Error) => {
-        // Error handling silently
-      });
-    } catch (error) {
-      // Still notify about the changed state so UI is consistent
-      sidePanelActiveMap.set(tab.id, false);
-      sendSidePanelVisibilityMessage(tab.id, false);
-    }
-  }
-}
-
-// Function to toggle reader mode
-async function handleToggleReaderMode(tab?: chrome.tabs.Tab) {
-  if (!tab?.id) return;
-  
-  try {
-    // Execute a content script to toggle reader mode
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: () => {
-        // Dispatch custom event to toggle reader mode 
-        document.dispatchEvent(new CustomEvent('READLITE_TOGGLE_INTERNAL'));
-      }
-    });
-  } catch (error) {
-    // Error handling silently
-  }
-}
-
-// Set up browser action click handler
-chrome.action.onClicked.addListener(async (tab) => {
-  // Toggle reader mode when extension icon is clicked
-  await handleToggleReaderMode(tab);
 });
 
-// Handle tab removal to clean up our state tracking
-chrome.tabs.onRemoved.addListener((tabId) => {
-  activeTabsMap.delete(tabId);
-  sidePanelActiveMap.delete(tabId);
+/**
+ * Listens for extension suspension to clean up resources.
+ */
+chrome.runtime.onSuspend.addListener(() => {
+  const LOG_PREFIX = "[Background:Suspend]";
+  console.log(`${LOG_PREFIX} Extension is suspending, cleaning up resources.`);
+  
+  // Clean up any open LLM streams using 'as any' for safety
+  const moduleForSuspend = llmModule as any; 
+  if (typeof moduleForSuspend?.cancelAllStreams === 'function') {
+    try {
+      console.log(`${LOG_PREFIX} Attempting to cancel LLM streams.`);
+      moduleForSuspend.cancelAllStreams();
+    } catch (e) {
+      console.error(`${LOG_PREFIX} Failed to cancel LLM streams:`, e);
+    }
+  } else {
+      console.log(`${LOG_PREFIX} cancelAllStreams method not found or not a function.`);
+  }
+  
+  // Clear state map
+  console.log(`${LOG_PREFIX} Clearing active tabs map.`);
+  activeTabsMap.clear();
+});
+
+/**
+ * Handles clicks on the browser action (extension icon).
+ */
+chrome.action.onClicked.addListener(async (tab) => {
+  console.log(`[Background] Action icon clicked for tab: ${tab.id}`);
+  // Toggle reader mode when extension icon is clicked
+  await handleToggleReaderMode(tab);
+  // Open the sidebar at the same time
+  await openSidePanel(tab);
 });
