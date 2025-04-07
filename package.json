@@ -56,8 +56,7 @@
       "activeTab",
       "scripting",
       "tabs",
-      "storage",
-      "sidePanel"
+      "storage"
     ],
     "host_permissions": [
       "<all_urls>"
@@ -68,9 +67,6 @@
     "background": {
       "service_worker": "background.js",
       "type": "module"
-    },
-    "side_panel": {
-      "default_path": "sidepanel.html"
     }
   }
 }

@@ -8,11 +8,6 @@ import llmModule from './utils/llm';
 
 // --- Constants ---
 
-// Enable the side panel when extension is installed
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
-});
-
 // Track which tabs have reader mode active
 const activeTabsMap = new Map<number, boolean>();
 
@@ -25,7 +20,6 @@ const BADGE_TEXT_COLOR: [number, number, number, number] = [255, 255, 255, 255];
 
 // Define specific payload interfaces for messages
 interface ToggleReaderModeMessage { type: 'TOGGLE_READER_MODE'; }
-interface OpenSidepanelMessage { type: 'OPEN_SIDEPANEL'; }
 interface ContentScriptReadyMessage { type: 'CONTENT_SCRIPT_READY'; }
 interface ReaderModeChangedMessage { type: 'READER_MODE_CHANGED'; isActive: boolean; }
 interface LlmApiRequestData {
@@ -37,7 +31,6 @@ interface LlmApiRequestMessage { type: 'LLM_API_REQUEST'; data: LlmApiRequestDat
 // Union type for all messages handled by the main listener
 type BackgroundMessage = 
   | ToggleReaderModeMessage
-  | OpenSidepanelMessage
   | ContentScriptReadyMessage
   | ReaderModeChangedMessage
   | LlmApiRequestMessage;
@@ -76,9 +69,6 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage, sender, sendRe
     case 'TOGGLE_READER_MODE':
       handleToggleReaderMode(sender.tab);
       break; // Synchronous or no response needed
-    case 'OPEN_SIDEPANEL':
-      openSidePanel(sender.tab);
-      break; // Synchronous or no response needed
     default:
       // Optional: Handle unknown message types if necessary
       // console.warn(`${LOG_PREFIX} Received unknown message type:`, message);
@@ -115,8 +105,113 @@ function handleLlmApiRequest(data: LlmApiRequestData, sender: chrome.runtime.Mes
   }
 }
 
+// Track active stream ports
+const activeStreamPorts = new Map();
+
+/**
+ * Listen for port connections from the client
+ * This handles LLM streaming more reliably than one-off messages
+ */
+chrome.runtime.onConnect.addListener((port) => {
+  const LOG_PREFIX = "[Background:Port]";
+  const portName = port.name || 'unknown';
+  
+  // Check if this is an LLM stream port
+  if (portName.startsWith('llm_stream_')) {
+    const streamId = portName.replace('llm_stream_', '');
+    console.log(`${LOG_PREFIX} New stream connection established: ${streamId}`);
+    
+    // Store the port reference for potential cleanup later
+    activeStreamPorts.set(streamId, port);
+    
+    // Handle disconnect
+    port.onDisconnect.addListener(() => {
+      console.log(`${LOG_PREFIX} Port disconnected: ${streamId}`);
+      activeStreamPorts.delete(streamId);
+      
+      // Handle cleanup for a disconnected port
+      // TODO: Consider canceling any ongoing stream process for this port
+    });
+    
+    // Handle messages from the client
+    port.onMessage.addListener((message) => {
+      console.log(`${LOG_PREFIX} Received message on port ${streamId}: ${message.type}`);
+      
+      if (message.type === 'LLM_STREAM_REQUEST') {
+        // Handle the streaming request via port
+        handlePortStreamingRequest(message.data, port);
+      }
+    });
+  }
+});
+
+/**
+ * Handle streaming request using port communication
+ */
+function handlePortStreamingRequest(data: any, port: chrome.runtime.Port) {
+  const LOG_PREFIX = "[Background:PortStream]";
+  const { prompt, options, streamId } = data;
+  console.log(`${LOG_PREFIX} Handling stream request for ${streamId}`);
+  
+  try {
+    const moduleToCheck = llmModule as any;
+    if (typeof moduleToCheck?.generateTextStream !== 'function') {
+      console.error(`${LOG_PREFIX} generateTextStream method not found`);
+      port.postMessage({ type: 'LLM_STREAM_ERROR', error: 'Stream method not available' });
+      return;
+    }
+    
+    console.log(`${LOG_PREFIX} Setting up stream for prompt: "${prompt?.substring(0, 30)}..."`);
+    
+    // Wrap the streamHandler to send chunks via port
+    const streamHandler = (chunk: string) => {
+      try {
+        // Only send if port is still connected
+        if (port) {
+          port.postMessage({
+            type: 'LLM_STREAM_CHUNK',
+            data: { chunk },
+            timestamp: Date.now()
+          });
+        }
+      } catch (error) {
+        console.error(`${LOG_PREFIX} Error sending chunk via port: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+    
+    // Start the streaming process
+    console.log(`${LOG_PREFIX} Starting stream process`);
+    moduleToCheck.generateTextStream(prompt, streamHandler, options)
+      .then(() => {
+        console.log(`${LOG_PREFIX} Stream completed successfully`);
+        // Send completion message
+        if (port) {
+          port.postMessage({ type: 'LLM_STREAM_COMPLETE' });
+        }
+      })
+      .catch((error: Error) => {
+        console.error(`${LOG_PREFIX} Stream failed: ${error.message}`);
+        // Send error message
+        if (port) {
+          port.postMessage({ 
+            type: 'LLM_STREAM_ERROR', 
+            error: error.message || 'Unknown streaming error'
+          });
+        }
+      });
+      
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Error in stream setup: ${error instanceof Error ? error.message : String(error)}`);
+    port.postMessage({ 
+      type: 'LLM_STREAM_ERROR', 
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+}
+
 /**
  * Handles streaming LLM API requests.
+ * Note: This method is kept for backward compatibility but new code should use port-based streaming
  */
 function handleStreamingRequest(
   // Explicitly type the expected function signature
@@ -154,7 +249,8 @@ function handleStreamingRequest(
           // Catch errors during sending (e.g., if receiver closes)
           const errorMessage = chrome.runtime.lastError?.message || (error instanceof Error ? error.message : 'Unknown send error');
           console.warn(`${LOG_PREFIX} Runtime error sending chunk: ${errorMessage}`);
-          // TODO: Consider cancelling the stream here if sending fails repeatedly.
+          // TODO: Consider recommending port-based streaming when this error happens
+          console.log(`${LOG_PREFIX} Consider using port-based streaming for more reliable communication`);
         });
       } catch (error) {
         console.error(`${LOG_PREFIX} Error inside stream handler: ${error instanceof Error ? error.message : String(error)}`);
@@ -278,26 +374,6 @@ function updateIconState(tabId: number, isActive: boolean) {
 }
 
 /**
- * Opens the side panel for the given tab.
- */
-function openSidePanel(tab?: chrome.tabs.Tab) {
-  const LOG_PREFIX = "[Background:SidePanel]";
-  if (!tab?.id) {
-    console.warn(`${LOG_PREFIX} Attempted to open side panel without valid tab.`);
-    return;
-  }
-  
-  console.log(`${LOG_PREFIX} Requesting to open side panel for tab ${tab.id}`);
-  chrome.sidePanel.open({ tabId: tab.id })
-    .then(() => {
-      console.log(`${LOG_PREFIX} Side panel opened successfully for tab ${tab.id}.`);
-    })
-    .catch(error => {
-      console.error(`${LOG_PREFIX} Failed to open side panel for tab ${tab.id}: ${error instanceof Error ? error.message : String(error)}`);
-    });
-}
-
-/**
  * Sends a command to the content script to toggle the reader mode view.
  */
 async function handleToggleReaderMode(tab?: chrome.tabs.Tab) {
@@ -378,6 +454,4 @@ chrome.action.onClicked.addListener(async (tab) => {
   console.log(`[Background] Action icon clicked for tab: ${tab.id}`);
   // Toggle reader mode when extension icon is clicked
   await handleToggleReaderMode(tab);
-  // Open the sidebar at the same time
-  await openSidePanel(tab);
 });

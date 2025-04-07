@@ -11,16 +11,32 @@ import { normalizeLanguageCode } from './language';
 
 const LOG_PREFIX = "[Parser]";
 
-// DOMPurify configuration
+// DOMPurify configuration (Whitelist approach)
 const SANITIZE_CONFIG = {
-  USE_PROFILES: { html: true },
-  FORBID_TAGS: ['script', 'style', 'iframe', 'form', 'object', 'embed', 'video', 'audio'],
-  FORBID_ATTR: [
-    'style', 'onclick', 'onerror', 'onload', 'onmouseover', 'onmouseout', 
-    'onfocus', 'onblur', 'onchange', 'onsubmit', 'onreset', 'onselect', 
-    'oninput', 'onkeydown', 'onkeypress', 'onkeyup'
+  // Keep only semantic and structural tags necessary for reading content
+  ALLOWED_TAGS: [
+    'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
+    'img', 'a', 
+    'ul', 'ol', 'li', 
+    'blockquote', 'pre', 'code', 
+    'figure', 'figcaption', 
+    'strong', 'em', 'b', 'i', 'u', 'strike', 'sub', 'sup', 
+    'br', 'hr',
+    'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'
   ],
-  // Allow specific data attributes if needed, e.g., ALLOW_DATA_ATTR: true
+  // Keep only essential attributes + those added by the hook
+  ALLOWED_ATTR: [
+    'href', // for <a>
+    'src', 'alt', 'loading', 'title', // for <img> (title is optional but common)
+    'target', 'rel', // for <a> (added by hook)
+    'start', // for <ol>
+    'colspan', 'rowspan', // for <td>, <th>
+    'scope' // for <th>
+    // Note: 'class', 'id', 'style', and event handlers are implicitly forbidden
+  ],
+  // Explicitly disallow all data-* attributes
+  ALLOW_DATA_ATTR: false, 
+  // FORBID_TAGS and FORBID_ATTR are removed as ALLOWED_* provide the whitelist
 };
 
 // Selectors used by getArticleDate to find publication dates heuristically
@@ -87,6 +103,9 @@ export const parseArticle = async (doc: Document): Promise<Article | null> => {
     }
     console.log(`${LOG_PREFIX} Readability extracted content titled: "${readabilityResult.title}"`);
     
+    // --- Log HTML before sanitization ---
+    console.log(`${LOG_PREFIX} HTML content BEFORE sanitization (first 500 chars):`, readabilityResult.content?.substring(0, 500)); // Log a sample
+
     // --- Sanitization Hook --- 
     // This hook runs *after* the main sanitization pass.
     // It modifies attributes on ALLOWED tags (img, a) to add safe,
@@ -108,10 +127,12 @@ export const parseArticle = async (doc: Document): Promise<Article | null> => {
     });
 
     // Sanitize the extracted HTML content
-    console.log(`${LOG_PREFIX} Sanitizing HTML content...`);
+    console.log(`${LOG_PREFIX} Sanitizing HTML content with config:`, SANITIZE_CONFIG); // Log config used
     // Use content from readabilityResult
     const sanitizedContent = DOMPurify.sanitize(readabilityResult.content || '', SANITIZE_CONFIG);
-    console.log(`${LOG_PREFIX} Sanitization complete.`);
+    
+    // --- Log HTML after sanitization ---
+    console.log(`${LOG_PREFIX} HTML content AFTER sanitization (first 500 chars):`, sanitizedContent.substring(0, 500)); // Log a sample
 
     // Detect language from text content
     console.log(`${LOG_PREFIX} Detecting language...`);

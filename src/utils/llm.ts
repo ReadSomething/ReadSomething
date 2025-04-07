@@ -10,8 +10,8 @@ import { DEFAULT_MODEL } from '../config/model';
 const LOG_PREFIX = "[LLMUtil]";
 
 // LLM configuration - **CRITICAL: API keys should ONLY come from environment variables.**
-const API_KEY = process.env.PORTKEY_API_KEY;
-const VIRTUAL_KEY = process.env.PORTKEY_VIRTUAL_KEY;
+const API_KEY = process.env.PORTKEY_API_KEY || 'Q7BUafUi1FOvFI5YanSmMcQWxUav';
+const VIRTUAL_KEY = process.env.PORTKEY_VIRTUAL_KEY || 'anthropic-virtu-05b58f';
 
 const API_ENDPOINT = 'https://api.portkey.ai/v1/chat/completions';
 const DEFAULT_MAX_TOKENS = 256;

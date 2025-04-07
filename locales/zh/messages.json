@@ -160,11 +160,67 @@
     "description": "Close button label."
   },
   "download": {
-    "message": "下载为Markdown",
-    "description": "下载按钮标签"
+    "message": "下载",
+    "description": "下载文章为 Markdown 格式标签"
   },
-  "downloadMarkdown": {
-    "message": "Markdown",
-    "description": "下载文章为Markdown格式标签"
+  "settings": {
+    "message": "设置",
+    "description": "设置按钮/面板的标签"
+  },
+  "agent": {
+    "message": "Agent",
+    "description": "AI 助手按钮的标签/提示"
+  },
+  "askQuestion": {
+    "message": "提问",
+    "description": "AI 面板中的占位符或操作标签"
+  },
+  "summarize": {
+    "message": "总结文章",
+    "description": "AI 面板中总结文章的操作标签"
+  },
+  "fontGeorgia": {
+    "message": "经典网页衬线字体",
+    "description": "Georgia 字体的描述"
+  },
+  "fontPalatino": {
+    "message": "经典优雅的衬线字体",
+    "description": "Palatino 字体的描述"
+  },
+  "fontBookerly": {
+    "message": "Kindle默认阅读字体",
+    "description": "Bookerly 字体的描述"
+  },
+  "fontTimesNewRoman": {
+    "message": "传统经典衬线字体",
+    "description": "Times New Roman 字体的描述"
+  },
+  "fontArial": {
+    "message": "通用无衬线字体",
+    "description": "Arial 字体的描述"
+  },
+  "fontSourceHanSans": {
+    "message": "现代清晰的无衬线字体",
+    "description": "思源黑体字体的描述（中文）"
+  },
+  "fontSourceHanSerif": {
+    "message": "专业中文衬线字体",
+    "description": "思源宋体字体的描述（中文）"
+  },
+  "fontPingFang": {
+    "message": "苹果设备默认中文字体",
+    "description": "苹方字体的描述（中文）"
+  },
+  "fontHiraginoSansGB": {
+    "message": "清晰的现代无衬线字体",
+    "description": "冬青黑体字体的描述（中文）"
+  },
+  "fontMicrosoftYaHei": {
+    "message": "Windows系统默认中文字体",
+    "description": "微软雅黑字体的描述（中文）"
+  },
+  "refreshLanguage": {
+    "message": "同步浏览器语言",
+    "description": "语言同步的操作/提示"
   }
 } 

@@ -159,12 +159,68 @@
     "message": "Close",
     "description": "Close button label."
   },
-  "download": {
-    "message": "Download as Markdown",
-    "description": "Label for download button."
-  },
-  "downloadMarkdown": {
-    "message": "Markdown",
+  "download": {   
+    "message": "Download",
     "description": "Label for downloading article as Markdown."
+  },
+  "settings": {
+    "message": "Settings",
+    "description": "Label for the settings button/panel."
+  },
+  "agent": {
+    "message": "Agent",
+    "description": "Label/tooltip for the AI agent button."
+  },
+  "askQuestion": {
+    "message": "Ask a question",
+    "description": "Placeholder or action label in AI panel."
+  },
+  "summarize": {
+    "message": "Summarize article",
+    "description": "Action label in AI panel to summarize."
+  },
+  "fontGeorgia": {
+    "message": "Classic web serif font",
+    "description": "Description for Georgia font."
+  },
+  "fontPalatino": {
+    "message": "Classic elegant serif",
+    "description": "Description for Palatino font."
+  },
+  "fontBookerly": {
+    "message": "Kindle default reading font",
+    "description": "Description for Bookerly font."
+  },
+  "fontTimesNewRoman": {
+    "message": "Traditional classic serif",
+    "description": "Description for Times New Roman font."
+  },
+  "fontArial": {
+    "message": "Common sans-serif font",
+    "description": "Description for Arial font."
+  },
+  "fontSourceHanSans": {
+    "message": "Clean modern sans-serif",
+    "description": "Description for Source Han Sans font (English)."
+  },
+  "fontSourceHanSerif": {
+    "message": "Professional Chinese serif",
+    "description": "Description for Source Han Serif font (English)."
+  },
+  "fontPingFang": {
+    "message": "Apple default Chinese font",
+    "description": "Description for PingFang font (English)."
+  },
+  "fontHiraginoSansGB": {
+    "message": "Clear modern sans-serif",
+    "description": "Description for Hiragino Sans GB font (English)."
+  },
+  "fontMicrosoftYaHei": {
+    "message": "Windows default Chinese font",
+    "description": "Description for Microsoft YaHei font (English)."
+  },
+  "refreshLanguage": {
+    "message": "Sync browser language",
+    "description": "Action/tooltip for language sync."
   }
 } 
