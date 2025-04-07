@@ -29,7 +29,7 @@ const AgentUI: React.FC<AgentUIProps> = ({
   theme, 
   onClose, 
   isVisible, 
-  initialMessage = "How can I help you with this article?",
+  initialMessage = "I can help summarize this article for you. Just ask me to create a summary.",
   article
 }) => {
   // State
@@ -41,9 +41,9 @@ const AgentUI: React.FC<AgentUIProps> = ({
   const [streamingResponse, setStreamingResponse] = useState('');
   const [suggestionChips, setSuggestionChips] = useState<string[]>([
     'Summarize this article',
-    'Key takeaways',
-    'Explain like I\'m 5',
-    'Generate quiz questions'
+    'Create a brief summary',
+    'TLDR of this article',
+    'Summarize in bullet points'
   ]);
   
   // Refs
@@ -202,8 +202,11 @@ const AgentUI: React.FC<AgentUIProps> = ({
     }
   }, [inputText, isLoading, article, messages]);
   
-  // Build prompt with context
+  // Build prompt with context - optimized for summary
   const buildPrompt = (userInput: string): string => {
+    // Always treat as a summary request now
+    const isSummaryRequest = true;
+    
     // Create a conversation history for context
     const conversationHistory = messages
       .filter(msg => !msg.id.includes('welcome')) // Skip welcome message
@@ -213,18 +216,100 @@ const AgentUI: React.FC<AgentUIProps> = ({
     // Add article context if available
     let articleContext = '';
     if (article) {
+      // Basic article metadata
       articleContext = `
 Article Title: ${article.title || 'Untitled'}
 Article URL: ${article.url || 'Unknown'}
 Article Language: ${article.language || 'English'}
-
-Here is a brief extract from the beginning of the article:
-${article.content ? article.content.substring(0, 500).replace(/<[^>]*>/g, '') + '...' : 'No content available'}
 `;
+
+      // Extract plain text from HTML content
+      let plainText = '';
+      if (article.content) {
+        // Simple HTML to text conversion
+        plainText = article.content
+          .replace(/<[^>]*>/g, ' ') // Remove HTML tags
+          .replace(/\s+/g, ' ')     // Normalize whitespace
+          .trim();
+        
+        // Take a substantial portion of the article for summarization
+        // Up to 4000 characters for longer articles
+        const contentLength = plainText.length;
+        const extractLength = Math.min(contentLength, 4000);
+        
+        // For long articles, take beginning, middle and end portions
+        if (contentLength > 6000) {
+          const beginning = plainText.substring(0, 1500);
+          const middle = plainText.substring(Math.floor(contentLength/2) - 750, Math.floor(contentLength/2) + 750);
+          const end = plainText.substring(contentLength - 1500);
+          
+          articleContext += `
+Here is the article content (beginning, middle and end portions):
+
+BEGINNING:
+${beginning}
+
+MIDDLE SECTION:
+${middle}
+
+ENDING:
+${end}
+`;
+        } else {
+          // For shorter articles, include as much as possible
+          articleContext += `
+Here is the article content (first ${extractLength} characters):
+${plainText.substring(0, extractLength)}${contentLength > extractLength ? '...' : ''}
+`;
+        }
+        
+        // Add a note about length
+        articleContext += `
+[Note: The full article is ${contentLength} characters long.]
+`;
+      } else {
+        articleContext += `
+[No article content available for summarization]
+`;
+      }
     }
     
+    // Specific instructions for summary
+    const systemInstructions = `
+You are an article summarization assistant. Create a concise, informative summary that:
+1. Captures the main points and key ideas of the article
+2. Maintains factual accuracy
+3. Is well-structured with clear organization
+4. Avoids introducing information not present in the original text
+5. Uses bullet points or sections if appropriate for clarity
+6. Keeps the summary reasonably brief (aim for 2-4 paragraphs unless specified otherwise)
+
+Respond directly with the summary without meta-commentary like "Here's a summary".
+If the user asks for a specific summary style (shorter, bullet points, etc.), adapt accordingly.
+`;
+    
     // Build the full prompt
-    return `${articleContext ? 'ARTICLE CONTEXT:\n' + articleContext + '\n\nCONVERSATION:\n' : ''}${conversationHistory ? conversationHistory + '\n\n' : ''}User: ${userInput}\n\nAssistant:`;
+    let prompt = '';
+    
+    // Add system instructions
+    prompt += `INSTRUCTIONS:\n${systemInstructions}\n\n`;
+    
+    // Add article context if available
+    if (articleContext) {
+      prompt += `ARTICLE CONTEXT:\n${articleContext}\n\n`;
+    } else {
+      prompt += `WARNING: No article content available to summarize.\n\n`;
+    }
+    
+    // Add conversation history if available
+    if (conversationHistory) {
+      prompt += `CONVERSATION:\n${conversationHistory}\n\n`;
+    }
+    
+    // Add current user input
+    prompt += `User: ${userInput}\n\nAssistant:`;
+    
+    return prompt;
   };
   
   // Handle key press (Enter to send, Shift+Enter for new line)
@@ -246,33 +331,15 @@ ${article.content ? article.content.substring(0, 500).replace(/<[^>]*>/g, '') + 
     }
   };
   
-  // Update suggestion chips based on conversation context
+  // Update suggestion chips based on conversation context - simplified for summary only
   const updateSuggestionChips = (lastUserMessage: string) => {
-    // In a real implementation, this would analyze the conversation and context
-    // to generate relevant follow-up suggestions
-    
-    if (lastUserMessage.toLowerCase().includes('summarize')) {
-      setSuggestionChips([
-        'Make it simpler',
-        'Give more details',
-        'Bullet points only',
-        'Compare with other sources'
-      ]);
-    } else if (lastUserMessage.toLowerCase().includes('explain')) {
-      setSuggestionChips([
-        'Explain more deeply',
-        'Give examples',
-        'Use analogies',
-        'Why is this important?'
-      ]);
-    } else {
-      setSuggestionChips([
-        'Find related articles',
-        'Ask a follow-up question',
-        'Extract key facts',
-        'Create a study guide'
-      ]);
-    }
+    // All suggestions now focus only on summarization
+    setSuggestionChips([
+      'Make the summary shorter',
+      'More detailed summary',
+      'Bullet point summary',
+      'ELI5 summary'
+    ]);
   };
   
   // Determine colors based on theme
@@ -408,55 +475,57 @@ ${article.content ? article.content.substring(0, 500).replace(/<[^>]*>/g, '') + 
     
     /* Markdown styling */
     .markdown-content {
-      line-height: 1.5;
+      line-height: 1.4;
+      font-family: 'SFMono-Regular', Consolas, Monaco, 'Liberation Mono', Menlo, monospace;
+      font-size: 0.85em;
     }
     
     .markdown-content h1, 
     .markdown-content h2, 
     .markdown-content h3 {
-      margin-top: 1em;
-      margin-bottom: 0.5em;
+      margin-top: 0.8em;
+      margin-bottom: 0.4em;
       font-weight: 600;
     }
     
     .markdown-content h1 {
-      font-size: 1.4em;
+      font-size: 1.3em;
     }
     
     .markdown-content h2 {
-      font-size: 1.2em;
+      font-size: 1.15em;
     }
     
     .markdown-content h3 {
-      font-size: 1.1em;
+      font-size: 1.05em;
     }
     
     .markdown-content ul, 
     .markdown-content ol {
-      padding-left: 1.5em;
-      margin: 0.5em 0;
+      padding-left: 1.2em;
+      margin: 0.4em 0;
     }
     
     .markdown-content li {
-      margin: 0.25em 0;
+      margin: 0.2em 0;
     }
     
     .markdown-content p {
-      margin: 0.75em 0;
+      margin: 0.5em 0;
     }
     
     .markdown-content pre {
       background-color: ${isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.05)'};
-      padding: 0.75em;
-      border-radius: 6px;
+      padding: 0.6em;
+      border-radius: 4px;
       overflow-x: auto;
-      margin: 0.75em 0;
+      margin: 0.5em 0;
     }
     
     .markdown-content code {
-      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-family: 'SFMono-Regular', Consolas, Monaco, 'Liberation Mono', Menlo, monospace;
       font-size: 0.9em;
-      padding: 0.2em 0.4em;
+      padding: 0.1em 0.3em;
       background-color: ${isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.05)'};
       border-radius: 3px;
     }
@@ -467,9 +536,9 @@ ${article.content ? article.content.substring(0, 500).replace(/<[^>]*>/g, '') + 
     }
     
     .markdown-content blockquote {
-      border-left: 3px solid ${colors.accent};
-      margin: 0.75em 0;
-      padding-left: 1em;
+      border-left: 2px solid ${colors.accent};
+      margin: 0.5em 0;
+      padding-left: 0.8em;
       color: ${colors.textSecondary};
     }
     
@@ -596,9 +665,10 @@ ${article.content ? article.content.substring(0, 500).replace(/<[^>]*>/g, '') + 
         style={{
           flexGrow: 1,
           overflowY: 'auto',
-          padding: '16px 0',
+          padding: '12px 0',
           display: 'flex',
           flexDirection: 'column',
+          gap: '6px',
         }}
       >
         {/* Message bubbles */}
@@ -613,19 +683,22 @@ ${article.content ? article.content.substring(0, 500).replace(/<[^>]*>/g, '') + 
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: isUser ? 'flex-end' : 'flex-start',
-                padding: '3px 16px',
-                marginBottom: '12px',
+                padding: '2px 12px',
+                marginBottom: '8px',
               }}
             >
               <div
                 style={{
                   maxWidth: '85%',
-                  padding: '12px 16px',
+                  padding: '8px 12px',
                   backgroundColor: isUser ? colors.userBubble : colors.agentBubble,
                   color: isUser ? '#FFFFFF' : colors.text,
-                  borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                  fontSize: '15px',
-                  lineHeight: '1.5',
+                  borderRadius: isUser ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
+                  fontSize: '13px',
+                  lineHeight: '1.4',
+                  fontFamily: isUser ? 
+                    'inherit' : 
+                    "'SFMono-Regular', Consolas, Monaco, 'Liberation Mono', Menlo, monospace",
                   boxShadow: `0 1px 2px ${isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.07)'}`,
                 }}
               >
@@ -650,19 +723,20 @@ ${article.content ? article.content.substring(0, 500).replace(/<[^>]*>/g, '') + 
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-start',
-              padding: '3px 16px',
-              marginBottom: '12px',
+              padding: '2px 12px',
+              marginBottom: '8px',
             }}
           >
             <div
               style={{
                 maxWidth: '85%',
-                padding: '12px 16px',
+                padding: '8px 12px',
                 backgroundColor: colors.agentBubble,
                 color: colors.text,
-                borderRadius: '18px 18px 18px 4px',
-                fontSize: '15px',
-                lineHeight: '1.5',
+                borderRadius: '12px 12px 12px 4px',
+                fontSize: '13px',
+                lineHeight: '1.4',
+                fontFamily: "'SFMono-Regular', Consolas, Monaco, 'Liberation Mono', Menlo, monospace",
                 boxShadow: `0 1px 2px ${isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.07)'}`,
               }}
             >
@@ -760,9 +834,9 @@ ${article.content ? article.content.substring(0, 500).replace(/<[^>]*>/g, '') + 
                   background: colors.chipBg,
                   color: colors.accent,
                   border: 'none',
-                  borderRadius: '18px',
-                  padding: '8px 12px',
-                  fontSize: '13px',
+                  borderRadius: '14px',
+                  padding: '6px 10px',
+                  fontSize: '12px',
                   cursor: 'pointer',
                   transition: 'background-color 0.2s',
                   whiteSpace: 'nowrap',
@@ -787,7 +861,7 @@ ${article.content ? article.content.substring(0, 500).replace(/<[^>]*>/g, '') + 
         style={{
           borderTop: `1px solid ${colors.border}`,
           backgroundColor: colors.messageBg,
-          padding: '12px 16px',
+          padding: '8px 12px',
           position: 'relative',
         }}
       >
@@ -798,7 +872,7 @@ ${article.content ? article.content.substring(0, 500).replace(/<[^>]*>/g, '') + 
             position: 'relative',
             backgroundColor: colors.inputBg,
             border: `1px solid ${colors.border}`,
-            borderRadius: '24px',
+            borderRadius: '18px',
             overflow: 'hidden',
             boxShadow: `0 1px 3px ${isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.05)'}`
           }}
@@ -814,15 +888,15 @@ ${article.content ? article.content.substring(0, 500).replace(/<[^>]*>/g, '') + 
               flex: 1,
               border: 'none',
               outline: 'none',
-              padding: '12px 16px',
-              maxHeight: '150px',
-              minHeight: '24px',
+              padding: '8px 12px',
+              maxHeight: '120px',
+              minHeight: '20px',
               resize: 'none',
               backgroundColor: 'transparent',
               color: colors.text,
-              fontSize: '15px',
+              fontSize: '13px',
               fontFamily: 'inherit',
-              lineHeight: '1.5',
+              lineHeight: '1.4',
             }}
             disabled={isLoading}
           />
