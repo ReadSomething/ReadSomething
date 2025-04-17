@@ -3,181 +3,187 @@ import { LanguageCode } from "../utils/language"
 import { useArticle } from "../hooks/useArticle"
 import { useStoredSettings } from "../hooks/useStoredSettings"
 
-// Language-specific settings type
-export interface LanguageSettings {
+// --- Types & Defaults ---
+
+// Main settings type
+// Removed LanguageSettings and LanguageSettingsMap as per-language overrides are currently not implemented in setters.
+export interface ReaderSettings {
+  theme: "light" | "dark" | "sepia" | "paper";
+  fontFamily: string;
   fontSize: number;
   lineHeight: number;
-  fontFamily: string;
   width: number;
   spacing: "tight" | "normal" | "relaxed";
-  theme: "light" | "dark" | "sepia" | "paper";
   textAlign: "left" | "justify" | "right" | "center";
-}
-
-// Language settings map type
-export interface LanguageSettingsMap {
-  [key: string]: LanguageSettings;
+  trackingEnabled: boolean; // For potential future analytics
+  version: number; // For settings migrations
 }
 
 // Default settings for reader
-export const defaultSettings = {
-  // Theme
-  theme: "light" as "light" | "dark" | "sepia" | "paper",
-  
-  // Global font settings
-  fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, serif',
+export const defaultSettings: ReaderSettings = {
+  theme: "light",
+  fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, serif', // A common default serif
   fontSize: 18,
   lineHeight: 1.6,
-  
-  // Content width
-  width: 700,
-  
-  // Spacing
-  spacing: "normal" as "tight" | "normal" | "relaxed",
-  
-  // Text alignment
-  textAlign: "left" as "left" | "justify" | "right" | "center",
-  
-  // Keep trackingEnabled flag for future analytics
+  width: 700, // Standard width
+  spacing: "normal",
+  textAlign: "left",
   trackingEnabled: false,
-  
-  // Version for settings migrations
   version: 1,
-  
-  // Language-specific settings to avoid reset when switching languages
-  languageSettings: {
-    en: {
-      theme: "light" as "light" | "dark" | "sepia" | "paper",
-      fontFamily: '"Bookerly", "Palatino Linotype", "Book Antiqua", Palatino, serif',
-      fontSize: 18,
-      lineHeight: 1.6,
-      width: 700,
-      spacing: "normal" as "tight" | "normal" | "relaxed",
-      textAlign: "left" as "left" | "justify" | "right" | "center",
-    },
-    zh: {
-      theme: "light" as "light" | "dark" | "sepia" | "paper",
-      fontFamily: '"Noto Serif SC", "Source Han Serif SC", "Source Han Serif CN", STSong, SimSun, serif',
-      fontSize: 18,
-      lineHeight: 1.8, // Slightly higher for Chinese
-      width: 700,
-      spacing: "normal" as "tight" | "normal" | "relaxed",
-      textAlign: "justify" as "left" | "justify" | "right" | "center", // Generally justified for Chinese
-    }
-  } as Record<LanguageCode, {
-    theme: "light" | "dark" | "sepia" | "paper",
-    fontFamily: string,
-    fontSize: number,
-    lineHeight: number,
-    width: number,
-    spacing: "tight" | "normal" | "relaxed",
-    textAlign: "left" | "justify" | "right" | "center",
-  }>
 };
 
-// Reader context type definition
-export interface ReaderContextType {
-  article: {
-    title: string;
-    content: string;
-    author?: string;
-    date?: string;
-    siteName?: string;
-    textContent?: string;
-    excerpt?: string;
-    length?: number;
-    byline?: string;
-    dir?: string;
-    language?: string;
-  } | null;
-  settings: typeof defaultSettings;
-  isLoading: boolean;
-  error: string | null;
-  isSettingsLoaded: boolean; // Added setting loading status
-  updateSettings: (settings: Partial<typeof defaultSettings>) => void;
-  resetSettings: () => void; // Added reset settings method
-  closeReader: () => void;
+// Define the structure for the extracted article data
+// Based on Mercury parser output structure
+export interface ArticleData {
+  title: string;
+  content: string; // HTML content
+  author?: string;
+  date?: string;
+  siteName?: string;
+  textContent?: string; // Plain text version
+  excerpt?: string;
+  length?: number;
+  byline?: string;
+  dir?: string; // Text direction (e.g., 'ltr', 'rtl')
+  language?: string; // Detected language code (e.g., 'en', 'zh')
 }
 
-// Create context with default values
+// Type for the context value
+export interface ReaderContextType {
+  article: ArticleData | null;
+  settings: ReaderSettings;
+  isLoading: boolean; // Loading state for article extraction
+  error: string | null; // Error message from article extraction
+  isSettingsLoaded: boolean; // Status from useStoredSettings
+  updateSettings: (newSettings: Partial<ReaderSettings>) => void; // From useStoredSettings
+  resetSettings: () => void; // From useStoredSettings
+  closeReader: () => void; // Function to trigger reader close
+}
+
+// --- Context Definition ---
+
+// Create context with default/placeholder values
 export const ReaderContext = createContext<ReaderContextType>({
   article: null,
   settings: defaultSettings,
   isLoading: false,
   error: null,
-  isSettingsLoaded: false, // Added default value
-  updateSettings: () => {},
-  resetSettings: () => {}, // Added default value
-  closeReader: () => {},
-})
+  isSettingsLoaded: false, 
+  updateSettings: () => console.warn("updateSettings called before Provider mounted"),
+  resetSettings: () => console.warn("resetSettings called before Provider mounted"),
+  closeReader: () => console.warn("closeReader called before Provider mounted"),
+});
 
-// Provider props
+// Hook to easily consume the context
+export const useReader = () => useContext(ReaderContext);
+
+// --- Provider Component ---
+
 interface ReaderProviderProps {
   children: ReactNode;
 }
 
-// Hook to use the reader context
-export const useReader = () => useContext(ReaderContext)
-
-// Simple loading indicator component
+// Simple loading indicator shown while settings are loading
 const LoadingIndicator: React.FC = () => (
   <div style={{ 
     display: 'flex', 
     justifyContent: 'center', 
     alignItems: 'center', 
     height: '100vh',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    backgroundColor: '#f0f0f0',
     color: '#555',
-    fontSize: '18px'
+    fontSize: '16px'
   }}>
-    <div>Loading settings...</div>
+    <div style={{ textAlign: 'center' }}>
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: '10px', opacity: 0.6 }}>
+         <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+         <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+       </svg>
+      <div>Loading Reader Settings...</div>
+    </div>
   </div>
-)
+);
 
-// Provider component that wraps app
+/**
+ * Provider component for the Reader Context.
+ * Manages fetching stored settings, extracting article content, and providing 
+ * state and update functions to child components.
+ */
 export const ReaderProvider: React.FC<ReaderProviderProps> = ({ children }) => {
-  // use storage hook instead of useState to manage settings
-  const { settings, updateSettings, isLoaded: isSettingsLoaded, resetSettings } = useStoredSettings()
+  // --- State & Hooks ---
+  const LOG_PREFIX = "[ReaderProvider]";
   
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const { extractArticle } = useArticle()
-  const [article, setArticle] = useState<ReaderContextType["article"]>(null)
+  // Settings state managed by useStoredSettings (handles loading from chrome.storage)
+  const { 
+    settings, 
+    updateSettings, 
+    isLoaded: isSettingsLoaded, 
+    resetSettings 
+  } = useStoredSettings();
   
-  // Extract article content when component mounts
+  // State for article extraction
+  const [article, setArticle] = useState<ArticleData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Start loading until settings loaded
+  const [error, setError] = useState<string | null>(null);
+  
+  // Hook providing the article extraction function
+  const { extractArticle } = useArticle();
+  
+  // --- Effects ---
+
+  /**
+   * Effect to load the article content once the settings have been loaded.
+   */
   useEffect(() => {
     const loadArticle = async () => {
-      setIsLoading(true)
+      console.log(`${LOG_PREFIX} Settings loaded. Starting article extraction...`);
+      setIsLoading(true);
+      setError(null); // Clear previous errors
       try {
-        const extractedArticle = await extractArticle()
+        const extractedArticle = await extractArticle();
         if (extractedArticle) {
-          // Language is already normalized in detectLanguage function
-          setArticle(extractedArticle)
-          setError(null)
+          console.log(`${LOG_PREFIX} Article extracted successfully: "${extractedArticle.title?.substring(0, 50)}..."`);
+          setArticle(extractedArticle);
         } else {
-          setError("Could not extract article content")
+          console.warn(`${LOG_PREFIX} Article extraction returned null or undefined.`);
+          setError("Could not extract article content from this page.");
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error occurred")
-        console.error("Error extracting article:", err)
+        const errorMessage = err instanceof Error ? err.message : "Unknown error during article extraction";
+        console.error(`${LOG_PREFIX} Error extracting article:`, err);
+        setError(errorMessage);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
     
-    // only load article after settings are loaded
+    // Trigger article loading only after settings are confirmed loaded
     if (isSettingsLoaded) {
-      loadArticle()
+      loadArticle();
+    } else {
+      // If settings aren't loaded yet, ensure isLoading remains true
+      setIsLoading(true); 
     }
-  }, [isSettingsLoaded])
+  // Dependency: Re-run if the settings loading status changes. 
+  // extractArticle is assumed to be stable from its hook.
+  }, [isSettingsLoaded, extractArticle]); 
   
-  // Close reader mode
+  // --- Callbacks ---
+
+  /**
+   * Callback function to close the reader mode.
+   * Dispatches a custom event handled by the content script.
+   */
   const closeReader = useCallback(() => {
-    // Use the same custom event mechanism as background.ts
+    console.log(`${LOG_PREFIX} Dispatching close event (READLITE_TOGGLE_INTERNAL).`);
     document.dispatchEvent(new CustomEvent('READLITE_TOGGLE_INTERNAL'));
-  }, [])
+  }, []);
   
-  // Context value
-  const value = {
+  // --- Context Value --- 
+
+  // Assemble the context value object
+  const value: ReaderContextType = {
     article,
     settings,
     isLoading,
@@ -186,11 +192,14 @@ export const ReaderProvider: React.FC<ReaderProviderProps> = ({ children }) => {
     updateSettings,
     resetSettings,
     closeReader,
-  }
+  };
   
+  // --- Render ---
+
   return (
     <ReaderContext.Provider value={value}>
+      {/* Show loading indicator until settings are loaded */} 
       {isSettingsLoaded ? children : <LoadingIndicator />}
     </ReaderContext.Provider>
-  )
-} 
+  );
+}; 

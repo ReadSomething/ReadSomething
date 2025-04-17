@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react"
 import { useReader } from "../context/ReaderContext"
 import { useI18n } from "../hooks/useI18n"
-import { FontOption, fontOptions, widthOptions, spacingOptions, alignmentOptions } from "../config/i18n/translations"
+import { FontOption, fontOptions, widthOptions, spacingOptions, alignmentOptions } from "../config/ui"
 import { LanguageCode } from "../utils/language"
-import { getLanguageDisplayName } from "../config/languages"
+import { getLanguageDisplayName } from "../utils/i18n"
+import { getSettingsColors } from "../config/theme"
 
 interface SettingsProps {
   onClose: () => void;
+  buttonRef?: React.RefObject<HTMLButtonElement>;
 }
 
 /**
@@ -14,11 +16,25 @@ interface SettingsProps {
  * Allows customization of reader appearance with Kindle-style UI
  * Supports responsive design for different screen sizes
  */
-const Settings: React.FC<SettingsProps> = ({ onClose }) => {
+const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
   const { settings, updateSettings, article } = useReader()
   const { t, uiLanguage } = useI18n()
   const [windowWidth, setWindowWidth] = useState(window.innerWidth)
   const [detectedLanguage, setDetectedLanguage] = useState<LanguageCode | null>(null)
+  const LOG_PREFIX = "[SettingsPanel]";
+  
+  // Get button position for panel positioning
+  const [buttonPosition, setButtonPosition] = useState<{ top: number; right: number } | null>(null);
+  
+  useEffect(() => {
+    if (buttonRef?.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setButtonPosition({
+        top: rect.top,
+        right: window.innerWidth - rect.right
+      });
+    }
+  }, [buttonRef]);
   
   // Update window width on resize
   useEffect(() => {
@@ -27,6 +43,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     }
     
     window.addEventListener('resize', handleResize)
+    console.log(`${LOG_PREFIX} Initial window width: ${window.innerWidth}`);
     return () => {
       window.removeEventListener('resize', handleResize)
     }
@@ -35,8 +52,9 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   // Detect article language using the language property from parser
   useEffect(() => {
     if (article?.language) {
-      // Language code is already normalized in detectLanguage function
-      setDetectedLanguage(article.language as LanguageCode);
+      const lang = article.language as LanguageCode;
+      console.log(`${LOG_PREFIX} Detected content language: ${lang}`);
+      setDetectedLanguage(lang);
     }
   }, [article]);
   
@@ -52,204 +70,69 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   const isSmallScreen = windowWidth <= 600
   const isMediumScreen = windowWidth > 600 && windowWidth <= 960
   
-  // Get colors based on theme
+  // Get colors based on theme - using the centralized ThemeUtils
   const getColors = () => {
-    switch (settings.theme) {
-      case "dark":
-        return {
-          bg: "#202020",          // Safari style dark gray
-          text: "#E0E0E0",        // Non-pure white text
-          border: "#383838",      // Slightly lighter border
-          highlight: "#4C8BF5",   // More gentle blue highlight
-          buttonBg: "#2D2D2D",    // Slightly lighter than background button color
-          buttonText: "#E0E0E0"   // Same as text button text
-        }
-      case "sepia":
-        return {
-          bg: "#F2E8D7",          // Safari style light brown background
-          text: "#594A38",        // Brown text
-          border: "#E1D5BF",      // Matching border with background
-          highlight: "#9D744D",   // Brown highlight
-          buttonBg: "#E8DDCB",    // Slightly darker button background
-          buttonText: "#594A38"   // Same as text button text
-        }
-      case "paper":
-        return {
-          bg: "#F7F7F7",          // Slight gray background
-          text: "#333333",        // Dark gray text
-          border: "#E0E0E0",      // Light gray border
-          highlight: "#656565",   // Medium gray highlight
-          buttonBg: "#EEEEEE",    // Slightly darker button background
-          buttonText: "#333333"   // Same as text button text
-        }
-      default:  // light
-        return {
-          bg: "#FFFFFF",          // Pure white background
-          text: "#2C2C2E",        // Dark gray text similar to native Safari
-          border: "#E5E5EA",      // Light gray border similar to Safari
-          highlight: "#0077FF",   // iOS/Safari style blue
-          buttonBg: "#F2F2F7",    // iOS system level light gray background
-          buttonText: "#2C2C2E"   // Same as text button text
-        }
-    }
+    return getSettingsColors(settings.theme);
   }
   
   const colors = getColors()
   
   // Update font family with language-specific handling
   const changeFont = (fontFamily: string) => {
-    // Basic update - always update the main fontFamily
-    const updates: Partial<typeof settings> = { fontFamily };
-    
-    // Use detected language rather than settings.contentLanguage
-    const contentLanguage = detectedLanguage || 'en';
-    
-    // Update language-specific settings based on content language only
-    if (contentLanguage === 'zh') {
-      // For Chinese content, update zh font settings
-      const updatedZhSettings = {
-        ...settings.languageSettings.zh,
-        fontFamily
-      };
-      
-      updates.languageSettings = {
-        ...settings.languageSettings,
-        zh: updatedZhSettings
-      };
-    } else if (contentLanguage === 'en') {
-      // For English content, update en font settings
-      const updatedEnSettings = {
-        ...settings.languageSettings.en,
-        fontFamily
-      };
-      
-      updates.languageSettings = {
-        ...settings.languageSettings,
-        en: updatedEnSettings
-      };
-    }
-    
-    // Apply all updates
-    updateSettings(updates);
+    console.log(`${LOG_PREFIX} Changing font family to: ${fontFamily}`);
+    updateSettings({ fontFamily });
   }
   
   // Update theme
   const changeTheme = (theme: "light" | "dark" | "sepia" | "paper") => {
-    // Update global theme
-    const updates: Partial<typeof settings> = { theme };
-    
-    // Use detected language rather than settings.contentLanguage
-    const contentLanguage = detectedLanguage || 'en';
-    const languageSettings = settings.languageSettings;
-    
-    if (contentLanguage && languageSettings[contentLanguage]) {
-      const updatedLangSettings = {
-        ...languageSettings[contentLanguage],
-        theme
-      };
-      
-      updates.languageSettings = {
-        ...languageSettings,
-        [contentLanguage]: updatedLangSettings
-      };
-    }
-    
-    updateSettings(updates);
+    console.log(`${LOG_PREFIX} Changing theme to: ${theme}`);
+    updateSettings({ theme });
   }
   
   // Update width
   const changeWidth = (width: number) => {
-    // Update global width
-    const updates: Partial<typeof settings> = { width };
-    
-    // Use detected language rather than settings.contentLanguage
-    const contentLanguage = detectedLanguage || 'en';
-    const languageSettings = settings.languageSettings;
-    
-    if (contentLanguage && languageSettings[contentLanguage]) {
-      const updatedLangSettings = {
-        ...languageSettings[contentLanguage],
-        width
-      };
-      
-      updates.languageSettings = {
-        ...languageSettings,
-        [contentLanguage]: updatedLangSettings
-      };
-    }
-    
-    updateSettings(updates);
+    console.log(`${LOG_PREFIX} Changing width to: ${width}`);
+    updateSettings({ width });
   }
   
   // Update spacing
   const changeSpacing = (spacing: "tight" | "normal" | "relaxed") => {
     const option = spacingOptions.find(opt => opt.value === spacing)
     if (option) {
-      // Global line height and spacing settings
-      const updates: Partial<typeof settings> = { 
+      console.log(`${LOG_PREFIX} Changing spacing to: ${spacing} (lineHeight: ${option.lineHeight})`);
+      updateSettings({ 
         spacing,
         lineHeight: option.lineHeight
-      };
-      
-      // Use detected language rather than settings.contentLanguage
-      const contentLanguage = detectedLanguage || 'en';
-      const languageSettings = settings.languageSettings;
-      
-      if (contentLanguage && languageSettings[contentLanguage]) {
-        const updatedLangSettings = {
-          ...languageSettings[contentLanguage],
-          spacing,
-          lineHeight: option.lineHeight
-        };
-        
-        updates.languageSettings = {
-          ...languageSettings,
-          [contentLanguage]: updatedLangSettings
-        };
-      }
-      
-      updateSettings(updates);
+      });
+    } else {
+      console.warn(`${LOG_PREFIX} Could not find spacing option for value: ${spacing}`);
     }
   }
   
   // Handle text alignment change
   const changeTextAlign = (align: "left" | "justify" | "center" | "right") => {
-    const newSettings = { ...settings, textAlign: align };
-    
-    // Check if alignment is content type specific
-    const contentLanguage = detectedLanguage || 'en';
-    if (contentLanguage === 'zh' || contentLanguage === 'en') {
-      // Update language-specific settings
-      const langSettings = {
-        ...settings.languageSettings[contentLanguage],
-        textAlign: align
-      };
-      
-      newSettings.languageSettings = {
-        ...settings.languageSettings,
-        [contentLanguage]: langSettings
-      };
-    }
-    
-    updateSettings(newSettings);
+    console.log(`${LOG_PREFIX} Changing text alignment to: ${align}`);
+    updateSettings({ textAlign: align });
   };
   
   // Common styles with responsive adjustments
   const panelStyle: React.CSSProperties = {
     position: "fixed",
-    top: isSmallScreen ? "0" : "80px",
-    right: isSmallScreen ? "0" : "20px",
+    top: isSmallScreen ? "0" : buttonPosition ? `${Math.min(buttonPosition.top + 45, window.innerHeight - 500)}px` : "80px",
+    right: isSmallScreen ? "0" : buttonPosition ? `${buttonPosition.right + 10}px` : "20px",
     left: isSmallScreen ? "0" : "auto",
-    width: isSmallScreen ? "100%" : (isMediumScreen ? "300px" : "320px"),
+    width: isSmallScreen ? "100%" : (isMediumScreen ? "320px" : "350px"),
     height: isSmallScreen ? "100%" : "auto",
+    maxHeight: isSmallScreen ? "100%" : "calc(100vh - 120px)",
     backgroundColor: colors.bg,
     color: colors.text,
-    boxShadow: isSmallScreen ? "none" : "0 2px 20px rgba(0,0,0,0.2)",
+    boxShadow: isSmallScreen ? "none" : "0 4px 24px rgba(0,0,0,0.15)",
     zIndex: 2147483646,
-    borderRadius: isSmallScreen ? "0" : "8px",
-    overflow: "hidden",
+    borderRadius: isSmallScreen ? "0" : "10px",
+    overflow: "auto",
     display: "flex",
-    flexDirection: "column"
+    flexDirection: "column",
+    border: isSmallScreen ? "none" : `1px solid ${colors.border}`
   }
   
   const headerStyle: React.CSSProperties = {
@@ -284,37 +167,51 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     gap: "8px"
   }
   
-  // Function to get option button style based on whether it's active
-  const getOptionStyle = (isActive: boolean): React.CSSProperties => ({
-    flex: "1",
-    minWidth: isSmallScreen ? "calc(33% - 8px)" : "auto",
-    padding: "8px 12px",
+  /** Base style for option buttons, determining border, background, and text color based on active state. */
+  const getBaseOptionButtonStyle = (isActive: boolean): React.CSSProperties => ({
     border: `1px solid ${isActive ? colors.highlight : colors.border}`,
-    borderRadius: "4px",
     backgroundColor: isActive ? 
-      settings.theme === "dark" ? "rgba(66, 133, 244, 0.2)" :
-      settings.theme === "sepia" ? "rgba(151, 115, 78, 0.1)" :
-      "rgba(66, 133, 244, 0.1)" : 
+      (settings.theme === "dark" ? "rgba(76, 139, 245, 0.2)" :
+       settings.theme === "sepia" ? "rgba(157, 116, 77, 0.2)" :
+       "rgba(0, 119, 255, 0.1)") :
       "transparent",
-    color: isActive ? (settings.theme === "dark" ? "#fff" : colors.text) : colors.text,
+    color: isActive ? colors.highlight : colors.text,
+    borderRadius: "4px",
     cursor: "pointer",
-    textAlign: "center",
-    fontWeight: isActive ? "bold" : "normal"
-  })
-  
-  // Close button style adjusted for small screens
-  const closeButtonStyle: React.CSSProperties = {
-    background: "none",
-    border: "none",
-    fontSize: isSmallScreen ? "24px" : "20px",
-    cursor: "pointer",
-    color: colors.text,
-    padding: isSmallScreen ? "8px" : "4px",
-    marginLeft: "8px",
+    flex: 1,
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
-    justifyContent: "center"
-  }
+    padding: "12px 0", // Default padding
+    transition: "all 0.15s ease"
+  });
+
+  /** Style for simple text-based option buttons (like Theme) */
+  const getSimpleOptionButtonStyle = (isActive: boolean): React.CSSProperties => ({
+    ...getBaseOptionButtonStyle(isActive),
+    padding: "8px 12px", // Override padding for simpler buttons
+    minWidth: isSmallScreen ? "calc(33% - 8px)" : "auto",
+    textAlign: "center",
+    fontWeight: isActive ? "600" : "normal",
+  });
+  
+  /** Style for Width option buttons */
+  const getWidthOptionButtonStyle = (optionValue: number, isActive: boolean): React.CSSProperties => ({
+    ...getBaseOptionButtonStyle(isActive),
+    // Visualization styles are nested within the button element in JSX
+  });
+
+  /** Style for Alignment option buttons */
+  const getAlignmentOptionButtonStyle = (optionValue: string, isActive: boolean): React.CSSProperties => ({
+    ...getBaseOptionButtonStyle(isActive),
+     // Visualization styles are nested within the button element in JSX
+  });
+
+  /** Style for Spacing option buttons */
+  const getSpacingOptionButtonStyle = (optionValue: string, isActive: boolean): React.CSSProperties => ({
+    ...getBaseOptionButtonStyle(isActive),
+     // Visualization styles are nested within the button element in JSX
+  });
   
   // Filter fonts to display based on language
   const getDisplayedFonts = () => {
@@ -405,7 +302,18 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
         <div style={{ display: "flex", gap: isSmallScreen ? "16px" : "12px", alignItems: "center" }}>
           <button 
             onClick={onClose}
-            style={closeButtonStyle}
+            style={{
+              background: "none",
+              border: "none",
+              fontSize: isSmallScreen ? "24px" : "20px",
+              cursor: "pointer",
+              color: colors.text,
+              padding: isSmallScreen ? "8px" : "4px",
+              marginLeft: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
             aria-label={t('close')}
           >
             ✕
@@ -418,30 +326,15 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
         <section style={sectionStyle}>
           <h3 style={sectionTitleStyle}>{t('readingTheme')}</h3>
           <div style={optionGroupStyle}>
-            <button
-              onClick={() => changeTheme("light")}
-              style={getOptionStyle(settings.theme === "light")}
-            >
-              {t('light')}
-            </button>
-            <button
-              onClick={() => changeTheme("sepia")}
-              style={getOptionStyle(settings.theme === "sepia")}
-            >
-              {t('sepia')}
-            </button>
-            <button
-              onClick={() => changeTheme("dark")}
-              style={getOptionStyle(settings.theme === "dark")}
-            >
-              {t('dark')}
-            </button>
-            <button
-              onClick={() => changeTheme("paper")}
-              style={getOptionStyle(settings.theme === "paper")}
-            >
-              {t('paper')}
-            </button>
+            {["light", "sepia", "dark", "paper"].map(themeOption => (
+              <button
+                key={themeOption}
+                onClick={() => changeTheme(themeOption as any)}
+                style={getSimpleOptionButtonStyle(settings.theme === themeOption)}
+              >
+                {t(themeOption)}
+              </button>
+            ))}
           </div>
         </section>
 
@@ -471,27 +364,8 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
               value={settings.fontSize}
               onChange={(e) => {
                 const size = parseInt(e.target.value);
-                
                 // Update global font size
-                const updates: Partial<typeof settings> = { fontSize: size };
-                
-                // Use detected language rather than settings.contentLanguage
-                const contentLanguage = detectedLanguage || 'en';
-                const languageSettings = settings.languageSettings;
-                
-                if (contentLanguage && languageSettings[contentLanguage]) {
-                  const updatedLangSettings = {
-                    ...languageSettings[contentLanguage],
-                    fontSize: size
-                  };
-                  
-                  updates.languageSettings = {
-                    ...languageSettings,
-                    [contentLanguage]: updatedLangSettings
-                  };
-                }
-                
-                updateSettings(updates);
+                updateSettings({ fontSize: size });
               }}
               style={{ 
                 flex: "1", 
@@ -663,44 +537,34 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
             justifyContent: "space-between",
             gap: "10px"
           }}>
-            {widthOptions.map(option => (
-            <button
-                key={option.value}
-                onClick={() => changeWidth(option.value)}
-                style={{
-                  border: `1px solid ${settings.width === option.value ? colors.highlight : colors.border}`,
-                  backgroundColor: settings.width === option.value ? 
-                    (settings.theme === "dark" ? "rgba(66, 133, 244, 0.2)" :
-                     settings.theme === "sepia" ? "rgba(151, 115, 78, 0.1)" :
-                     "rgba(66, 133, 244, 0.1)") : 
-                    "transparent",
-                  borderRadius: "4px",
-                  padding: "12px 0",
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  cursor: "pointer"
-                }}
-              >
-                {/* Width visualization */}
-                <div style={{
-                  width: option.value === 580 ? "30%" : option.value === 700 ? "50%" : "70%",
-                  height: "4px",
-                  backgroundColor: settings.width === option.value ? colors.highlight : colors.text,
-                  marginBottom: "8px",
-                  borderRadius: "2px",
-                  opacity: settings.width === option.value ? 1 : 0.6
-                }} />
-                <div style={{
-                  fontSize: "14px",
-                  color: settings.width === option.value ? colors.highlight : colors.text,
-                  fontWeight: settings.width === option.value ? "600" : "normal"
-                }}>
-                  {t(option.widthClass || (option.label.en.toLowerCase()))}
-                </div>
-            </button>
-            ))}
+            {widthOptions.map(option => {
+              const isActive = settings.width === option.value;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => changeWidth(option.value)}
+                  style={getWidthOptionButtonStyle(option.value, isActive)}
+                >
+                  {/* Width visualization */}
+                  <div style={{
+                    width: option.value === 580 ? "30%" : option.value === 700 ? "50%" : "70%",
+                    height: "4px",
+                    backgroundColor: isActive ? colors.highlight : colors.text,
+                    marginBottom: "8px",
+                    borderRadius: "2px",
+                    opacity: isActive ? 1 : 0.6
+                  }} />
+                  {/* Label */}
+                  <div style={{
+                    fontSize: "14px",
+                    color: isActive ? colors.highlight : colors.text,
+                    fontWeight: isActive ? "600" : "normal"
+                  }}>
+                    {t(option.widthClass || (option.label.en.toLowerCase()))}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </section>
 
@@ -714,69 +578,46 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
             justifyContent: "space-between",
             gap: "10px"
           }}>
-            {alignmentOptions.map(option => (
-              <button
-                key={option.value}
-                onClick={() => changeTextAlign(option.value as "left" | "justify" | "center" | "right")}
-                style={{
-                  border: `1px solid ${settings.textAlign === option.value ? colors.highlight : colors.border}`,
-                  backgroundColor: settings.textAlign === option.value ? 
-                    (settings.theme === "dark" ? "rgba(66, 133, 244, 0.2)" :
-                     settings.theme === "sepia" ? "rgba(151, 115, 78, 0.1)" :
-                     "rgba(66, 133, 244, 0.1)") : 
-                    "transparent",
-                  borderRadius: "4px",
-                  padding: "12px 0",
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  cursor: "pointer"
-                }}
-              >
-                {/* Alignment visualization */}
-                <div style={{
-                  width: "70%",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: option.value === "left" ? "flex-start" : 
-                             option.value === "right" ? "flex-end" : 
-                             option.value === "center" ? "center" : "stretch",
-                  marginBottom: "8px"
-                }}>
+            {alignmentOptions.map(option => {
+              const isActive = settings.textAlign === option.value;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => changeTextAlign(option.value as any)}
+                  style={getAlignmentOptionButtonStyle(option.value, isActive)}
+                >
+                  {/* Alignment visualization */}
                   <div style={{
-                    height: "3px",
-                    width: option.value === "justify" ? "100%" : "60%",
-                    backgroundColor: settings.textAlign === option.value ? colors.highlight : colors.text,
-                    marginBottom: "3px",
-                    borderRadius: "2px",
-                    opacity: settings.textAlign === option.value ? 1 : 0.6
-                  }} />
+                    width: "70%",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: option.value === "left" ? "flex-start" : 
+                               option.value === "right" ? "flex-end" : 
+                               option.value === "center" ? "center" : "stretch",
+                    marginBottom: "8px"
+                  }}>
+                    {[60, 80, 40].map((widthPercent, index) => (
+                       <div key={index} style={{
+                         height: "3px",
+                         width: option.value === "justify" ? "100%" : `${widthPercent}%`, // Justify uses full width
+                         backgroundColor: isActive ? colors.highlight : colors.text,
+                         marginBottom: "3px",
+                         borderRadius: "2px",
+                         opacity: isActive ? 1 : 0.6
+                       }} />
+                    ))}
+                  </div>
+                  {/* Label */}
                   <div style={{
-                    height: "3px",
-                    width: option.value === "justify" ? "100%" : "80%",
-                    backgroundColor: settings.textAlign === option.value ? colors.highlight : colors.text,
-                    marginBottom: "3px",
-                    borderRadius: "2px",
-                    opacity: settings.textAlign === option.value ? 1 : 0.6
-                  }} />
-                  <div style={{
-                    height: "3px",
-                    width: option.value === "justify" ? "100%" : "40%",
-                    backgroundColor: settings.textAlign === option.value ? colors.highlight : colors.text,
-                    borderRadius: "2px",
-                    opacity: settings.textAlign === option.value ? 1 : 0.6
-                  }} />
-                </div>
-                <div style={{
-                  fontSize: "14px",
-                  color: settings.textAlign === option.value ? colors.highlight : colors.text,
-                  fontWeight: settings.textAlign === option.value ? "600" : "normal"
-                }}>
-                  {t(option.value) || option.label[uiLanguage as keyof typeof option.label] || option.label.en}
-                </div>
-              </button>
-            ))}
+                    fontSize: "14px",
+                    color: isActive ? colors.highlight : colors.text,
+                    fontWeight: isActive ? "600" : "normal"
+                  }}>
+                    {t(option.value) || option.label[uiLanguage as keyof typeof option.label] || option.label.en}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </section>
 
@@ -790,57 +631,44 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
             justifyContent: "space-between",
             gap: "10px"
           }}>
-            {spacingOptions.map(option => (
-            <button
-                key={option.value}
-                onClick={() => changeSpacing(option.value)}
-                style={{
-                  border: `1px solid ${settings.spacing === option.value ? colors.highlight : colors.border}`,
-                  backgroundColor: settings.spacing === option.value ? 
-                    (settings.theme === "dark" ? "rgba(66, 133, 244, 0.2)" :
-                     settings.theme === "sepia" ? "rgba(151, 115, 78, 0.1)" :
-                     "rgba(66, 133, 244, 0.1)") : 
-                    "transparent",
-                  borderRadius: "4px",
-                  padding: "12px 0",
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  cursor: "pointer"
-                }}
-              >
-                {/* Spacing visualization */}
-                <div style={{ 
-                  display: "flex", 
-                  flexDirection: "column",
-                  alignItems: "center",
-                  marginBottom: "8px",
-                  gap: option.value === "tight" ? "3px" : option.value === "normal" ? "6px" : "9px",
-                  width: "60%"
-                }}>
-                  {[0, 1, 2].map(i => (
-                    <div 
-                      key={i}
-                      style={{
+            {spacingOptions.map(option => {
+              const isActive = settings.spacing === option.value;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => changeSpacing(option.value)}
+                  style={getSpacingOptionButtonStyle(option.value, isActive)}
+                >
+                  {/* Spacing visualization */}
+                  <div style={{ 
+                    display: "flex", 
+                    flexDirection: "column",
+                    alignItems: "center",
+                    marginBottom: "8px",
+                    gap: option.value === "tight" ? "3px" : option.value === "normal" ? "6px" : "9px",
+                    width: "60%"
+                  }}>
+                    {[0, 1, 2].map(i => (
+                      <div key={i} style={{
                         height: "3px",
                         width: "100%",
-                        backgroundColor: settings.spacing === option.value ? colors.highlight : colors.text,
+                        backgroundColor: isActive ? colors.highlight : colors.text,
                         borderRadius: "1px",
-                        opacity: settings.spacing === option.value ? 1 : 0.6
-                      }}
-                    />
-                  ))}
-                </div>
-                <div style={{
-                  fontSize: "14px",
-                  color: settings.spacing === option.value ? colors.highlight : colors.text,
-                  fontWeight: settings.spacing === option.value ? "600" : "normal"
-                }}>
-                  {t(option.spacingClass || (option.label.en.toLowerCase()))}
-                </div>
-            </button>
-            ))}
+                        opacity: isActive ? 1 : 0.6
+                      }} />
+                    ))}
+                  </div>
+                  {/* Label */}
+                  <div style={{
+                    fontSize: "14px",
+                    color: isActive ? colors.highlight : colors.text,
+                    fontWeight: isActive ? "600" : "normal"
+                  }}>
+                    {t(option.spacingClass || (option.label.en.toLowerCase()))}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </section>
         

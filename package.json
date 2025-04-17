@@ -1,42 +1,57 @@
 {
   "name": "read-lite",
   "displayName": "ReadLite - Simple Reading Mode",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A simple reading mode extension to make web reading more comfortable",
   "author": "ReadLite Team",
   "license": "MIT",
   "scripts": {
     "clean": "rm -rf .plasmo/ build/",
-    "dev": "plasmo dev",
-    "build": "plasmo build",
-    "package": "plasmo build --zip",
+    "dev": "npm run build:tailwind && plasmo dev",
+    "build": "npm run build:tailwind && plasmo build",
+    "package": "npm run build:tailwind && plasmo build --zip",
     "test": "jest",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
+    "build:tailwind": "npx tailwindcss -i ./src/styles/global.css -o ./src/styles/tailwind.output.css",
+    "watch:tailwind": "npx tailwindcss -i ./src/styles/global.css -o ./src/styles/tailwind.output.css --watch"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@mozilla/readability": "^0.6.0",
+    "@mui/icons-material": "^7.0.1",
+    "@mui/material": "^7.0.1",
     "@plasmohq/storage": "^1.9.0",
-    "dompurify": "^3.0.6",
+    "dompurify": "^3.2.4",
+    "flexsearch": "^0.8.151",
     "franc-min": "^6.2.0",
+    "marked": "^15.0.7",
     "plasmo": "^0.90.3",
+    "portkey-ai": "^1.7.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.5.2",
     "turndown": "^7.2.0",
     "turndown-plugin-gfm": "^1.0.2"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.312",
     "@types/dompurify": "^3.0.5",
+    "@types/flexsearch": "^0.7.6",
     "@types/jest": "^29.5.11",
-    "@types/react": "^18.2.43",
-    "@types/react-dom": "^18.2.17",
+    "@types/marked": "^5.0.2",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
     "@types/turndown": "^5.0.5",
+    "autoprefixer": "^10.4.21",
     "eslint": "^8.55.0",
     "jest": "^29.7.0",
     "jimp": "^1.6.0",
+    "postcss": "^8.5.3",
     "prettier": "^3.1.0",
+    "tailwindcss": "^3.3.3",
     "typescript": "^5.3.3"
   },
   "manifest": {
@@ -58,6 +73,16 @@
     "background": {
       "service_worker": "background.js",
       "type": "module"
-    }
+    },
+    "web_accessible_resources": [
+      {
+        "resources": [
+          "src/styles/tailwind.output.css"
+        ],
+        "matches": [
+          "<all_urls>"
+        ]
+      }
+    ]
   }
 }

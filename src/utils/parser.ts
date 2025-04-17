@@ -7,144 +7,225 @@ import DOMPurify from 'dompurify';
 import { franc } from 'franc-min';
 import { normalizeLanguageCode } from './language';
 
-// Article data structure
+// --- Constants ---
+
+const LOG_PREFIX = "[Parser]";
+
+// DOMPurify configuration (Whitelist approach)
+const SANITIZE_CONFIG = {
+  // Keep only semantic and structural tags necessary for reading content
+  ALLOWED_TAGS: [
+    'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
+    'img', 'a', 
+    'ul', 'ol', 'li', 
+    'blockquote', 'pre', 'code', 
+    'figure', 'figcaption', 
+    'strong', 'em', 'b', 'i', 'u', 'strike', 'sub', 'sup', 
+    'br', 'hr',
+    'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'
+  ],
+  // Keep only essential attributes + those added by the hook
+  ALLOWED_ATTR: [
+    'href', // for <a>
+    'src', 'alt', 'loading', 'title', // for <img> (title is optional but common)
+    'target', 'rel', // for <a> (added by hook)
+    'start', // for <ol>
+    'colspan', 'rowspan', // for <td>, <th>
+    'scope' // for <th>
+    // Note: 'class', 'id', 'style', and event handlers are implicitly forbidden
+  ],
+  // Explicitly disallow all data-* attributes
+  ALLOW_DATA_ATTR: false, 
+  // FORBID_TAGS and FORBID_ATTR are removed as ALLOWED_* provide the whitelist
+};
+
+// Selectors used by getArticleDate to find publication dates heuristically
+const DATE_SELECTORS = [
+  'time[datetime]', // Prefer <time> elements with datetime attribute
+  'meta[property="article:published_time"]', // Common meta tag
+  'meta[name="pubdate"]', 
+  'meta[name="date"]',
+  '[itemprop="datePublished"]', // Schema.org
+  '.published', '.pubdate', '.date', '.time', '.timestamp', '.post-date' // Common class names
+];
+
+// --- Types ---
+
+// Define the structure of the object returned by this parser
 export interface Article {
   title: string;
-  content: string;
-  author?: string;
-  date?: string;
-  siteName?: string;
+  content: string;      // Sanitized HTML content
   textContent?: string; // Plain text content
-  excerpt?: string;    // Short excerpt/description
   length?: number;     // Article length in characters
-  byline?: string;     // Author metadata
-  dir?: string;        // Content direction
-  language?: string;   // Detected language code
+  excerpt?: string;    // Short excerpt/description
+  byline?: string;     // Author metadata (often same as author)
+  siteName?: string;
+  dir?: string;        // Content direction (e.g., 'ltr')
+  language?: string;   // Detected language code (ISO 639-1)
+  date?: string;       // Formatted publication date (YYYY-MM-DD) if found
+  // Note: We explicitly map byline to author in parseArticle if needed
 }
 
-// Language detection helper
+// --- Functions ---
+
+/**
+ * Detects the primary language of a text snippet.
+ * @param text Text content to analyze.
+ * @returns Normalized language code (ISO 639-1) or 'und' if detection fails.
+ */
 export const detectLanguage = (text: string): string => {
-  // Use a reasonable sample size to improve accuracy and performance
-  const sampleText = text.slice(0, 1000);
-  const detectedCode = franc(sampleText);
-  // Normalize the detected code to ISO 639-1 standard
+  if (!text) return 'und';
+  // Use a reasonable sample size for performance and accuracy
+  const sampleText = text.slice(0, 1500);
+  const detectedCode = franc(sampleText, { minLength: 3 }); // Use franc options if needed
+  // Normalize the detected code (e.g., 'eng' -> 'en')
   return normalizeLanguageCode(detectedCode);
 };
 
 /**
- * Parse article from a document
- * @param doc - The document to parse
- * @returns Promise that resolves to article data
+ * Extracts the main article content from a Document using Readability,
+ * sanitizes it, detects language, and attempts to find the publication date.
+ * @param doc The original Document object.
+ * @returns A Promise resolving to the processed Article object or null if parsing fails.
  */
 export const parseArticle = async (doc: Document): Promise<Article | null> => {
+  console.log(`${LOG_PREFIX} Starting article parsing.`);
   try {
-    // Clone the document to avoid modifying the original
     const documentClone = doc.cloneNode(true) as Document;
     
-    // Use Readability to extract the article content
+    console.log(`${LOG_PREFIX} Running Readability...`);
     const reader = new Readability(documentClone);
-    const article = reader.parse();
+    const readabilityResult = reader.parse(); // Store the result
     
-    if (!article) {
-      console.warn("Readability couldn't extract article content");
+    if (!readabilityResult) {
+      console.warn(`${LOG_PREFIX} Readability failed to parse article content.`);
       return null;
     }
+    console.log(`${LOG_PREFIX} Readability extracted content titled: "${readabilityResult.title}"`);
     
-    // Sanitize the content using DOMPurify to prevent XSS
-    const sanitizedContent = DOMPurify.sanitize(article.content || '', {
-      USE_PROFILES: { html: true },
-      FORBID_TAGS: ['script', 'style', 'iframe', 'form', 'object', 'embed'],
-      FORBID_ATTR: ['style']
-    });
-    
-    // Allow safe image sources and links
-    DOMPurify.addHook('afterSanitizeAttributes', function(node) {
-      // Fix URLs for images and links
-      if ('src' in node || 'href' in node) {
-        // Allow http and https 
-        if (node.getAttribute('href')?.startsWith('http')) {
-          node.setAttribute('target', '_blank');
-          node.setAttribute('rel', 'noopener noreferrer');
-        }
-        
-        // Add other safe attributes as needed
-        if (node.tagName === 'IMG') {
-          node.setAttribute('loading', 'lazy');
-          node.setAttribute('alt', node.getAttribute('alt') || 'Image');
+    // --- Log HTML before sanitization ---
+    console.log(`${LOG_PREFIX} HTML content BEFORE sanitization (first 500 chars):`, readabilityResult.content?.substring(0, 500)); // Log a sample
+
+    // --- Sanitization Hook --- 
+    // This hook runs *after* the main sanitization pass.
+    // It modifies attributes on ALLOWED tags (img, a) to add safe,
+    // functional attributes (target, rel, loading, alt).
+    // It does NOT allow new tags or attributes that were initially forbidden.
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      // Add target="_blank" and rel="noopener noreferrer" to external links
+      if (node.tagName === 'A' && node.getAttribute('href')?.startsWith('http')) {
+        node.setAttribute('target', '_blank');
+        node.setAttribute('rel', 'noopener noreferrer');
+      }
+      // Add lazy loading and default alt text to images
+      if (node.tagName === 'IMG') {
+        node.setAttribute('loading', 'lazy');
+        if (!node.getAttribute('alt')) { // Only add alt if it's missing
+           node.setAttribute('alt', 'Image');
         }
       }
     });
 
-    // Detect article language
-    const language = detectLanguage(article.textContent || '');
+    // Sanitize the extracted HTML content
+    console.log(`${LOG_PREFIX} Sanitizing HTML content with config:`, SANITIZE_CONFIG); // Log config used
+    // Use content from readabilityResult
+    const sanitizedContent = DOMPurify.sanitize(readabilityResult.content || '', SANITIZE_CONFIG);
+    
+    // --- Log HTML after sanitization ---
+    console.log(`${LOG_PREFIX} HTML content AFTER sanitization (first 500 chars):`, sanitizedContent.substring(0, 500)); // Log a sample
+
+    // Detect language from text content
+    console.log(`${LOG_PREFIX} Detecting language...`);
+    // Use textContent from readabilityResult
+    const language = detectLanguage(readabilityResult.textContent || '');
+    console.log(`${LOG_PREFIX} Detected language: ${language}`);
         
-    // Return cleaned article data
-    return {
-      title: article.title || "",
+    // Attempt to find and format publication date
+    const publicationDate = getArticleDate(documentClone);
+    console.log(`${LOG_PREFIX} Found date: ${publicationDate || 'None'}`);
+
+    // Construct the final Article object using fields from readabilityResult
+    const finalArticle: Article = {
+      title: readabilityResult.title || "",
       content: sanitizedContent,
-      textContent: article.textContent || "",
-      excerpt: article.excerpt || undefined,
-      length: article.length || undefined,
-      author: article.byline || undefined,
-      byline: article.byline || undefined,
-      date: article.siteName ? undefined : getArticleDate(documentClone),
-      siteName: article.siteName || undefined,
-      dir: article.dir || undefined,
-      language: language
+      textContent: readabilityResult.textContent || undefined,
+      length: readabilityResult.length || undefined,
+      excerpt: readabilityResult.excerpt || undefined,
+      byline: readabilityResult.byline || undefined, // Keep original byline if needed elsewhere
+      siteName: readabilityResult.siteName || undefined,
+      dir: readabilityResult.dir || undefined,
+      language: language, 
+      date: publicationDate, 
     };
+
+    // Remove the hook after use if DOMPurify allows (or manage hooks globally if needed)
+    // DOMPurify.removeHook('afterSanitizeAttributes'); 
+
+    console.log(`${LOG_PREFIX} Parsing complete.`);
+    return finalArticle;
+
   } catch (error) {
-    console.error("Error parsing article:", error);
+    console.error(`${LOG_PREFIX} Error during article parsing pipeline:`, error);
     return null;
   }
 };
 
 /**
- * Extract publication date from document if not provided by Readability
+ * Attempts to extract and format the publication date from a document.
+ * Uses various heuristics (time tags, meta tags, common selectors).
+ * @param doc The Document to search within.
+ * @returns Formatted date string (YYYY-MM-DD) or undefined if not found/parsable.
  */
 function getArticleDate(doc: Document): string | undefined {
-  // Try time element
-  const timeEl = doc.querySelector('time');
-  if (timeEl && timeEl.getAttribute('datetime')) {
-    return formatDate(new Date(timeEl.getAttribute('datetime')!));
-  }
-  
-  // Try meta tags
-  const metaDate = doc.querySelector('meta[property="article:published_time"]');
-  if (metaDate && metaDate.getAttribute('content')) {
-    return formatDate(new Date(metaDate.getAttribute('content')!));
-  }
-  
-  // Try common date selectors
-  const dateSelectors = [
-    '.date', '.time', '.published', '.pubdate', '.timestamp',
-    '.post-date', '[itemprop="datePublished"]'
-  ];
-  
-  for (const selector of dateSelectors) {
+  for (const selector of DATE_SELECTORS) {
     const element = doc.querySelector(selector);
-    if (element?.textContent) {
-      return element.textContent.trim();
+    let dateString: string | null = null;
+
+    if (element) {
+      if (element.tagName === 'META') {
+        dateString = element.getAttribute('content');
+      } else if (element.tagName === 'TIME') {
+        dateString = element.getAttribute('datetime');
+      } 
+      // If still no dateString, try textContent for other selectors
+      if (!dateString) {
+          dateString = element.textContent;
+      }
+    }
+
+    if (dateString) {
+      try {
+        const date = new Date(dateString.trim());
+        // Check if the parsed date is valid before formatting
+        if (!isNaN(date.getTime())) {
+          return formatDate(date); // Format valid dates
+        }
+      } catch (e) {
+        // Ignore parsing errors for this selector and try the next
+        console.warn(`${LOG_PREFIX} Could not parse date string "${dateString}" from selector "${selector}"`);
+      }
     }
   }
   
-  return undefined;
+  return undefined; // No valid date found
 }
 
 /**
- * Format a date object into a readable string
+ * Formats a Date object into a standard YYYY-MM-DD string.
+ * Returns an empty string if the date is invalid.
  */
 function formatDate(date: Date): string {
-  if (isNaN(date.getTime())) {
-    return '';
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    console.warn(`${LOG_PREFIX} formatDate received an invalid date object.`);
+    return ''; // Return empty string for invalid dates
   }
   
   try {
-    return new Intl.DateTimeFormat('zh-CN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(date);
-  } catch {
-    return date.toLocaleDateString();
+    // Use toISOString for a guaranteed locale-independent YYYY-MM-DD format
+    return date.toISOString().split('T')[0];
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Error formatting date object:`, error);
+    // Fallback to a simple format if toISOString fails unexpectedly
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }
 } 
