@@ -4,9 +4,11 @@ import { useI18n } from "../hooks/useI18n"
 import { FontOption, fontOptions, widthOptions, spacingOptions, alignmentOptions } from "../config/ui"
 import { LanguageCode } from "../utils/language"
 import { getLanguageDisplayName } from "../utils/i18n"
+import { getSettingsColors } from "../config/theme"
 
 interface SettingsProps {
   onClose: () => void;
+  buttonRef?: React.RefObject<HTMLButtonElement>;
 }
 
 /**
@@ -14,12 +16,25 @@ interface SettingsProps {
  * Allows customization of reader appearance with Kindle-style UI
  * Supports responsive design for different screen sizes
  */
-const Settings: React.FC<SettingsProps> = ({ onClose }) => {
+const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
   const { settings, updateSettings, article } = useReader()
   const { t, uiLanguage } = useI18n()
   const [windowWidth, setWindowWidth] = useState(window.innerWidth)
   const [detectedLanguage, setDetectedLanguage] = useState<LanguageCode | null>(null)
   const LOG_PREFIX = "[SettingsPanel]";
+  
+  // Get button position for panel positioning
+  const [buttonPosition, setButtonPosition] = useState<{ top: number; right: number } | null>(null);
+  
+  useEffect(() => {
+    if (buttonRef?.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setButtonPosition({
+        top: rect.top,
+        right: window.innerWidth - rect.right
+      });
+    }
+  }, [buttonRef]);
   
   // Update window width on resize
   useEffect(() => {
@@ -55,46 +70,9 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   const isSmallScreen = windowWidth <= 600
   const isMediumScreen = windowWidth > 600 && windowWidth <= 960
   
-  // Get colors based on theme
+  // Get colors based on theme - using the centralized ThemeUtils
   const getColors = () => {
-    switch (settings.theme) {
-      case "dark":
-        return {
-          bg: "#202020",          // Safari style dark gray
-          text: "#E0E0E0",        // Non-pure white text
-          border: "#383838",      // Slightly lighter border
-          highlight: "#4C8BF5",   // More gentle blue highlight
-          buttonBg: "#2D2D2D",    // Slightly lighter than background button color
-          buttonText: "#E0E0E0"   // Same as text button text
-        }
-      case "sepia":
-        return {
-          bg: "#F2E8D7",          // Safari style light brown background
-          text: "#594A38",        // Brown text
-          border: "#E1D5BF",      // Matching border with background
-          highlight: "#9D744D",   // Brown highlight
-          buttonBg: "#E8DDCB",    // Slightly darker button background
-          buttonText: "#594A38"   // Same as text button text
-        }
-      case "paper":
-        return {
-          bg: "#F7F7F7",          // Slight gray background
-          text: "#333333",        // Dark gray text
-          border: "#E0E0E0",      // Light gray border
-          highlight: "#656565",   // Medium gray highlight
-          buttonBg: "#EEEEEE",    // Slightly darker button background
-          buttonText: "#333333"   // Same as text button text
-        }
-      default:  // light
-        return {
-          bg: "#FFFFFF",          // Pure white background
-          text: "#2C2C2E",        // Dark gray text similar to native Safari
-          border: "#E5E5EA",      // Light gray border similar to Safari
-          highlight: "#0077FF",   // iOS/Safari style blue
-          buttonBg: "#F2F2F7",    // iOS system level light gray background
-          buttonText: "#2C2C2E"   // Same as text button text
-        }
-    }
+    return getSettingsColors(settings.theme);
   }
   
   const colors = getColors()
@@ -140,19 +118,21 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   // Common styles with responsive adjustments
   const panelStyle: React.CSSProperties = {
     position: "fixed",
-    top: isSmallScreen ? "0" : "80px",
-    right: isSmallScreen ? "0" : "20px",
+    top: isSmallScreen ? "0" : buttonPosition ? `${Math.min(buttonPosition.top + 45, window.innerHeight - 500)}px` : "80px",
+    right: isSmallScreen ? "0" : buttonPosition ? `${buttonPosition.right + 10}px` : "20px",
     left: isSmallScreen ? "0" : "auto",
-    width: isSmallScreen ? "100%" : (isMediumScreen ? "300px" : "320px"),
+    width: isSmallScreen ? "100%" : (isMediumScreen ? "320px" : "350px"),
     height: isSmallScreen ? "100%" : "auto",
+    maxHeight: isSmallScreen ? "100%" : "calc(100vh - 120px)",
     backgroundColor: colors.bg,
     color: colors.text,
-    boxShadow: isSmallScreen ? "none" : "0 2px 20px rgba(0,0,0,0.2)",
+    boxShadow: isSmallScreen ? "none" : "0 4px 24px rgba(0,0,0,0.15)",
     zIndex: 2147483646,
-    borderRadius: isSmallScreen ? "0" : "8px",
-    overflow: "hidden",
+    borderRadius: isSmallScreen ? "0" : "10px",
+    overflow: "auto",
     display: "flex",
-    flexDirection: "column"
+    flexDirection: "column",
+    border: isSmallScreen ? "none" : `1px solid ${colors.border}`
   }
   
   const headerStyle: React.CSSProperties = {
@@ -384,27 +364,8 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
               value={settings.fontSize}
               onChange={(e) => {
                 const size = parseInt(e.target.value);
-                
                 // Update global font size
-                const updates: Partial<typeof settings> = { fontSize: size };
-                
-                // Use detected language rather than settings.contentLanguage
-                const contentLanguage = detectedLanguage || 'en';
-                const languageSettings = settings.languageSettings;
-                
-                if (contentLanguage && languageSettings[contentLanguage]) {
-                  const updatedLangSettings = {
-                    ...languageSettings[contentLanguage],
-                    fontSize: size
-                  };
-                  
-                  updates.languageSettings = {
-                    ...languageSettings,
-                    [contentLanguage]: updatedLangSettings
-                  };
-                }
-                
-                updateSettings(updates);
+                updateSettings({ fontSize: size });
               }}
               style={{ 
                 flex: "1", 

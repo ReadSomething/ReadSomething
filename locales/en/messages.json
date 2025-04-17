@@ -35,12 +35,12 @@
     "message": "Font Size",
     "description": "Label for font size adjustment."
   },
-  "font": {
+  "fontFamily": {
     "message": "Font",
     "description": "Label for font selection."
   },
-  "pageWidth": {
-    "message": "Page Width",
+  "contentWidth": {
+    "message": "Content Width",
     "description": "Label for page width adjustment."
   },
   "narrow": {
@@ -222,5 +222,125 @@
   "refreshLanguage": {
     "message": "Sync browser language",
     "description": "Action/tooltip for language sync."
+  },
+  "clearChat": {
+    "message": "Clear chat",
+    "description": "Label for the clear chat button in Agent UI."
+  },
+  "selectModel": {
+    "message": "Select Model",
+    "description": "Label for the model selector in Agent UI."
+  },
+  "comingSoon": {
+    "message": "Coming soon",
+    "description": "Label for features that will be available in the future."
+  },
+  "welcomeMessage": {
+    "message": "I'm here to help you understand what's currently visible on your screen. As you scroll, my context updates to focus on what you're reading now.",
+    "description": "Initial welcome message shown in Agent UI."
+  },
+  "contextTypeScreen": {
+    "message": "Screen",
+    "description": "Label for screen context type in Agent UI."
+  },
+  "contextTypeArticle": {
+    "message": "Article",
+    "description": "Label for article context type in Agent UI."
+  },
+  "contextTypeSelection": {
+    "message": "Selection",
+    "description": "Label for selection context type in Agent UI."
+  },
+  "loading": {
+    "message": "Loading...",
+    "description": "Message shown when content is loading."
+  },
+  "login": {
+    "message": "Log in",
+    "description": "Label for the login button."
+  },
+  "loginRequired": {
+    "message": "Login Required",
+    "description": "Title for the login required message."
+  },
+  "loginMessage": {
+    "message": "Please log in to use the AI assistant feature. Login is free and helps us prevent abuse.",
+    "description": "Message explaining why login is required."
+  },
+  "loginButton": {
+    "message": "Log In",
+    "description": "Label for the login button in the login UI."
+  },
+  "loginSafe": {
+    "message": "Safe login, no privacy concerns",
+    "description": "Message indicating login is safe"
+  },
+  "minimize": {
+    "message": "Close",
+    "description": "Text for minimize/close button"
+  },
+  "thinking": {
+    "message": "Thinking...",
+    "description": "Indicator when AI is thinking"
+  },
+  "agentContext": {
+    "message": "Context",
+    "description": "Label for the context selector"
+  },
+  "agentDefaultModel": {
+    "message": "Default",
+    "description": "Default model option"
+  },
+  "agentInputPlaceholder": {
+    "message": "Type your message...",
+    "description": "Placeholder text for input field"
+  },
+  "agentSendMessage": {
+    "message": "Send message",
+    "description": "Title for send button"
+  },
+  "agentSending": {
+    "message": "Sending...",
+    "description": "Text shown when message is being sent"
+  },
+  "agentSend": {
+    "message": "Send",
+    "description": "Text for send button"
+  },
+  "startConversation": {
+    "message": "Start a new conversation",
+    "description": "Text shown when no messages exist"
+  },
+  "emptyStateDescription": {
+    "message": "Select a context mode and ask any question to start the conversation.",
+    "description": "Description for empty state"
+  },
+  "errorOccurred": {
+    "message": "An error occurred",
+    "description": "Text shown when an error occurs"
+  },
+  "errorMessage": {
+    "message": "Unable to complete the request. Please try again later.",
+    "description": "Default error message"
+  },
+  "retry": {
+    "message": "Retry",
+    "description": "Text for retry button"
+  },
+  "modelSelectorTitle": {
+    "message": "Select AI Model",
+    "description": "Title for model selector"
+  },
+  "noModelsAvailable": {
+    "message": "No models available",
+    "description": "Text when no models are available"
+  },
+  "contextScreenDesc": {
+    "message": "Only use currently visible content",
+    "description": "Description for screen context"
+  },
+  "contextArticleDesc": {
+    "message": "Use the entire article as context",
+    "description": "Description for article context"
   }
-} 
+}

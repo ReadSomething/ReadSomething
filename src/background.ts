@@ -5,6 +5,8 @@
 
 // Background service worker for the ReadLite extension
 import llmModule from './utils/llm';
+import { getAuthToken } from './utils/auth';
+import { Model } from './types/api';
 
 // --- Constants ---
 
@@ -16,24 +18,44 @@ const ACTIVE_COLOR: [number, number, number, number] = [187, 156, 216, 255]; // 
 const INACTIVE_COLOR: [number, number, number, number] = [216, 216, 240, 255]; // #D8D8F0
 const BADGE_TEXT_COLOR: [number, number, number, number] = [255, 255, 255, 255]; // White
 
+// --- State ---
+
+// Store available models fetched from the server
+let availableModels: Model[] = [];
+
 // --- Types --- 
 
 // Define specific payload interfaces for messages
 interface ToggleReaderModeMessage { type: 'TOGGLE_READER_MODE'; }
 interface ContentScriptReadyMessage { type: 'CONTENT_SCRIPT_READY'; }
 interface ReaderModeChangedMessage { type: 'READER_MODE_CHANGED'; isActive: boolean; }
+interface LlmStreamRequestData {
+  prompt: string;
+  options: any;
+  streamId: string;
+}
 interface LlmApiRequestData {
   method: string;
   params: any[]; // Keep params flexible for now, but method is required
 }
+interface LlmStreamRequestMessage { type: 'LLM_STREAM_REQUEST'; data: LlmStreamRequestData; }
 interface LlmApiRequestMessage { type: 'LLM_API_REQUEST'; data: LlmApiRequestData; }
+interface AuthStatusChangedMessage { 
+  type: 'AUTH_STATUS_CHANGED'; 
+  isAuthenticated: boolean; 
+}
+// Message to request the model list
+interface GetModelsRequestMessage { type: 'GET_MODELS_REQUEST'; }
 
-// Union type for all messages handled by the main listener
+// Union type defining all possible background message types
 type BackgroundMessage = 
-  | ToggleReaderModeMessage
-  | ContentScriptReadyMessage
-  | ReaderModeChangedMessage
-  | LlmApiRequestMessage;
+  ToggleReaderModeMessage | 
+  ContentScriptReadyMessage | 
+  ReaderModeChangedMessage | 
+  LlmApiRequestMessage | 
+  LlmStreamRequestMessage |
+  AuthStatusChangedMessage |
+  GetModelsRequestMessage;
 
 // --- Main Message Listener --- 
 
@@ -69,6 +91,13 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage, sender, sendRe
     case 'TOGGLE_READER_MODE':
       handleToggleReaderMode(sender.tab);
       break; // Synchronous or no response needed
+    case 'AUTH_STATUS_CHANGED':
+      // Type guard ensures message.isAuthenticated exists
+      handleAuthStatusChanged(message.isAuthenticated, sendResponse);
+      return true; // Async response possible
+    case 'GET_MODELS_REQUEST':
+      handleGetModelsRequest(sendResponse);
+      return true; // Async response possible
     default:
       // Optional: Handle unknown message types if necessary
       // console.warn(`${LOG_PREFIX} Received unknown message type:`, message);
@@ -455,3 +484,75 @@ chrome.action.onClicked.addListener(async (tab) => {
   // Toggle reader mode when extension icon is clicked
   await handleToggleReaderMode(tab);
 });
+
+/**
+ * Handles authentication status change message.
+ * Broadcasts the new status to all tabs.
+ */
+function handleAuthStatusChanged(isAuthenticated: boolean, sendResponse: (response?: any) => void) {
+  console.log(`[Background] Authentication status changed: ${isAuthenticated}`);
+  
+  // Broadcast to all tabs
+  chrome.tabs.query({}, (tabs) => {
+    for (const tab of tabs) {
+      if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, {
+          type: 'AUTH_STATUS_CHANGED',
+          isAuthenticated
+        }).catch(error => {
+          // Ignore errors, as some tabs may not have the content script running
+          console.debug(`[Background] Failed to send auth status to tab ${tab.id}: ${error instanceof Error ? error.message : String(error)}`);
+        });
+      }
+    }
+  });
+  
+  // Respond to confirm receipt
+  sendResponse({ received: true });
+}
+
+/**
+ * Fetches the list of available models from the API endpoint.
+ * Updates the global `availableModels` state.
+ */
+async function fetchModelsInBackground(): Promise<void> {
+  const LOG_PREFIX = "[Background:FetchModels]";
+  console.log(`${LOG_PREFIX} Attempting to fetch models...`);
+  try {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch('https://api.readlite.app/api/models', { headers });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const models = await response.json();
+
+    if (Array.isArray(models) && models.length > 0 && models.every(m => m.value && m.label)) {
+      availableModels = models;
+      console.log(`${LOG_PREFIX} Successfully fetched and updated models:`, availableModels);
+    } else {
+      console.warn(`${LOG_PREFIX} Fetched models have unexpected structure or are empty, using defaults.`, models);
+      availableModels = []; // Reset to defaults if fetch is invalid
+    }
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to fetch models, using defaults:`, error);
+    availableModels = []; // Reset to defaults on error
+  }
+}
+
+// Fetch models when the background script starts
+fetchModelsInBackground();
+
+/**
+ * Handles the GET_MODELS_REQUEST message.
+ */
+function handleGetModelsRequest(sendResponse: (response?: any) => void) {
+  console.log(`[Background] Received GET_MODELS_REQUEST`);
+  sendResponse({ success: true, data: availableModels });
+}

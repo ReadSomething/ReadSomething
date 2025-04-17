@@ -1,75 +1,61 @@
 # ReadLite - Simple Reading Mode
 
-ReadLite is a browser extension focused on user experience, providing clean typography and immersive reading experience similar to physical books. It intelligently extracts webpage content, filters out ads and distracting elements, allowing you to focus on the content itself.
+A browser extension that provides a clean, distraction-free reading experience with AI summarization capabilities.
 
-## ✨ Key Features
+![ReadLite Screenshot](assets/screenshot.png)
 
-### 📖 Smart Content Extraction
-- Automatically identifies and extracts main content using advanced algorithms
-- Effectively filters out ads, popups, and other distracting elements
-- Supports various news sites, blogs, documentation, and long-form content
+## Features
 
-### 🎨 Beautiful Reading Experience
-- Multiple themes: Light, Dark, Sepia, and Paper mode
-- Customizable fonts, font sizes, line spacing, and page width
-- Automatically adapts to different screen sizes for optimal reading
+- **Clean Reader Interface**: Transform cluttered web pages into a beautiful, distraction-free reading experience
+- **AI Article Summarization**: Get instant summaries and insights about what you're reading
+- **Multiple Themes**: Choose from Light, Dark, Sepia, and Paper themes to suit your preference
+- **Adjustable Typography**: Customize font size, line spacing, and width for optimal reading comfort
+- **Article Saving**: Save articles as markdown for offline reading
 
-### 🔤 Multilingual Support
-- Automatically detects page language and applies appropriate typography rules
-- Provides specialized reading experience for Chinese and English content
-- Supports switching between Chinese and English interfaces
+## Usage
 
-### ⚡ Convenient Controls
-- One-click adjustment for all reading settings
-- Automatically remembers your reading preferences
+1. Install the extension from the Chrome Web Store (coming soon)
+2. Navigate to any article or blog post
+3. Click the ReadLite icon in your browser toolbar
+4. Enjoy a clean reading experience
+5. Use the AI button to get summaries and ask questions about the article
 
-### 🔒 Privacy Focused
-- All features process locally, no transmission of your reading content
-- No account registration required for full functionality
-- Collects no personal data, protecting your privacy
-
-## 🚀 How to Use
-
-1. After installation, browse any page with articles
-2. Click the ReadLite icon in the toolbar
-3. The page will immediately convert to comfortable reading mode
-4. Customize your reading experience through the settings panel
-
-## 🛠️ Development Guide
+## Development
 
 ### Prerequisites
+- Node.js (v16+)
+- Yarn or npm
 
-- Node.js 16+ and npm/yarn
-- Chrome, Edge, or other modern browsers
-
-### Install Dependencies
-
+### Setup
 ```bash
-npm install
-# or
+# Clone the repository
+git clone https://github.com/yourusername/read-lite.git
+cd read-lite
+
+# Install dependencies
 yarn install
-```
 
-### Development Mode
-
-```bash
-npm run dev
-# or
+# Start development server
 yarn dev
 ```
 
-### Build Extension
-
+### Build for production
 ```bash
-npm run build
-# or
 yarn build
 ```
 
-## 📄 License
+## Technical Details
+
+This extension is built with:
+- [Plasmo Framework](https://www.plasmo.com/) - Browser extension framework
+- [React](https://reactjs.org/) - UI library
+- [Mozilla Readability](https://github.com/mozilla/readability) - Content extraction
+- [Marked](https://marked.js.org/) - Markdown parsing
+
+## License
 
 MIT
 
----
+## Translation
 
-*For Chinese version, please see [README.zh.md](README.zh.md)*
+- [中文说明](./README.zh.md)

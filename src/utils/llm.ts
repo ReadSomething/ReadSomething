@@ -1,27 +1,20 @@
 /**
  * LLM API integration utility for ReadLite
- * Provides direct fetch implementation to interact with Portkey gateway.
+ * Provides direct fetch implementation to interact with OpenRouter via ReadLite API.
  */
 
-import { DEFAULT_MODEL } from '../config/model';
+import { getAuthToken } from './auth';
 
 // --- Constants & Configuration ---
 
 const LOG_PREFIX = "[LLMUtil]";
 
-// LLM configuration - **CRITICAL: API keys should ONLY come from environment variables.**
-const API_KEY = process.env.PORTKEY_API_KEY || 'Q7BUafUi1FOvFI5YanSmMcQWxUav';
-const VIRTUAL_KEY = process.env.PORTKEY_VIRTUAL_KEY || 'anthropic-virtu-05b58f';
-
-const API_ENDPOINT = 'https://api.portkey.ai/v1/chat/completions';
+// Updated API endpoint
+const API_ENDPOINT = 'https://api.readlite.app/api/openrouter/chat/completions';
 const DEFAULT_MAX_TOKENS = 256;
 const API_TIMEOUT_MS = 120000; // 120 seconds
-
-const IS_API_CONFIGURED = !!API_KEY && !!VIRTUAL_KEY;
-
-if (!IS_API_CONFIGURED) {
-  console.warn(`${LOG_PREFIX} Portkey API Key or Virtual Key is missing. LLM features will use fallback implementation.`);
-}
+// Default model ID to use as fallback when none specified
+const FALLBACK_MODEL_ID = 'deepseek/deepseek-chat-v3-0324:free';
 
 // --- Types ---
 
@@ -39,69 +32,16 @@ export interface LLMRequestOptions {
   };
 }
 
-// Standard chat message format (similar to OpenAI)
-interface ChatMessage {
+/** Interface for chat messages */
+export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
 }
 
-// --- Fallback Implementation ---
-
-/** Creates a fallback implementation that simulates LLM responses when API keys are missing. */
-const createFallbackImplementation = () => {
-  console.info(`${LOG_PREFIX} Creating fallback LLM implementation.`);
-  const FALLBACK_DELAY = 500; // ms
-  const streamChunkDelay = 50; // ms
-
-  return {
-    generateText: async (prompt: string, options?: LLMRequestOptions): Promise<string> => {
-      console.warn(`${LOG_PREFIX} Using fallback: generateText`);
-      await new Promise(resolve => setTimeout(resolve, FALLBACK_DELAY));
-      return "[Fallback] LLM API not configured. This is simulated text.";
-    },
-    
-    generateTextStream: async (prompt: string, onChunk: (chunk: string) => void, options?: LLMRequestOptions): Promise<void> => {
-      console.warn(`${LOG_PREFIX} Using fallback: generateTextStream`);
-      const fallbackResponse = "[Fallback] Simulated stream. LLM API not configured.";
-      const words = fallbackResponse.split(' ');
-      for (const word of words) {
-        await new Promise(resolve => setTimeout(resolve, streamChunkDelay));
-        onChunk(word + ' ');
-      }
-      // Ensure stream completion is signaled if necessary by the caller
-    },
-    
-    summarizeText: async (text: string, maxLength?: number): Promise<string> => {
-      console.warn(`${LOG_PREFIX} Using fallback: summarizeText`);
-      await new Promise(resolve => setTimeout(resolve, FALLBACK_DELAY));
-      return `[Fallback] Simulated summary of ${maxLength || 3} sentences. LLM API not configured.`;
-    },
-    
-    extractKeyInfo: async (text: string): Promise<string> => {
-      console.warn(`${LOG_PREFIX} Using fallback: extractKeyInfo`);
-      await new Promise(resolve => setTimeout(resolve, FALLBACK_DELAY));
-      return "* [Fallback] Simulated key point 1\n* [Fallback] Simulated key point 2\n* LLM API not configured.";
-    },
-    
-    answerQuestion: async (question: string, context: string): Promise<string> => {
-      console.warn(`${LOG_PREFIX} Using fallback: answerQuestion`);
-      await new Promise(resolve => setTimeout(resolve, FALLBACK_DELAY));
-      return `[Fallback] Cannot answer "${question.substring(0,30)}..." - LLM API not configured.`;
-    },
-
-    // Add processStream as a no-op or minimal implementation if it might be called directly
-    processStream: async (streamResponse: Response, onChunk: (chunk: string) => void): Promise<void> => {
-      console.warn(`${LOG_PREFIX} Using fallback: processStream (no-op)`);
-      // Fallback doesn't produce real streams, so this does nothing.
-      return Promise.resolve();
-    }
-  };
-};
-
 // --- Core API Interaction (Direct Fetch) ---
 
 /**
- * Direct fetch implementation for Portkey Chat Completions API.
+ * Direct fetch implementation for OpenRouter Chat Completions API.
  * Necessary for Service Worker compatibility where some libraries might fail.
  */
 async function callLLMAPI(
@@ -115,12 +55,6 @@ async function callLLMAPI(
 ): Promise<any> { // Returns Response for stream, JSON object otherwise
   const FN_LOG_PREFIX = `${LOG_PREFIX}:callLLMAPI`;
   
-  if (!IS_API_CONFIGURED) {
-    // Should ideally not be called if fallback is active, but acts as a safeguard
-    console.error(`${FN_LOG_PREFIX} Attempted to call API without configuration.`);
-    throw new Error("LLM API is not configured. Check API_KEY and VIRTUAL_KEY.");
-  }
-
   console.debug(`${FN_LOG_PREFIX} Calling API with model: ${options.model}, stream: ${!!options.stream}`);
   
   const requestBody = {
@@ -132,11 +66,18 @@ async function callLLMAPI(
   };
   
   try {
-    const headers = {
+    // Get auth token
+    const token = await getAuthToken();
+    
+    // Prepare headers
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'x-portkey-api-key': API_KEY!,
-      'x-portkey-virtual-key': VIRTUAL_KEY!
     };
+    
+    // Add auth token if available
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     
     console.debug(`${FN_LOG_PREFIX} Requesting ${API_ENDPOINT}`);
     const response = await fetch(API_ENDPOINT, {
@@ -174,107 +115,64 @@ async function callLLMAPI(
   }
 }
 
-// --- Stream Processing --- 
+// --- Stream Handling --- 
 
 /**
- * Processes a streaming Fetch Response body.
- * Handles Server-Sent Events (SSE) with JSON data.
- * Expects data chunks in OpenAI or Anthropic/Portkey format.
- * 
- * @param streamResponse The raw Response object from a fetch call.
- * @param onChunk Callback function invoked with each extracted text chunk.
+ * Process a stream response from the LLM API.
+ * @param streamResponse The Response object from fetch with a readable stream.
+ * @param onChunk Callback function to handle each chunk of text as it arrives.
+ * @returns Promise resolving to the complete concatenated response.
  */
-async function processStreamInternal(
-  streamResponse: Response,
-  onChunk: (chunk: string) => void
-): Promise<void> { 
-  const FN_LOG_PREFIX = `${LOG_PREFIX}:processStream`;
-
+async function processStreamInternal(streamResponse: Response, onChunk: (text: string) => void): Promise<string> {
   if (!streamResponse.body) {
-    console.error(`${FN_LOG_PREFIX} Response body is null or undefined.`);
-    throw new Error('Cannot process stream: Response body is missing.');
+    throw new Error('No readable stream in the response');
   }
 
   const reader = streamResponse.body.getReader();
   const decoder = new TextDecoder('utf-8');
-  let buffer = '';
+  let completeResponse = '';
 
-  console.debug(`${FN_LOG_PREFIX} Starting stream processing...`);
   try {
     while (true) {
-      const { done, value } = await reader.read();
+      const { value, done } = await reader.read();
+      
       if (done) {
-        console.debug(`${FN_LOG_PREFIX} Stream finished.`);
         break;
       }
       
-      buffer += decoder.decode(value, { stream: true });
-      let endOfLineIndex;
-
-      // Process buffer line by line (SSE format uses \n\n or \r\n\r\n)
-      // More robustly handles different line endings
-      while ((endOfLineIndex = buffer.indexOf('\n')) >= 0) {
-        const line = buffer.substring(0, endOfLineIndex).trim();
-        buffer = buffer.substring(endOfLineIndex + 1);
-
-        if (line.startsWith('data:')) {
-          const jsonData = line.substring(5).trim();
-          if (jsonData === '[DONE]') {
-            console.debug(`${FN_LOG_PREFIX} Received [DONE] signal.`);
-            continue; // OpenAI DONE signal
+      // Decode the chunk
+      const chunk = decoder.decode(value, { stream: true });
+      
+      // Process the chunk
+      const dataLines = chunk
+        .split('\n')
+        .filter(line => line.trim().startsWith('data:'));
+      
+      for (const line of dataLines) {
+        if (line.includes('[DONE]')) continue;
+        
+        try {
+          // Get the data part after 'data:'
+          const jsonStr = line.substring(line.indexOf('data:') + 5).trim();
+          // Parse the JSON data
+          const data = JSON.parse(jsonStr);
+          // Extract text content
+          const content = data?.choices?.[0]?.delta?.content || '';
+          
+          if (content) {
+            onChunk(content);
+            completeResponse += content;
           }
-          if (jsonData.startsWith('{')) {
-            try {
-              const json = JSON.parse(jsonData);
-              let text = '';
-              // Standard OpenAI/Portkey format
-              if (json.choices && json.choices[0]?.delta?.content) {
-                text = json.choices[0].delta.content;
-              } 
-              // Anthropic format (via Portkey potentially)
-              else if (json.type === 'content_block_delta' && json.delta?.type === 'text_delta') {
-                 text = json.delta.text;
-              } 
-              // Fallback for potential non-delta messages in stream?
-              else if (json.choices && json.choices[0]?.message?.content) {
-                 text = json.choices[0].message.content; 
-                 console.warn(`${FN_LOG_PREFIX} Received full message content in stream, not delta.`);
-              }
-
-              if (text) {
-                onChunk(text);
-              }
-            } catch (e) {
-              console.error(`${FN_LOG_PREFIX} Error parsing JSON data line: "${jsonData}"`, e);
-            }
-          }
-        } else if (line.startsWith('{')) { 
-           // Handle plain JSON lines (if Portkey sends them outside 'data:')
-           try {
-             const json = JSON.parse(line);
-             // Check similar locations as above
-             let text = json.choices?.[0]?.delta?.content || json.choices?.[0]?.message?.content || '';
-             if (text) {
-               onChunk(text);
-             }
-           } catch (e) {
-             console.error(`${FN_LOG_PREFIX} Error parsing plain JSON line: "${line}"`, e);
-           }
+        } catch (e) {
+          console.warn("Error parsing stream chunk:", e, "Line:", line);
         }
       }
     }
-
-    // Process any remaining data in buffer (should be empty in SSE)
-    if (buffer.trim()) {
-      console.warn(`${FN_LOG_PREFIX} Unexpected data remaining in buffer after stream end: "${buffer}"`);
-    }
-
+    
+    return completeResponse;
   } catch (error) {
-    console.error(`${FN_LOG_PREFIX} Error reading stream:`, error);
-    throw error instanceof Error ? error : new Error('Stream processing failed.');
-  } finally {
-      console.debug(`${FN_LOG_PREFIX} Stream processing finished.`);
-      // Ensure reader cancellation/release if necessary, though exiting the loop should suffice
+    console.error("Error processing stream:", error);
+    throw error;
   }
 }
 
@@ -297,7 +195,7 @@ async function generateTextInternal(prompt: string, options: LLMRequestOptions =
     }
     messages.push({ role: 'user', content: prompt });
 
-    const model = options.model || DEFAULT_MODEL;
+    const model = options.model || FALLBACK_MODEL_ID;
     const maxTokens = options.maxTokens || DEFAULT_MAX_TOKENS;
     const temperature = options.temperature ?? 0.7;
 
@@ -328,20 +226,20 @@ async function generateTextInternal(prompt: string, options: LLMRequestOptions =
 }
 
 /**
- * Generates text with streaming response.
+ * Generates text using the LLM with streaming response, handled through callbacks.
  * @param prompt The user's prompt.
- * @param onChunk Callback invoked for each received text chunk.
+ * @param onChunk Callback function that receives each chunk of text as it arrives.
  * @param options Configuration options for the LLM request.
- * @returns A Promise that resolves when the stream is complete, or rejects on error.
+ * @returns A Promise resolving to the complete generated text as a string.
  */
 async function generateTextStreamInternal(
   prompt: string,
-  onChunk: (chunk: string) => void,
+  onChunk: (text: string) => void,
   options: LLMRequestOptions = {}
-): Promise<void> {
+): Promise<string> {
   const FN_LOG_PREFIX = `${LOG_PREFIX}:generateTextStream`;
-  console.debug(`${FN_LOG_PREFIX} Request: "${prompt.substring(0, 50)}..."`, options);
-
+  console.debug(`${FN_LOG_PREFIX} Stream request: "${prompt.substring(0, 50)}..."`, options);
+  
   try {
     const messages: ChatMessage[] = [];
     if (options.systemPrompt) {
@@ -349,68 +247,183 @@ async function generateTextStreamInternal(
     }
     messages.push({ role: 'user', content: prompt });
 
-    const model = options.model || DEFAULT_MODEL;
+    const model = options.model || FALLBACK_MODEL_ID;
     const maxTokens = options.maxTokens || DEFAULT_MAX_TOKENS;
     const temperature = options.temperature ?? 0.7;
-    
-    // Use a timeout promise (applies to establishing the connection and starting the stream)
-    let timeoutId: NodeJS.Timeout | null = null;
-    const timeoutPromise = new Promise<Response>((_, reject) => { // Type changed
-      timeoutId = setTimeout(() => {
-        console.error(`${FN_LOG_PREFIX} API stream request timed out after ${API_TIMEOUT_MS}ms`);
-        reject(new Error(`LLM API stream request timed out after ${API_TIMEOUT_MS / 1000} seconds`));
-      }, API_TIMEOUT_MS);
-    });
 
+    // Make the direct API call (streaming)
     console.debug(`${FN_LOG_PREFIX} Calling callLLMAPI (stream)`);
-    const apiCallPromise = callLLMAPI(messages, { model, maxTokens, temperature, stream: true });
-    
-    // Race for the initial Response object
-    const streamResponse = await Promise.race([apiCallPromise, timeoutPromise]) as Response;
-    if (timeoutId) clearTimeout(timeoutId); // Clear timeout once we have the Response
+    const streamResponse = await callLLMAPI(messages, { model, maxTokens, temperature, stream: true });
 
-    console.debug(`${FN_LOG_PREFIX} Received stream Response object. Starting processing...`);
-    // Process the stream body
-    await processStreamInternal(streamResponse, onChunk);
-    console.debug(`${FN_LOG_PREFIX} Stream processing finished.`);
+    // Process the stream
+    const fullText = await processStreamInternal(streamResponse, onChunk);
+    console.debug(`${FN_LOG_PREFIX} Stream completed. Full text length: ${fullText.length}`);
+    return fullText;
 
-  } catch (error) {
-    console.error(`${FN_LOG_PREFIX} Failed:`, error);
-    throw error instanceof Error ? error : new Error('Failed to generate text stream.');
+  } catch (error: unknown) {
+    console.error(`${FN_LOG_PREFIX} Stream failed:`, error);
+    throw error instanceof Error ? error : new Error('Failed to generate streaming text.');
   }
 }
 
-/** Summarizes text using the LLM. */
+/**
+ * Creates summarization messages to insert before the prompt.
+ */
+function createSummarizationMessages(maxLength: number = 3): ChatMessage[] {
+  const messages: ChatMessage[] = [];
+  
+  // Add system prompt for summarization
+  messages.push({
+    role: 'system',
+    content: `Summarize the provided text concisely. Aim for around ${maxLength} sentences. Focus on key points, main ideas, and conclusions. Avoid unnecessary details. Return ONLY the summary without additional commentary or notes.`
+  });
+  
+  return messages;
+}
+
+/**
+ * Summarizes a text using the LLM.
+ * @param text The text to summarize.
+ * @param maxLength Approximate maximum summary length (in sentences).
+ * @returns A Promise resolving to the summary string.
+ */
 async function summarizeTextInternal(text: string, maxLength: number = 3): Promise<string> {
-  const systemPrompt = `Summarize the following text concisely in ${maxLength} sentences or fewer, focusing on the key points. Output only the summary.`;
-  return generateTextInternal(text, { systemPrompt, maxTokens: 150, temperature: 0.3 });
+  const FN_LOG_PREFIX = `${LOG_PREFIX}:summarizeText`;
+  console.debug(`${FN_LOG_PREFIX} Called with text length: ${text.length}, max length: ${maxLength}`);
+  
+  try {
+    // Prepare summary-specific instructions
+    const messages = createSummarizationMessages(maxLength);
+    messages.push({ role: 'user', content: text });
+    
+    // Configure options
+    const model = FALLBACK_MODEL_ID;
+    const maxTokens = 150; // Keep summary concise
+    const temperature = 0.5; // Less creative
+    
+    // Call the API directly
+    console.debug(`${FN_LOG_PREFIX} Calling API`);
+    const response = await callLLMAPI(messages, { model, maxTokens, temperature, stream: false });
+    
+    const summary = response?.choices?.[0]?.message?.content || '';
+    console.debug(`${FN_LOG_PREFIX} Generated summary: "${summary.substring(0, 50)}${summary.length > 50 ? '...' : ''}"`);
+    return summary;
+    
+  } catch (error) {
+    console.error(`${FN_LOG_PREFIX} Error generating summary:`, error);
+    throw error instanceof Error ? error : new Error('Failed to generate summary.');
+  }
 }
 
-/** Extracts key information (facts, entities) from text using the LLM. */
-async function extractKeyInfoInternal(text: string): Promise<string> {
-  const systemPrompt = `Extract the most important facts, entities, names, dates, and concepts from the text. Format as a bulleted list. Output only the list.`;
-  return generateTextInternal(text, { systemPrompt, maxTokens: 200, temperature: 0.2 });
+/**
+ * Creates extraction messages to insert before the prompt.
+ */
+function createExtractionMessages(question: string): ChatMessage[] {
+  const messages: ChatMessage[] = [];
+  
+  // Add system prompt for information extraction
+  messages.push({
+    role: 'system',
+    content: `Extract key information from the provided text to answer the following question: "${question}". 
+    Focus only on directly relevant information. Be concise but thorough. If the answer cannot be found in the text, state that clearly.`
+  });
+  
+  return messages;
 }
 
-/** Answers a question based *only* on the provided context using the LLM. */
-async function answerQuestionInternal(question: string, context: string): Promise<string> {
-  const systemPrompt = `Answer the following question based *only* on the provided context. If the answer is not found in the context, state that clearly. Context: """${context}"""`;
-  return generateTextInternal(question, { systemPrompt, maxTokens: 200, temperature: 0.4 });
+/**
+ * Extracts key information from text to answer a specific question
+ * @param text The text to analyze
+ * @param question The question to answer
+ * @returns A Promise resolving to extracted information
+ */
+async function extractKeyInfoInternal(text: string, question: string): Promise<string> {
+  const FN_LOG_PREFIX = `${LOG_PREFIX}:extractKeyInfo`;
+  console.debug(`${FN_LOG_PREFIX} Called with question: "${question}", text length: ${text.length}`);
+  
+  try {
+    // Prepare extraction-specific instructions
+    const messages = createExtractionMessages(question);
+    messages.push({ role: 'user', content: text });
+    
+    // Configure options
+    const model = FALLBACK_MODEL_ID;
+    const maxTokens = 200; // Keep extraction reasonably sized
+    const temperature = 0.3; // More factual
+    
+    // Call the API directly
+    console.debug(`${FN_LOG_PREFIX} Calling API`);
+    const response = await callLLMAPI(messages, { model, maxTokens, temperature, stream: false });
+    
+    const extraction = response?.choices?.[0]?.message?.content || '';
+    console.debug(`${FN_LOG_PREFIX} Extracted info: "${extraction.substring(0, 50)}${extraction.length > 50 ? '...' : ''}"`);
+    return extraction;
+    
+  } catch (error) {
+    console.error(`${FN_LOG_PREFIX} Error extracting information:`, error);
+    throw error instanceof Error ? error : new Error('Failed to extract information.');
+  }
+}
+
+/**
+ * Creates Q&A messages to insert before the prompt.
+ */
+function createQAMessages(question: string): ChatMessage[] {
+  const messages: ChatMessage[] = [];
+  
+  // Add system prompt for Q&A
+  messages.push({
+    role: 'system',
+    content: `Answer the user's question based solely on the provided content. If you cannot find the answer in the content, say so clearly. Be concise but thorough. The question is: "${question}"`
+  });
+  
+  return messages;
+}
+
+/**
+ * Answers a specific question about provided text
+ * @param text The text containing information to answer the question
+ * @param question The question to answer
+ * @returns A Promise resolving to the answer
+ */
+async function answerQuestionInternal(text: string, question: string): Promise<string> {
+  const FN_LOG_PREFIX = `${LOG_PREFIX}:answerQuestion`;
+  console.debug(`${FN_LOG_PREFIX} Called with question: "${question}", text length: ${text.length}`);
+  
+  try {
+    // Prepare Q&A-specific instructions
+    const messages = createQAMessages(question);
+    messages.push({ role: 'user', content: text });
+    
+    // Configure options
+    const model = FALLBACK_MODEL_ID;
+    const maxTokens = 200; // Keep answer reasonably sized
+    const temperature = 0.3; // More factual
+    
+    // Call the API directly
+    console.debug(`${FN_LOG_PREFIX} Calling API`);
+    const response = await callLLMAPI(messages, { model, maxTokens, temperature, stream: false });
+    
+    const answer = response?.choices?.[0]?.message?.content || '';
+    console.debug(`${FN_LOG_PREFIX} Answer: "${answer.substring(0, 50)}${answer.length > 50 ? '...' : ''}"`);
+    return answer;
+    
+  } catch (error) {
+    console.error(`${FN_LOG_PREFIX} Error answering question:`, error);
+    throw error instanceof Error ? error : new Error('Failed to answer question.');
+  }
 }
 
 // --- Exported Module --- 
 
-// Determine which implementation to export based on API key configuration
-const llmImplementation = IS_API_CONFIGURED 
-  ? {
-      generateText: generateTextInternal,
-      generateTextStream: generateTextStreamInternal,
-      processStream: processStreamInternal, // Export internal stream processor if needed externally
-      summarizeText: summarizeTextInternal,
-      extractKeyInfo: extractKeyInfoInternal,
-      answerQuestion: answerQuestionInternal,
-    }
-  : createFallbackImplementation();
+const llmImplementation = {
+  generateText: generateTextInternal,
+  generateTextStream: generateTextStreamInternal,
+  processStream: processStreamInternal, // Export internal stream processor if needed externally
+  summarizeText: summarizeTextInternal,
+  extractKeyInfo: extractKeyInfoInternal,
+  answerQuestion: answerQuestionInternal,
+};
 
 // Export the chosen implementation
 export default llmImplementation; 

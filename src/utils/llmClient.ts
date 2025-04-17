@@ -5,6 +5,10 @@
 
 // Import LLM request options type to maintain consistency with main LLM API
 import { LLMRequestOptions } from './llm';
+import { getAuthToken } from './auth';
+
+// New API endpoint 
+const OPENROUTER_API_ENDPOINT = 'https://api.readlite.app/api/openrouter/chat/completions';
 
 /**
  * Call LLM API via background service worker
@@ -53,6 +57,43 @@ const callBackgroundLLM = async (method: string, params: any[]): Promise<any> =>
 const activeStreamListeners = new Map();
 
 /**
+ * Direct API call to the LLM service
+ * @param messages Chat messages to send
+ * @param options API options
+ * @returns Promise with API response
+ */
+export async function directApiCall(messages: any[], options: any): Promise<Response> {
+  // Get auth token
+  const token = await getAuthToken();
+  
+  // Prepare headers with authentication if available
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  // Add auth token if available
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  // Prepare request body
+  const requestBody = {
+    model: options.model,
+    max_tokens: options.maxTokens,
+    temperature: options.temperature,
+    messages: messages,
+    stream: !!options.stream
+  };
+  
+  // Make the API call
+  return fetch(OPENROUTER_API_ENDPOINT, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(requestBody)
+  });
+}
+
+/**
  * LLM client API
  * Provides the same methods as the main LLM API, but calls via background service worker
  */
@@ -91,24 +132,20 @@ const llmClient = {
     // Use port-based communication for more reliable streaming
     return new Promise((resolve, reject) => {
       try {
-        console.log(`[DEBUG] llmClient.generateTextStream: Establishing port connection to background`);
-        
-        // Connect to the background service worker
+        // Create a communication port
         const port = chrome.runtime.connect({ name: `llm_stream_${streamId}` });
         let isPortDisconnected = false;
         
-        // Handle port disconnection
+        // Set up disconnect event
         port.onDisconnect.addListener(() => {
-          console.log(`[DEBUG] llmClient.generateTextStream: Port disconnected for stream ${streamId}`);
+          console.log(`[DEBUG] llmClient.generateTextStream: Port disconnected`);
           isPortDisconnected = true;
           
-          // If we received chunks but port disconnected prematurely, still return what we have
-          if (receivedChunks > 0) {
-            console.log(`[DEBUG] llmClient.generateTextStream: Port disconnected but returning ${receivedChunks} chunks received so far`);
-            resolve(fullResponse);
-          } else {
-            reject(new Error("Connection to background service was lost before receiving any response"));
-          }
+          // Register this port/callback for cleanup
+          activeStreamListeners.set(streamId, {
+            port,
+            onChunk
+          });
         });
         
         // Listen for messages on the port
@@ -198,12 +235,12 @@ const llmClient = {
   },
   
   /**
-   * Extract key information via background service worker
+   * Extract key information from text via background service worker
    */
-  extractKeyInfo: async (text: string) => {
+  extractKeyInfo: async (text: string, question: string) => {
     console.log(`[DEBUG] llmClient.extractKeyInfo: Called with text length: ${text.length}`);
     try {
-      const result = await callBackgroundLLM('extractKeyInfo', [text]);
+      const result = await callBackgroundLLM('extractKeyInfo', [text, question]);
       console.log(`[DEBUG] llmClient.extractKeyInfo: Received result successfully`);
       return result;
     } catch (error) {
@@ -213,12 +250,12 @@ const llmClient = {
   },
   
   /**
-   * Answer questions via background service worker
+   * Answer specific question about text
    */
-  answerQuestion: async (question: string, context: string) => {
-    console.log(`[DEBUG] llmClient.answerQuestion: Called with question: "${question.substring(0, 50)}${question.length > 50 ? '...' : ''}" and context length: ${context.length}`);
+  answerQuestion: async (text: string, question: string) => {
+    console.log(`[DEBUG] llmClient.answerQuestion: Called with question: "${question}"`);
     try {
-      const result = await callBackgroundLLM('answerQuestion', [question, context]);
+      const result = await callBackgroundLLM('answerQuestion', [text, question]);
       console.log(`[DEBUG] llmClient.answerQuestion: Received result successfully`);
       return result;
     } catch (error) {
@@ -226,21 +263,23 @@ const llmClient = {
       throw error;
     }
   },
-
+  
   /**
-   * Clean up all active stream listeners
-   * Call this when the component unmounts or when streams need to be force-cleaned
+   * Clean up stream listeners to prevent memory leaks
+   * Important to call when component unmounts
    */
   cleanupStreamListeners: () => {
     console.log(`[DEBUG] llmClient.cleanupStreamListeners: Cleaning up ${activeStreamListeners.size} listeners`);
-    
-    activeStreamListeners.forEach((listener, streamId) => {
-      console.log(`[DEBUG] llmClient.cleanupStreamListeners: Removing listener for stream ${streamId}`);
-      chrome.runtime.onMessage.removeListener(listener);
+    activeStreamListeners.forEach((listener, id) => {
+      try {
+        if (listener.port) {
+          listener.port.disconnect();
+        }
+      } catch (e) {
+        // Ignore errors during cleanup
+      }
     });
-    
     activeStreamListeners.clear();
-    console.log(`[DEBUG] llmClient.cleanupStreamListeners: All listeners removed`);
   }
 };
 
