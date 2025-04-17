@@ -342,5 +342,9 @@
   "contextArticleDesc": {
     "message": "使用整篇文章作为上下文",
     "description": "文章上下文的描述"
+  },
+  "collapseToolbar": {
+    "message": "折叠工具栏",
+    "description": "折叠工具栏按钮的标签"
   }
-} 
+}
