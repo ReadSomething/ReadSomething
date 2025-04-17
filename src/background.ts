@@ -22,6 +22,10 @@ const BADGE_TEXT_COLOR: [number, number, number, number] = [255, 255, 255, 255];
 
 // Store available models fetched from the server
 let availableModels: Model[] = [];
+// Track when models were last fetched (timestamp)
+let lastModelsFetchTime = 0;
+// Cache expiration time in milliseconds (1 hour)
+const MODELS_CACHE_EXPIRY = 60 * 60 * 1000;
 
 // --- Types --- 
 
@@ -45,7 +49,10 @@ interface AuthStatusChangedMessage {
   isAuthenticated: boolean; 
 }
 // Message to request the model list
-interface GetModelsRequestMessage { type: 'GET_MODELS_REQUEST'; }
+interface GetModelsRequestMessage { 
+  type: 'GET_MODELS_REQUEST'; 
+  forceRefresh?: boolean;
+}
 
 // Union type defining all possible background message types
 type BackgroundMessage = 
@@ -96,7 +103,7 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage, sender, sendRe
       handleAuthStatusChanged(message.isAuthenticated, sendResponse);
       return true; // Async response possible
     case 'GET_MODELS_REQUEST':
-      handleGetModelsRequest(sendResponse);
+      handleGetModelsRequest(message as GetModelsRequestMessage, sendResponse);
       return true; // Async response possible
     default:
       // Optional: Handle unknown message types if necessary
@@ -546,13 +553,53 @@ async function fetchModelsInBackground(): Promise<void> {
   }
 }
 
-// Fetch models when the background script starts
-fetchModelsInBackground();
-
 /**
  * Handles the GET_MODELS_REQUEST message.
  */
-function handleGetModelsRequest(sendResponse: (response?: any) => void) {
-  console.log(`[Background] Received GET_MODELS_REQUEST`);
-  sendResponse({ success: true, data: availableModels });
+function handleGetModelsRequest(message: GetModelsRequestMessage, sendResponse: (response?: any) => void) {
+  const LOG_PREFIX = "[Background:GetModels]";
+  console.log(`${LOG_PREFIX} Received GET_MODELS_REQUEST`);
+  
+  const forceRefresh = message.forceRefresh === true;
+  const isExpired = Date.now() - lastModelsFetchTime > MODELS_CACHE_EXPIRY;
+  
+  // Fetch new data if:
+  // 1. Force refresh requested, OR
+  // 2. Cache is empty/not loaded, OR
+  // 3. Cache has expired
+  if (forceRefresh || !availableModels || availableModels.length === 0 || isExpired) {
+    const reason = forceRefresh ? "force refresh requested" : 
+                  (!availableModels || availableModels.length === 0) ? "cache empty" : 
+                  "cache expired";
+    console.log(`${LOG_PREFIX} Fetching from server (reason: ${reason})`);
+    
+    fetchModelsInBackground()
+      .then(() => {
+        lastModelsFetchTime = Date.now(); // Update the timestamp
+        sendResponse({ success: true, data: availableModels, fromCache: false });
+      })
+      .catch((error) => {
+        console.error(`${LOG_PREFIX} Error fetching models:`, error);
+        // If we have cached data, return it even on fetch error
+        if (availableModels && availableModels.length > 0) {
+          console.log(`${LOG_PREFIX} Returning cached data despite fetch error`);
+          sendResponse({ 
+            success: true, 
+            data: availableModels, 
+            fromCache: true,
+            fetchError: error instanceof Error ? error.message : String(error)
+          });
+        } else {
+          sendResponse({ 
+            success: false, 
+            error: error instanceof Error ? error.message : String(error), 
+            data: [] 
+          });
+        }
+      });
+  } else {
+    // Return cached models
+    console.log(`${LOG_PREFIX} Returning cached models (${availableModels.length} items)`);
+    sendResponse({ success: true, data: availableModels, fromCache: true });
+  }
 }
