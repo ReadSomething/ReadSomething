@@ -1,6 +1,12 @@
 import TurndownService from 'turndown';
 import * as turndownPluginGfm from 'turndown-plugin-gfm';
 
+import { createLogger } from "~/utils/logger";
+
+// Create a logger for this module
+const logger = createLogger('utils');
+
+
 /**
  * Export utilities for article content
  * Support for exporting to Markdown
@@ -102,7 +108,7 @@ function downloadFile(content: string | Blob, filename: string, mimeType: string
                   });
         return;
       } catch (e) {
-        console.error("Chrome extension download API failed:", e);
+        logger.error("Chrome extension download API failed:", e);
         // Continue to fallback methods
       }
     }
@@ -161,13 +167,13 @@ function downloadFile(content: string | Blob, filename: string, mimeType: string
           }
           URL.revokeObjectURL(url);
                   } catch (cleanupError) {
-          console.error("Error during cleanup:", cleanupError);
+          logger.error("Error during cleanup:", cleanupError);
         }
       }, 2000);
       
       return;
     } catch (downloadError) {
-      console.error("Standard download method failed:", downloadError);
+      logger.error("Standard download method failed:", downloadError);
       
       // Clean up the container if it's still in the DOM
       if (document.body.contains(container)) {
@@ -203,7 +209,7 @@ function downloadFile(content: string | Blob, filename: string, mimeType: string
         setTimeout(() => URL.revokeObjectURL(url), 2000);
       }
     } catch (finalError) {
-      console.error("All download methods failed:", finalError);
+      logger.error("All download methods failed:", finalError);
       
       // Show user-friendly message
       if (typeof content === 'string') {
@@ -213,7 +219,7 @@ function downloadFile(content: string | Blob, filename: string, mimeType: string
       }
     }
   } catch (criticalError) {
-    console.error("Critical error in download function:", criticalError);
+    logger.error("Critical error in download function:", criticalError);
     alert("A problem occurred while trying to download. Please try again later.");
   }
 }
@@ -240,7 +246,7 @@ export const exportAsMarkdown = (title: string, content: string): void => {
     downloadFile(markdownWithTitle, filename, "text/markdown;charset=utf-8");
     
   } catch (error) {
-    console.error("Error exporting as Markdown:", error);
+    logger.error("Error exporting as Markdown:", error);
     alert("Failed to export Markdown. Please try again.");
   }
 };

@@ -7,9 +7,13 @@ import DOMPurify from 'dompurify';
 import { franc } from 'franc-min';
 import { normalizeLanguageCode } from './language';
 
-// --- Constants ---
+import { createLogger } from "~/utils/logger";
 
-const LOG_PREFIX = "[Parser]";
+// Create a logger for this module
+const logger = createLogger('parser');
+
+
+// --- Constants ---
 
 // DOMPurify configuration (Whitelist approach)
 const SANITIZE_CONFIG = {
@@ -31,7 +35,8 @@ const SANITIZE_CONFIG = {
     'target', 'rel', // for <a> (added by hook)
     'start', // for <ol>
     'colspan', 'rowspan', // for <td>, <th>
-    'scope' // for <th>
+    'scope', // for <th>
+    'lang'  // for language tagging
     // Note: 'class', 'id', 'style', and event handlers are implicitly forbidden
   ],
   // Explicitly disallow all data-* attributes
@@ -74,7 +79,7 @@ export interface Article {
  * @returns Normalized language code (ISO 639-1) or 'und' if detection fails.
  */
 export const detectLanguage = (text: string): string => {
-  if (!text) return 'und';
+  if (!text) return 'en';
   // Use a reasonable sample size for performance and accuracy
   const sampleText = text.slice(0, 1500);
   const detectedCode = franc(sampleText, { minLength: 3 }); // Use franc options if needed
@@ -89,22 +94,22 @@ export const detectLanguage = (text: string): string => {
  * @returns A Promise resolving to the processed Article object or null if parsing fails.
  */
 export const parseArticle = async (doc: Document): Promise<Article | null> => {
-  console.log(`${LOG_PREFIX} Starting article parsing.`);
+  logger.info("Starting article parsing.");
   try {
     const documentClone = doc.cloneNode(true) as Document;
     
-    console.log(`${LOG_PREFIX} Running Readability...`);
+    logger.info("Running Readability...");
     const reader = new Readability(documentClone);
     const readabilityResult = reader.parse(); // Store the result
     
     if (!readabilityResult) {
-      console.warn(`${LOG_PREFIX} Readability failed to parse article content.`);
+      logger.warn("Readability failed to parse article content.");
       return null;
     }
-    console.log(`${LOG_PREFIX} Readability extracted content titled: "${readabilityResult.title}"`);
+    logger.info(`Readability extracted content titled: "${readabilityResult.title}"`);
     
     // --- Log HTML before sanitization ---
-    console.log(`${LOG_PREFIX} HTML content BEFORE sanitization (first 500 chars):`, readabilityResult.content?.substring(0, 500)); // Log a sample
+    logger.info(`HTML content BEFORE sanitization (first 500 chars):`, readabilityResult.content?.substring(0, 500)); // Log a sample
 
     // --- Sanitization Hook --- 
     // This hook runs *after* the main sanitization pass.
@@ -127,22 +132,22 @@ export const parseArticle = async (doc: Document): Promise<Article | null> => {
     });
 
     // Sanitize the extracted HTML content
-    console.log(`${LOG_PREFIX} Sanitizing HTML content with config:`, SANITIZE_CONFIG); // Log config used
+    logger.info("Sanitizing HTML content with config:", SANITIZE_CONFIG); // Log config used
     // Use content from readabilityResult
     const sanitizedContent = DOMPurify.sanitize(readabilityResult.content || '', SANITIZE_CONFIG);
     
     // --- Log HTML after sanitization ---
-    console.log(`${LOG_PREFIX} HTML content AFTER sanitization (first 500 chars):`, sanitizedContent.substring(0, 500)); // Log a sample
+    logger.info(`HTML content AFTER sanitization (first 500 chars):`, sanitizedContent.substring(0, 500)); // Log a sample
 
     // Detect language from text content
-    console.log(`${LOG_PREFIX} Detecting language...`);
+    logger.info("Detecting language...");
     // Use textContent from readabilityResult
     const language = detectLanguage(readabilityResult.textContent || '');
-    console.log(`${LOG_PREFIX} Detected language: ${language}`);
+    logger.info(`Detected language: ${language}`);
         
     // Attempt to find and format publication date
     const publicationDate = getArticleDate(documentClone);
-    console.log(`${LOG_PREFIX} Found date: ${publicationDate || 'None'}`);
+    logger.info(`Found date: ${publicationDate || 'None'}`);
 
     // Construct the final Article object using fields from readabilityResult
     const finalArticle: Article = {
@@ -161,11 +166,11 @@ export const parseArticle = async (doc: Document): Promise<Article | null> => {
     // Remove the hook after use if DOMPurify allows (or manage hooks globally if needed)
     // DOMPurify.removeHook('afterSanitizeAttributes'); 
 
-    console.log(`${LOG_PREFIX} Parsing complete.`);
+    logger.info("Parsing complete.");
     return finalArticle;
 
   } catch (error) {
-    console.error(`${LOG_PREFIX} Error during article parsing pipeline:`, error);
+    logger.error("Error during article parsing pipeline:", error);
     return null;
   }
 };
@@ -202,7 +207,7 @@ function getArticleDate(doc: Document): string | undefined {
         }
       } catch (e) {
         // Ignore parsing errors for this selector and try the next
-        console.warn(`${LOG_PREFIX} Could not parse date string "${dateString}" from selector "${selector}"`);
+        logger.warn(`Could not parse date string "${dateString}" from selector "${selector}"`);
       }
     }
   }
@@ -216,7 +221,7 @@ function getArticleDate(doc: Document): string | undefined {
  */
 function formatDate(date: Date): string {
   if (!(date instanceof Date) || isNaN(date.getTime())) {
-    console.warn(`${LOG_PREFIX} formatDate received an invalid date object.`);
+    logger.warn(`formatDate received an invalid date object.`);
     return ''; // Return empty string for invalid dates
   }
   
@@ -224,7 +229,7 @@ function formatDate(date: Date): string {
     // Use toISOString for a guaranteed locale-independent YYYY-MM-DD format
     return date.toISOString().split('T')[0];
   } catch (error) {
-    console.error(`${LOG_PREFIX} Error formatting date object:`, error);
+    logger.error(`Error formatting date object:`, error);
     // Fallback to a simple format if toISOString fails unexpectedly
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }

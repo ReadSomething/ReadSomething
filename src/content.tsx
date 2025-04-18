@@ -6,6 +6,12 @@ import { I18nProvider } from "./context/I18nContext"
 import Reader from "./components/Reader"
 import { setupAuthListener } from "./utils/auth"
 import { createRoot } from 'react-dom/client'
+import { createLogger } from "./utils/logger"
+
+// Create content-specific loggers
+const contentLogger = createLogger('content');
+const uiLogger = createLogger('content-ui');
+const isolatorLogger = createLogger('content-isolator');
 
 // --- Config --- 
 
@@ -55,7 +61,7 @@ export const StyleIsolator: React.FC<{
 
     // Only create shadow DOM if it doesn't already exist
     if (!containerRef.current.shadowRoot) {
-      console.log("StyleIsolator creating shadow root");
+      isolatorLogger.info("Creating shadow root");
       const shadow = containerRef.current.attachShadow({ mode: 'open' });
       setShadowRoot(shadow);
       
@@ -92,7 +98,7 @@ export const StyleIsolator: React.FC<{
     // Update theme on mount point
     if (mountPoint) {
       mountPoint.setAttribute('data-theme', theme);
-      console.log("StyleIsolator updated theme attribute to:", theme);
+      isolatorLogger.info("Updated theme attribute to:", theme);
     }
     
     // Find or create style element
@@ -175,22 +181,21 @@ export const StyleIsolator: React.FC<{
  */
 const ContentScriptUI = () => {
   const [isActive, setIsActive] = useState(false)
-  const LOG_PREFIX = "[ContentScriptUI]";
 
   /**
    * Toggles the reader mode state and notifies the background script.
    */
   const toggleReaderMode = () => {
-    console.log(`${LOG_PREFIX} Toggling reader mode...`);
+    uiLogger.info("Toggling reader mode...");
     setIsActive(prevState => {
       const newState = !prevState;
-      console.log(`${LOG_PREFIX} Reader mode is now: ${newState ? 'Active' : 'Inactive'}`);
+      uiLogger.info(`Reader mode is now: ${newState ? 'Active' : 'Inactive'}`);
       // Notify background script about the state change
       chrome.runtime.sendMessage<ReaderModeChangedMessage>({ 
         type: "READER_MODE_CHANGED", 
         isActive: newState 
       }).catch(error => {
-        console.warn(`${LOG_PREFIX} Failed to send READER_MODE_CHANGED message:`, error);
+        uiLogger.warn("Failed to send READER_MODE_CHANGED message:", error);
       });
       return newState;
     });
@@ -203,17 +208,17 @@ const ContentScriptUI = () => {
      * (via executeScript) to toggle the reader UI.
      */
     const handleInternalToggleEvent = () => {
-      console.log(`${LOG_PREFIX} Received internal toggle event.`);
+      uiLogger.info("Received internal toggle event.");
       toggleReaderMode();
     };
     
     document.addEventListener('READLITE_TOGGLE_INTERNAL', handleInternalToggleEvent);
     
     // Notify background script that this content script instance is ready
-    console.log(`${LOG_PREFIX} Sending CONTENT_SCRIPT_READY message.`);
+    uiLogger.info("Sending CONTENT_SCRIPT_READY message.");
     chrome.runtime.sendMessage<ContentScriptReadyMessage>({ type: "CONTENT_SCRIPT_READY" })
       .catch(error => {
-        console.warn(`${LOG_PREFIX} Failed to send CONTENT_SCRIPT_READY message:`, error);
+        uiLogger.warn("Failed to send CONTENT_SCRIPT_READY message:", error);
       });
     
     /**
@@ -227,7 +232,7 @@ const ContentScriptUI = () => {
     ): boolean => { // Explicitly return boolean
       // Example: Check for a hypothetical future message type
       // if (message.type === 'SOME_FUTURE_ACTION') {
-      //   console.log("Received SOME_FUTURE_ACTION", message);
+      //   logger.info("Received SOME_FUTURE_ACTION", message);
       //   sendResponse({ received: true });
       //   return true; 
       // }
@@ -242,7 +247,7 @@ const ContentScriptUI = () => {
     setupAuthListener();
     
     return () => {
-      console.log(`${LOG_PREFIX} Cleaning up listeners.`);
+      uiLogger.info("Cleaning up listeners.");
       document.removeEventListener('READLITE_TOGGLE_INTERNAL', handleInternalToggleEvent);
       // Check if the listener exists before trying to remove it (good practice)
       if (chrome.runtime?.onMessage?.hasListener(handleBackgroundMessages)) {
@@ -333,15 +338,26 @@ const ContentScriptUI = () => {
   )
 }
 
-// Injection point for the content script
-const app = document.createElement('div');
-app.id = 'readlite-root';
-document.body.appendChild(app);
-
-// Create React root
-const root = createRoot(app);
-root.render(<ContentScriptUI />);
-
-console.log('[Content Script] ReadLite content script initialized');
+// Render the extension UI with context providers
+try {
+  // Create a container element for our app
+  const mountPoint = document.createElement('div');
+  mountPoint.id = 'readlite-app-container';
+  document.body.appendChild(mountPoint);
+  
+  // Use createRoot instead of ReactDOM.render (React 18 API)
+  const root = createRoot(mountPoint);
+  root.render(
+    <I18nProvider>
+      <ReaderProvider>
+        <ContentScriptUI />
+      </ReaderProvider>
+    </I18nProvider>
+  );
+  
+  contentLogger.info('[Content Script] ReadLite content script initialized');
+} catch (error) {
+  contentLogger.error('[Content Script] Error initializing ReadLite content script:', error);
+}
 
 export default ContentScriptUI

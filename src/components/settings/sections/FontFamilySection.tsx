@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { FontOption, fontOptions } from '../../../config/ui';
 import { LanguageCode } from '../../../utils/language';
 
@@ -33,6 +33,23 @@ const FontFamilySection: React.FC<FontFamilySectionProps> = ({
   detectedLanguage,
   updateSettings
 }) => {
+  // Set default font based on detected language if not set
+  useEffect(() => {
+    // Apply default font when fontFamily is empty or not set
+    if (!settings.fontFamily || settings.fontFamily === '') {
+      // For Chinese languages and dialects
+      const chineseLanguages = ['zh', 'cmn', 'wuu', 'yue'];
+      const defaultFont = chineseLanguages.includes(detectedLanguage || '')
+        ? fontOptions.find(f => f.label.en === 'PingFang')?.value
+        : fontOptions.find(f => f.label.en === 'Bookerly')?.value;
+      
+      if (defaultFont) {
+        console.log(`Applying default font for language ${detectedLanguage}: ${defaultFont}`);
+        updateSettings({ fontFamily: defaultFont });
+      }
+    }
+  }, [settings.fontFamily, detectedLanguage, updateSettings]);
+
   // Font family selection handler
   const changeFontFamily = (fontFamily: string) => {
     updateSettings({ fontFamily });

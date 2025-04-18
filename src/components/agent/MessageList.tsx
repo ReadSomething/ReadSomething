@@ -95,7 +95,7 @@ const MessageList: React.FC<MessageListProps> = ({
           <div className="readlite-empty-title text-base font-medium text-[var(--readlite-text)]">
             {t('startConversation') || 'Start a new conversation'}
           </div>
-          <p className="readlite-empty-description text-sm text-[var(--readlite-text-secondary)] mt-2 max-w-xs">
+          <p className="readlite-empty-description text-base text-[var(--readlite-text-secondary)] mt-2 max-w-xs" style={{ fontSize: "16px", lineHeight: "1.5" }}>
             {t('emptyStateDescription') || 'Select a context mode and ask any question to start the conversation.'}
           </p>
         </div>
@@ -134,19 +134,21 @@ const MessageList: React.FC<MessageListProps> = ({
                   border: `1px solid ${agentColors.border}`
                 }}
               >
-                <div className="readlite-context-badge text-[10px] text-[var(--readlite-text-secondary)] flex items-center mb-1">
+                <div className="readlite-context-badge text-[12px] text-[var(--readlite-text-secondary)] flex items-center mb-1">
                   <span>@</span>
                   <span className="ml-0.5">{getContextTypeLabel(contextType)}</span>
                 </div>
                 
                 {/* Streaming response content */}
                 <div
-                  className="readlite-markdown-content prose prose-xs max-w-none text-[var(--readlite-text)]/85 prose-headings:text-[var(--readlite-text)]/90 prose-pre:bg-[var(--readlite-background)]/10 prose-pre:p-2 prose-pre:rounded-md prose-pre:text-xs prose-code:text-xs prose-code:bg-[var(--readlite-background)]/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-a:text-[var(--readlite-accent)] prose-a:no-underline hover:prose-a:underline text-sm font-[system-ui,-apple-system,BlinkMacSystemFont,'Segoe_UI','PingFang_SC','Hiragino_Sans_GB','Microsoft_YaHei',sans-serif]"
+                  className="readlite-markdown-content prose prose-xs max-w-none text-[var(--readlite-text)] prose-headings:text-[var(--readlite-text)] prose-pre:bg-[var(--readlite-background)]/10 prose-pre:p-2 prose-pre:rounded-md prose-pre:text-xs prose-code:text-xs prose-code:bg-[var(--readlite-background)]/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-a:text-[var(--readlite-accent)] prose-a:no-underline hover:prose-a:underline text-base leading-relaxed font-[system-ui,-apple-system,BlinkMacSystemFont,'Segoe_UI','PingFang_SC','Hiragino_Sans_GB','Microsoft_YaHei',sans-serif]"
                   style={{ 
                     fontFeatureSettings: "'tnum' on, 'lnum' on",
                     textRendering: "optimizeLegibility",
                     WebkitFontSmoothing: "antialiased",
-                    MozOsxFontSmoothing: "grayscale"
+                    MozOsxFontSmoothing: "grayscale",
+                    fontSize: "16px",
+                    lineHeight: "1.5"
                   }}
                   dangerouslySetInnerHTML={renderMarkdown(streamingResponse)}
                 />
@@ -165,7 +167,7 @@ const MessageList: React.FC<MessageListProps> = ({
           {/* Error message */}
           {isError && (
             <div className="readlite-error-message flex flex-col items-start px-2.5 py-1.5">
-              <div className="readlite-error-container bg-[var(--readlite-background)] text-[var(--readlite-error)] px-4 py-3 rounded-2xl text-sm max-w-[92%] shadow-sm ring-1 ring-[var(--readlite-error)]/20 backdrop-blur-[2px] font-[system-ui,-apple-system,BlinkMacSystemFont,'Segoe_UI','PingFang_SC','Hiragino_Sans_GB','Microsoft_YaHei',sans-serif]" style={{ WebkitFontSmoothing: "antialiased", MozOsxFontSmoothing: "grayscale" }}>
+              <div className="readlite-error-container bg-[var(--readlite-background)] text-[var(--readlite-error)] px-4 py-3 rounded-2xl text-base max-w-[92%] shadow-sm ring-1 ring-[var(--readlite-error)]/20 backdrop-blur-[2px] font-[system-ui,-apple-system,BlinkMacSystemFont,'Segoe_UI','PingFang_SC','Hiragino_Sans_GB','Microsoft_YaHei',sans-serif]" style={{ WebkitFontSmoothing: "antialiased", MozOsxFontSmoothing: "grayscale", fontSize: "16px", lineHeight: "1.5" }}>
                 <div className="readlite-error-title font-medium mb-2 flex items-center">
                   <svg className="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="12" cy="12" r="10" />
@@ -174,12 +176,13 @@ const MessageList: React.FC<MessageListProps> = ({
                   </svg>
                   {t('errorOccurred') || 'An error occurred'}
                 </div>
-                <div className="readlite-error-description text-xs text-[var(--readlite-text-secondary)]">
+                <div className="readlite-error-description text-sm text-[var(--readlite-text-secondary)]" style={{ fontSize: "14px", lineHeight: "1.5" }}>
                   {errorMessage || (t('errorMessage') || 'Unable to complete the request. Please try again later.')}
                 </div>
                 <button 
                   onClick={retry}
-                  className="readlite-retry-button mt-3 text-xs bg-[var(--readlite-accent)]/10 text-[var(--readlite-accent)] px-3 py-1 rounded-full hover:bg-[var(--readlite-accent)]/15 transition-colors font-medium"
+                  className="readlite-retry-button mt-3 text-sm bg-[var(--readlite-accent)]/10 text-[var(--readlite-accent)] px-3 py-1 rounded-full hover:bg-[var(--readlite-accent)]/15 transition-colors font-medium"
+                  style={{ fontSize: "14px" }}
                 >
                   {t('retry') || 'Retry'}
                 </button>

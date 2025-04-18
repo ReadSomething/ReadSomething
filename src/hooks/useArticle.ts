@@ -1,5 +1,9 @@
 import { useCallback } from "react"
 import { parseArticle } from "../utils/parser"
+import { createLogger } from "../utils/logger"
+
+// Create a logger for this module
+const logger = createLogger('article');
 
 /**
  * Hook for extracting article content from a web page
@@ -19,13 +23,13 @@ export const useArticle = () => {
       const article = await parseArticle(doc)
       
       if (!article || !article.content) {
-        console.warn("Failed to extract article content")
+        logger.warn("Failed to extract article content")
         return null
       }
       
       return article
     } catch (error) {
-      console.error("Error extracting article:", error)
+      logger.error("Error extracting article:", error)
       return null
     }
   }, [])

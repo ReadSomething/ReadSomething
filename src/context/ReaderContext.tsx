@@ -2,6 +2,11 @@ import React, { createContext, useState, useEffect, ReactNode, useContext, useCa
 import { LanguageCode } from "../utils/language"
 import { useArticle } from "../hooks/useArticle"
 import { useStoredSettings } from "../hooks/useStoredSettings"
+import { createLogger } from "../utils/logger"
+
+// Create a logger for this module
+const logger = createLogger('reader-context');
+
 
 // --- Types & Defaults ---
 
@@ -22,7 +27,7 @@ export interface ReaderSettings {
 // Default settings for reader
 export const defaultSettings: ReaderSettings = {
   theme: "light",
-  fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, serif', // A common default serif
+  fontFamily: '', // Empty string to allow language-specific default
   fontSize: 18,
   lineHeight: 1.6,
   width: 700, // Standard width
@@ -69,9 +74,9 @@ export const ReaderContext = createContext<ReaderContextType>({
   isLoading: false,
   error: null,
   isSettingsLoaded: false, 
-  updateSettings: () => console.warn("updateSettings called before Provider mounted"),
-  resetSettings: () => console.warn("resetSettings called before Provider mounted"),
-  closeReader: () => console.warn("closeReader called before Provider mounted"),
+  updateSettings: () => logger.warn("updateSettings called before Provider mounted"),
+  resetSettings: () => logger.warn("resetSettings called before Provider mounted"),
+  closeReader: () => logger.warn("closeReader called before Provider mounted"),
 });
 
 // Hook to easily consume the context
@@ -112,7 +117,6 @@ const LoadingIndicator: React.FC = () => (
  */
 export const ReaderProvider: React.FC<ReaderProviderProps> = ({ children }) => {
   // --- State & Hooks ---
-  const LOG_PREFIX = "[ReaderProvider]";
   
   // Settings state managed by useStoredSettings (handles loading from chrome.storage)
   const { 
@@ -137,21 +141,21 @@ export const ReaderProvider: React.FC<ReaderProviderProps> = ({ children }) => {
    */
   useEffect(() => {
     const loadArticle = async () => {
-      console.log(`${LOG_PREFIX} Settings loaded. Starting article extraction...`);
+      logger.info("Settings loaded. Starting article extraction...");
       setIsLoading(true);
       setError(null); // Clear previous errors
       try {
         const extractedArticle = await extractArticle();
         if (extractedArticle) {
-          console.log(`${LOG_PREFIX} Article extracted successfully: "${extractedArticle.title?.substring(0, 50)}..."`);
+          logger.info(`Article extracted successfully: "${extractedArticle.title?.substring(0, 50)}..."`);
           setArticle(extractedArticle);
         } else {
-          console.warn(`${LOG_PREFIX} Article extraction returned null or undefined.`);
+          logger.warn("Article extraction returned null or undefined.");
           setError("Could not extract article content from this page.");
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Unknown error during article extraction";
-        console.error(`${LOG_PREFIX} Error extracting article:`, err);
+        logger.error("Error extracting article:", err);
         setError(errorMessage);
       } finally {
         setIsLoading(false);
@@ -176,7 +180,7 @@ export const ReaderProvider: React.FC<ReaderProviderProps> = ({ children }) => {
    * Dispatches a custom event handled by the content script.
    */
   const closeReader = useCallback(() => {
-    console.log(`${LOG_PREFIX} Dispatching close event (READLITE_TOGGLE_INTERNAL).`);
+    logger.info("Dispatching close event (READLITE_TOGGLE_INTERNAL).");
     document.dispatchEvent(new CustomEvent('READLITE_TOGGLE_INTERNAL'));
   }, []);
   

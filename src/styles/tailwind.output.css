@@ -1426,6 +1426,10 @@ video {
   font-size: 10px;
 }
 
+.text-\[12px\] {
+  font-size: 12px;
+}
+
 .text-\[9px\] {
   font-size: 9px;
 }

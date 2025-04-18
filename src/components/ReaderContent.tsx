@@ -2,6 +2,12 @@ import React, { forwardRef, useEffect, CSSProperties, useMemo } from 'react';
 import { LanguageCode } from '~/utils/language';
 import { ThemeType, getReaderColors } from '~/config/theme';
 
+import { createLogger } from "~/utils/logger";
+
+// Create a logger for this module
+const logger = createLogger('reader-content');
+
+
 interface ReaderContentProps {
   settings: {
     theme: ThemeType;
@@ -32,8 +38,6 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
     // Apply specific DOM transformations after content rendering
     useEffect(() => {
       if (!ref || !('current' in ref) || !ref.current || !article) return;
-      
-      const LOG_PREFIX = "[ReaderContent]";
       
       // --- Code Block Language Label Handling ---
       try {
@@ -68,7 +72,7 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
           }
         });
       } catch (domError) {
-        console.error(`${LOG_PREFIX} Error during code block DOM manipulation:`, domError);
+        logger.error(`Error during code block DOM manipulation:`, domError);
       }
     }, [article, ref]);
 
@@ -95,7 +99,7 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
           (el as HTMLElement).style.lineHeight = Math.min(1.5, settings.lineHeight).toString();
         });
       } catch (err) {
-        console.error("[ReaderContent] Error applying font settings:", err);
+        logger.error("Error applying font settings:", err);
       }
     }, [settings.fontFamily, settings.fontSize, settings.lineHeight, ref]);
 
@@ -135,6 +139,7 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
             text-rendering: optimizeLegibility;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            color: ${readerColors.text} !important;
           }
           
           /* Ensure content elements inherit font settings */
@@ -151,6 +156,7 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
             font-family: ${settings.fontFamily} !important;
             line-height: ${settings.lineHeight} !important;
             font-size: ${settings.fontSize}px !important;
+            color: ${readerColors.text} !important;
           }
           
           /* CJK language optimizations */
@@ -161,16 +167,31 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
             letter-spacing: ${settings.fontSize <= 16 ? '0.02em' : '0.01em'};
             word-break: normal;
           }
+
+          /* English text alignment */
+          .lang-en p, .lang-en li {
+            text-align: var(--en-text-align, left);
+            hyphens: auto;
+            letter-spacing: var(--en-letter-spacing, 0em);
+            word-break: normal;
+          }
           
           /* Improved spacing */
           .reader-content p {
             margin-bottom: ${Math.max(14, settings.fontSize * 0.8)}px !important;
+            font-weight: 400;
           }
           
           /* Improved lists */
           .reader-content ul, .reader-content ol {
             padding-left: 2em;
             margin: 1em 0;
+            color: ${readerColors.text} !important;
+          }
+          
+          .reader-content li {
+            margin-bottom: 0.5em;
+            font-weight: 400;
           }
           
           .reader-content li + li {
@@ -183,15 +204,16 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
             padding-left: 1em;
             margin-left: 0;
             font-style: italic;
-            color: ${readerColors.text}e0;
+            color: ${readerColors.text};
           }
           
           .reader-content h1 {
             font-size: ${Math.max(24, settings.fontSize * 1.5)}px !important;
-            font-weight: 600;
+            font-weight: 700;
             margin-top: 1.8em;
             margin-bottom: 0.8em;
             letter-spacing: ${isCJKLanguage ? '0.02em' : '0'};
+            color: ${readerColors.title} !important;
           }
           
           .reader-content h2 {
@@ -200,6 +222,7 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
             margin-top: 1.5em;
             margin-bottom: 0.7em;
             letter-spacing: ${isCJKLanguage ? '0.015em' : '0'};
+            color: ${readerColors.title} !important;
           }
           
           .reader-content h3 {
@@ -208,6 +231,7 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
             margin-top: 1.3em;
             margin-bottom: 0.6em;
             letter-spacing: ${isCJKLanguage ? '0.01em' : '0'};
+            color: ${readerColors.title} !important;
           }
           
           .reader-content img {

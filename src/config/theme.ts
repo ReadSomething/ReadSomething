@@ -107,11 +107,11 @@ const themeTokens: Record<ThemeType, ColorTokens> = {
       input: '#ffffff'
     },
     text: {
-      primary: '#4b5563',
-      secondary: '#a1aebf',
-      user: '#4b5563',
-      agent: '#4b5563',
-      accent: '#3B82F6'
+      primary: '#334155',
+      secondary: '#64748b',
+      user: '#334155',
+      agent: '#334155',
+      accent: '#2563eb'
     },
     border: '#edf2f7',
     accent: '#3B82F6',
@@ -121,10 +121,10 @@ const themeTokens: Record<ThemeType, ColorTokens> = {
       thumb: '#d9e2ec'
     },
     link: {
-      normal: '#60a5fa',
-      visited: '#a78bfa', 
-      hover: '#3b82f6',
-      active: '#2563eb'
+      normal: '#2563eb',
+      visited: '#7c3aed',
+      hover: '#1d4ed8',
+      active: '#1e40af'
     }
   },
   
@@ -138,10 +138,10 @@ const themeTokens: Record<ThemeType, ColorTokens> = {
       input: '#242424'
     },
     text: {
-      primary: '#cbd5e1',
+      primary: '#e2e8f0',
       secondary: '#94a3b8',
-      user: '#cbd5e1',
-      agent: '#d1dbe8',
+      user: '#e2e8f0',
+      agent: '#e2e8f0',
       accent: '#60a5fa'
     },
     border: '#2c2c2c',
@@ -169,11 +169,11 @@ const themeTokens: Record<ThemeType, ColorTokens> = {
       input: '#fbf8f2'
     },
     text: {
-      primary: '#5e4d36',
-      secondary: '#8a7b69',
-      user: '#5e4d36',
-      agent: '#5e4d36',
-      accent: '#9a7c59'
+      primary: '#422006',
+      secondary: '#7c5e2c',
+      user: '#422006',
+      agent: '#422006',
+      accent: '#854d0e'
     },
     border: '#f0e6d7',
     accent: '#9a7c59',
@@ -183,10 +183,10 @@ const themeTokens: Record<ThemeType, ColorTokens> = {
       thumb: '#e0d5bf'
     },
     link: {
-      normal: '#966f33',
-      visited: '#7c5e2c',
-      hover: '#ab7c38',
-      active: '#85612b'
+      normal: '#854d0e',
+      visited: '#713f12',
+      hover: '#92400e',
+      active: '#7c2d12'
     }
   },
   
@@ -200,24 +200,24 @@ const themeTokens: Record<ThemeType, ColorTokens> = {
       input: '#ffffff'
     },
     text: {
-      primary: '#334155',
-      secondary: '#7a8899',
-      user: '#334155',
-      agent: '#334155',
-      accent: '#4b5563'
+      primary: '#1e293b',
+      secondary: '#475569',
+      user: '#1e293b',
+      agent: '#1e293b',
+      accent: '#334155'
     },
     border: '#e9f0f7',
-    accent: '#4b5563',
+    accent: '#475569',
     error: '#dc2626',
     scrollbar: {
       track: '#e9f0f7',
       thumb: '#d6e2f0'
     },
     link: {
-      normal: '#4b5563',
-      visited: '#6b7280',
-      hover: '#374151',
-      active: '#1f2937'
+      normal: '#334155',
+      visited: '#4b5563',
+      hover: '#1e293b',
+      active: '#0f172a'
     }
   }
 };
@@ -319,8 +319,8 @@ export function getReaderColors(theme: ThemeType): ReaderColors {
   
   return {
     background: tokens.bg.primary,
-    text: addOpacity(tokens.text.primary, 0.75),
-    title: addOpacity(tokens.text.primary, 0.8),
+    text: addOpacity(tokens.text.primary, 1),
+    title: addOpacity(tokens.text.primary, 1),
     border: addOpacity(borderBaseColor, borderOpacity),
     toolbar: {
       background: addOpacity(tokens.bg.primary, 0.5),

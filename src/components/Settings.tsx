@@ -6,6 +6,12 @@ import { LanguageCode } from "../utils/language"
 import { getLanguageDisplayName } from "../utils/i18n"
 import { getSettingsColors } from "../config/theme"
 
+import { createLogger } from "~/utils/logger";
+
+// Create a logger for this module
+const logger = createLogger('settings');
+
+
 interface SettingsProps {
   onClose: () => void;
   buttonRef?: React.RefObject<HTMLButtonElement>;
@@ -21,7 +27,6 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
   const { t, uiLanguage } = useI18n()
   const [windowWidth, setWindowWidth] = useState(window.innerWidth)
   const [detectedLanguage, setDetectedLanguage] = useState<LanguageCode | null>(null)
-  const LOG_PREFIX = "[SettingsPanel]";
   
   // Get button position for panel positioning
   const [buttonPosition, setButtonPosition] = useState<{ top: number; right: number } | null>(null);
@@ -43,7 +48,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
     }
     
     window.addEventListener('resize', handleResize)
-    console.log(`${LOG_PREFIX} Initial window width: ${window.innerWidth}`);
+    logger.info(`Initial window width: ${window.innerWidth}`);
     return () => {
       window.removeEventListener('resize', handleResize)
     }
@@ -53,7 +58,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
   useEffect(() => {
     if (article?.language) {
       const lang = article.language as LanguageCode;
-      console.log(`${LOG_PREFIX} Detected content language: ${lang}`);
+      logger.info(`Detected content language: ${lang}`);
       setDetectedLanguage(lang);
     }
   }, [article]);
@@ -79,19 +84,19 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
   
   // Update font family with language-specific handling
   const changeFont = (fontFamily: string) => {
-    console.log(`${LOG_PREFIX} Changing font family to: ${fontFamily}`);
+    logger.info(`Changing font family to: ${fontFamily}`);
     updateSettings({ fontFamily });
   }
   
   // Update theme
   const changeTheme = (theme: "light" | "dark" | "sepia" | "paper") => {
-    console.log(`${LOG_PREFIX} Changing theme to: ${theme}`);
+    logger.info(`Changing theme to: ${theme}`);
     updateSettings({ theme });
   }
   
   // Update width
   const changeWidth = (width: number) => {
-    console.log(`${LOG_PREFIX} Changing width to: ${width}`);
+    logger.info(`Changing width to: ${width}`);
     updateSettings({ width });
   }
   
@@ -99,19 +104,19 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
   const changeSpacing = (spacing: "tight" | "normal" | "relaxed") => {
     const option = spacingOptions.find(opt => opt.value === spacing)
     if (option) {
-      console.log(`${LOG_PREFIX} Changing spacing to: ${spacing} (lineHeight: ${option.lineHeight})`);
+      logger.info(`Changing spacing to: ${spacing} (lineHeight: ${option.lineHeight})`);
       updateSettings({ 
         spacing,
         lineHeight: option.lineHeight
       });
     } else {
-      console.warn(`${LOG_PREFIX} Could not find spacing option for value: ${spacing}`);
+      logger.warn(`Could not find spacing option for value: ${spacing}`);
     }
   }
   
   // Handle text alignment change
   const changeTextAlign = (align: "left" | "justify" | "center" | "right") => {
-    console.log(`${LOG_PREFIX} Changing text alignment to: ${align}`);
+    logger.info(`Changing text alignment to: ${align}`);
     updateSettings({ textAlign: align });
   };
   
@@ -218,8 +223,6 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
     // Use detected language for filtering appropriate fonts
     const contentLanguage = detectedLanguage || 'en';
 
-    console.log("contentLanguage", contentLanguage)
-    
     // Filter fonts based on content language
     return fontOptions
       .filter(font => 

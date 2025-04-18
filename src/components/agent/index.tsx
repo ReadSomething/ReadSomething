@@ -9,6 +9,10 @@ import { Message, ContextType } from './types';
 import { getAgentColors, applyThemeColors } from '../../config/theme';
 import { StyleIsolator } from '../../content'; // Import StyleIsolator component
 import { useTheme } from '../../context/ThemeContext';
+import { createLogger } from '../../utils/logger';
+
+// Create a logger instance for the agent component
+const logger = createLogger('agent');
 
 // Import components
 import LoginPrompt from './LoginPrompt';
@@ -73,12 +77,12 @@ const AgentUI: React.FC<AgentUIProps> = ({
   // Define context options after t is declared
   const contextOptions = [
     { value: 'screen' as ContextType, label: t('contextTypeScreen') || 'Screen' },
-    { value: 'article' as ContextType, label: t('contextTypeArticle') || 'Full Article' }
+    { value: 'article' as ContextType, label: t('contextTypeArticle') || 'Article' }
   ];
   
   // Apply theme colors to CSS variables for Tailwind
   useEffect(() => {
-    console.log("[AgentUI] Theme changed:", theme);
+    logger.info("Theme changed:", theme);
     const colors = getAgentColors(theme);
     applyThemeColors(colors);
   }, [theme]);
@@ -91,7 +95,7 @@ const AgentUI: React.FC<AgentUIProps> = ({
         const authenticated = await isAuthenticated();
         setIsAuth(authenticated);
       } catch (error) {
-        console.error("Error checking auth status:", error);
+        logger.error("Error checking auth status:", error);
         setIsAuth(false);
       } finally {
         setIsAuthLoading(false);
@@ -110,24 +114,39 @@ const AgentUI: React.FC<AgentUIProps> = ({
         // Find model object that matches the saved model ID
         const matchedModel = modelsList.find(model => model.value === savedModelId);
         if (matchedModel) {
-          console.log(`[AgentUI] Loaded saved model from localStorage: ${savedModelId}`);
+          logger.info(`Loaded saved model from localStorage: ${savedModelId}`);
           setSelectedModel(matchedModel);
         }
       }
     } catch (error) {
-      console.error('[AgentUI] Error loading saved model:', error);
+      logger.error('Error loading saved model:', error);
     }
     
     // Fetch available models list from background script
-    const loadModels = () => {
-      chrome.runtime.sendMessage({ type: 'GET_MODELS_REQUEST' }, (response) => {
+    const loadModels = (attempt = 1, maxAttempts = 3, delay = 2000) => {
+      logger.info(`Loading models (attempt ${attempt}/${maxAttempts})`);
+      
+      chrome.runtime.sendMessage({ 
+        type: 'GET_MODELS_REQUEST',
+        // Force refresh on retry attempts
+        forceRefresh: attempt > 1
+      }, (response) => {
         if (chrome.runtime.lastError) {
-          console.error("[AgentUI] Error requesting models:", chrome.runtime.lastError);
+          logger.error("Error requesting models:", chrome.runtime.lastError);
+          retryIfNeeded(attempt, maxAttempts, delay);
           return;
         }
         
         if (response && response.success && Array.isArray(response.data)) {
-          console.log('[AgentUI] Received models list:', response.data);
+          logger.info(`Received models list (${response.data.length} models, fromCache: ${response.fromCache}):`, response.data);
+          
+          // If we got an empty list and we're authenticated, retry
+          if (response.data.length === 0 && isAuth && attempt < maxAttempts) {
+            logger.info(`Empty models list while authenticated, will retry in ${delay}ms`);
+            retryIfNeeded(attempt, maxAttempts, delay);
+            return;
+          }
+          
           setModelsList(response.data);
           
           // Ensure selected model is available in the list, otherwise use default
@@ -136,20 +155,31 @@ const AgentUI: React.FC<AgentUIProps> = ({
             const savedModelId = localStorage.getItem('readlite_selected_model');
             
             if (savedModelId && !response.data.some((m: Model) => m.value === savedModelId)) {
-              console.log(`[AgentUI] Selected model ${savedModelId} not found in list, using default: ${currentDefault}`);
+              logger.info(`Selected model ${savedModelId} not found in list, using default: ${currentDefault}`);
               const defaultModel = response.data[0];
               setSelectedModel(defaultModel);
               localStorage.setItem('readlite_selected_model', defaultModel.value); // Only store ID
             }
           } else {
             // Handle case when no models are available
-            console.warn('[AgentUI] No models available from API');
+            logger.warn('No models available from API');
             setSelectedModel(null);
           }
         } else {
-          console.error("[AgentUI] Failed to get models from background or invalid format:", response);
+          logger.error("Failed to get models from background or invalid format:", response);
+          retryIfNeeded(attempt, maxAttempts, delay);
         }
       });
+    };
+    
+    // Helper function to retry loading models if needed
+    const retryIfNeeded = (attempt: number, maxAttempts: number, delay: number) => {
+      if (attempt < maxAttempts) {
+        logger.info(`Will retry loading models in ${delay}ms (attempt ${attempt}/${maxAttempts})`);
+        setTimeout(() => {
+          loadModels(attempt + 1, maxAttempts, delay);
+        }, delay);
+      }
     };
     
     loadModels();
@@ -158,6 +188,20 @@ const AgentUI: React.FC<AgentUIProps> = ({
   // Use useEffect to set default model when modelsList changes and selectedModel is null
   useEffect(() => {
     if (modelsList.length > 0 && selectedModel === null) {
+      const savedModelId = localStorage.getItem('readlite_selected_model');
+      
+      if (savedModelId) {
+        // Try to find the saved model in our list
+        const matchedModel = modelsList.find(model => model.value === savedModelId);
+        if (matchedModel) {
+          logger.info(`Using saved model from localStorage: ${matchedModel.label}`);
+          setSelectedModel(matchedModel);
+          return;
+        }
+      }
+      
+      // If no saved model or saved model not found, use the first model as default
+      logger.info(`Using default model: ${modelsList[0].label}`);
       setSelectedModel(modelsList[0]);
     }
   }, [modelsList, selectedModel]);
@@ -259,18 +303,9 @@ const AgentUI: React.FC<AgentUIProps> = ({
       const htmlContent = marked.parse(text, { breaks: true }) as string;
       return { __html: htmlContent };
     } catch (error) {
-      console.error("Error rendering markdown:", error);
+      logger.error("Error rendering markdown:", error);
       return { __html: text };
     }
-  };
-  
-  // Handle input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInputText(e.target.value);
-    
-    // Auto resize textarea
-    e.target.style.height = 'auto';
-    e.target.style.height = `${Math.min(150, e.target.scrollHeight)}px`;
   };
   
   // Get context label
@@ -295,9 +330,9 @@ const AgentUI: React.FC<AgentUIProps> = ({
     if (selectedModel) {
       try {
         localStorage.setItem('readlite_selected_model', selectedModel.value);
-        console.log(`[AgentUI] Saved selected model to localStorage: ${selectedModel.label}`);
+        logger.info(`Saved selected model to localStorage: ${selectedModel.label}`);
       } catch (error) {
-        console.error('[AgentUI] Error saving model to localStorage:', error);
+        logger.error('Error saving model to localStorage:', error);
       }
     }
   }, [selectedModel]);
@@ -389,13 +424,8 @@ const AgentUI: React.FC<AgentUIProps> = ({
       // Get optimized prompt from session manager
       const prompt = sessionManagerRef.current.buildPrompt(getSummaryInstructions());
       
-      // Use appropriate model settings - ensure we use the currently selected model
-      console.log(`Using model for generation: ${selectedModel?.label || 'Default'}`);
-      const modelSettings: any = {
-        model: selectedModel?.value || (modelsList.length > 0 ? modelsList[0].value : undefined),
-        temperature: 0.7,
-        maxTokens: 1500
-      };
+      // Use appropriate model settings for API call
+      const modelSettings = getModelSettings();
       
       // Use streaming API for more responsive experience
       await llmClient.generateTextStream(
@@ -431,7 +461,7 @@ const AgentUI: React.FC<AgentUIProps> = ({
       setStreamingResponse('');
       
     } catch (err) {
-      console.error("Error calling LLM API:", err);
+      logger.error("Error calling LLM API:", err);
       
       // Special handling for auth errors - suggest logging in again
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while generating a response';
@@ -468,7 +498,7 @@ const AgentUI: React.FC<AgentUIProps> = ({
       setIsLoading(false);
       setIsThinking(false);
     }
-  }, [inputText, isLoading, article, visibleContent, contextType, selectedModel, isAuth]);
+  }, [inputText, isLoading, article, visibleContent, contextType, isAuth, modelsList]);
   
   // Get summary instructions for the LLM
   const getSummaryInstructions = (): string => {
@@ -520,8 +550,32 @@ Respond directly to queries without meta-commentary like "Based on the visible c
   useEffect(() => {
     const authChangeListener = (message: any) => {
       if (message.type === 'AUTH_STATUS_CHANGED' && message.isAuthenticated !== undefined) {
-        console.log('Authentication status changed:', message.isAuthenticated);
+        logger.info('Authentication status changed:', message.isAuthenticated);
         setIsAuth(message.isAuthenticated);
+        
+        // When authentication status changes, refresh the models list with force refresh
+        logger.info('Authentication status changed, refreshing models list');
+        chrome.runtime.sendMessage({ 
+          type: 'GET_MODELS_REQUEST',
+          forceRefresh: true
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            logger.error("Error requesting models after auth change:", chrome.runtime.lastError);
+            return;
+          }
+          
+          if (response && response.success && Array.isArray(response.data)) {
+            logger.info(`Received refreshed models after auth change (${response.data.length} models):`, response.data);
+            setModelsList(response.data);
+            
+            // Set default model if needed
+            if (response.data.length > 0 && (!selectedModel || !response.data.some((m: Model) => m.value === selectedModel.value))) {
+              logger.info(`Setting default model after auth change: ${response.data[0].label}`);
+              setSelectedModel(response.data[0]);
+              localStorage.setItem('readlite_selected_model', response.data[0].value);
+            }
+          }
+        });
       }
     };
     
@@ -532,7 +586,34 @@ Respond directly to queries without meta-commentary like "Based on the visible c
     return () => {
       chrome.runtime.onMessage.removeListener(authChangeListener);
     };
-  }, []);
+  }, [selectedModel]);
+  
+  // Use appropriate model settings for API call
+  const getModelSettings = () => {
+    // If we have a selected model, use it
+    if (selectedModel) {
+      return {
+        model: selectedModel.value,
+        temperature: 0.7,
+        maxTokens: 10000
+      };
+    }
+    
+    // If no selected model but we have models available, use the first one
+    if (modelsList.length > 0) {
+      return {
+        model: modelsList[0].value,
+        temperature: 0.7,
+        maxTokens: 10000
+      };
+    }
+    
+    // Fallback - should rarely happen
+    return {
+      temperature: 0.7,
+      maxTokens: 10000
+    };
+  };
   
   // Render the AgentUI component
   const agentContent = (
