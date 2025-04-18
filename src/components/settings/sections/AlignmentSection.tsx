@@ -64,7 +64,7 @@ const AlignmentSection: React.FC<AlignmentSectionProps> = ({
                 {/* Left alignment icon */}
                 {option.value === 'left' && (
                   <div className="flex flex-col items-start">
-                    <div className="w-10 h-[3px] bg-current mb-[3px] rounded-sm" />
+                    <div className="w-10 h-[3px] bg-current mb-[px] rounded-sm" />
                     <div className="w-6 h-[3px] bg-current mb-[3px] rounded-sm" />
                     <div className="w-8 h-[3px] bg-current rounded-sm" />
                   </div>

@@ -22,6 +22,20 @@ interface ReaderContentProps {
   error: string | null;
 }
 
+// Define optimal typography settings
+const TYPOGRAPHY = {
+  paragraphSpacing: {
+    min: 0.5,  // Multiplier of line height
+    max: 1.5,
+    default: 0.8
+  },
+  margins: {
+    min: 16,
+    default: 20,
+    max: 32
+  }
+};
+
 /**
  * Displays the article content in a well-formatted reader view
  */
@@ -34,6 +48,23 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
     const isCJKLanguage = useMemo(() => {
       return ['zh', 'ja', 'ko'].includes(detectedLanguage);
     }, [detectedLanguage]);
+
+    // Calculate optimal line height based on font size
+    const getOptimalLineHeight = useMemo(() => {
+      // Smaller font sizes need slightly larger line height ratios
+      if (settings.fontSize < 14) {
+        return Math.max(settings.lineHeight, 1.5);
+      } else if (settings.fontSize > 20) {
+        return Math.min(settings.lineHeight, 1.6);
+      }
+      return settings.lineHeight;
+    }, [settings.fontSize, settings.lineHeight]);
+    
+    // Calculate paragraph spacing based on line height
+    const getParagraphSpacing = useMemo(() => {
+      const baseSpacing = getOptimalLineHeight * settings.fontSize;
+      return `${baseSpacing * TYPOGRAPHY.paragraphSpacing.default}px`;
+    }, [getOptimalLineHeight, settings.fontSize]);
 
     // Apply specific DOM transformations after content rendering
     useEffect(() => {
@@ -88,7 +119,13 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
         contentElements.forEach((el: Element) => {
           (el as HTMLElement).style.fontFamily = settings.fontFamily;
           (el as HTMLElement).style.fontSize = `${settings.fontSize}px`;
-          (el as HTMLElement).style.lineHeight = settings.lineHeight.toString();
+          (el as HTMLElement).style.lineHeight = getOptimalLineHeight.toString();
+        });
+        
+        // Apply spacing to paragraphs
+        const paragraphs = content.querySelectorAll('p');
+        paragraphs.forEach((el: Element) => {
+          (el as HTMLElement).style.marginBottom = getParagraphSpacing;
         });
         
         // Apply to code blocks
@@ -96,19 +133,21 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
         codeBlocks.forEach((el: Element) => {
           (el as HTMLElement).style.fontFamily = 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace';
           (el as HTMLElement).style.fontSize = `${Math.max(13, settings.fontSize - 2)}px`;
-          (el as HTMLElement).style.lineHeight = Math.min(1.5, settings.lineHeight).toString();
+          (el as HTMLElement).style.lineHeight = Math.min(1.5, getOptimalLineHeight).toString();
         });
       } catch (err) {
         logger.error("Error applying font settings:", err);
       }
-    }, [settings.fontFamily, settings.fontSize, settings.lineHeight, ref]);
+    }, [settings.fontSize, getOptimalLineHeight, getParagraphSpacing, ref]);
 
     // Create content style with proper typing
     const contentStyle: CSSProperties = {
       maxWidth: `${settings.width}px`,
+      margin: '0 auto',
+      padding: `0 ${TYPOGRAPHY.margins.default}px`,
       fontFamily: settings.fontFamily,
       fontSize: `${settings.fontSize}px`,
-      lineHeight: settings.lineHeight,
+      lineHeight: getOptimalLineHeight,
       textAlign: settings.textAlign as any, // Cast to any to avoid type errors
       backgroundColor: readerColors.background,
       color: readerColors.text,
@@ -130,7 +169,7 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
       <div 
         ref={ref}
         style={contentStyle}
-        className={`reader-content lang-${detectedLanguage} mx-auto px-6 py-5 pb-[100px] relative`}
+        className={`reader-content lang-${detectedLanguage} mx-auto py-5 pb-[100px] relative`}
       >
         <style>{`
           /* Global font settings */
@@ -140,6 +179,8 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             color: ${readerColors.text} !important;
+            max-width: ${settings.width}px !important;
+            margin: 0 auto;
           }
           
           /* Ensure content elements inherit font settings */
@@ -154,9 +195,15 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
           .reader-content h6,
           .reader-content div:not(.code-lang-label) {
             font-family: ${settings.fontFamily} !important;
-            line-height: ${settings.lineHeight} !important;
+            line-height: ${getOptimalLineHeight} !important;
             font-size: ${settings.fontSize}px !important;
             color: ${readerColors.text} !important;
+          }
+          
+          /* Improve paragraph spacing */
+          .reader-content p {
+            margin-bottom: ${getParagraphSpacing} !important;
+            font-weight: 400;
           }
           
           /* CJK language optimizations */
@@ -170,15 +217,34 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
 
           /* English text alignment */
           .lang-en p, .lang-en li {
-            text-align: var(--en-text-align, left);
+            text-align: ${settings.textAlign};
             hyphens: auto;
-            letter-spacing: var(--en-letter-spacing, 0em);
+            letter-spacing: ${settings.fontSize <= 14 ? '0.01em' : '0'};
             word-break: normal;
+          }
+          
+          /* Implement text-wrap: balance for headings */
+          .reader-content h1, 
+          .reader-content h2, 
+          .reader-content h3 {
+            text-wrap: balance;
+          }
+          
+          /* Add support for text hyphenation */
+          .reader-content p {
+            hyphens: auto;
+          }
+          
+          /* First paragraph after heading should not be indented */
+          .reader-content h1 + p,
+          .reader-content h2 + p,
+          .reader-content h3 + p {
+            text-indent: 0 !important;
           }
           
           /* Improved spacing */
           .reader-content p {
-            margin-bottom: ${Math.max(14, settings.fontSize * 0.8)}px !important;
+            margin-bottom: ${getParagraphSpacing} !important;
             font-weight: 400;
           }
           
@@ -245,7 +311,7 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
           .reader-content code {
             font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace !important;
             font-size: ${Math.max(13, settings.fontSize - 2)}px !important;
-            line-height: ${Math.min(1.5, settings.lineHeight)} !important;
+            line-height: ${Math.min(1.5, getOptimalLineHeight)} !important;
             border-radius: 4px;
           }
           
@@ -285,6 +351,45 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
             background-color: rgba(0, 0, 0, 0.1);
             color: currentColor;
             border-bottom-left-radius: 0.25rem;
+          }
+          
+          /* Paragraph indentation styles */
+          .reader-content p.indented {
+            text-indent: 2em;
+          }
+          
+          /* First letter drop cap effect */
+          .reader-content p.drop-cap::first-letter {
+            float: left;
+            font-size: 3em;
+            line-height: 0.8;
+            font-weight: 500;
+            margin-right: 0.1em;
+            padding-top: 0.1em;
+            color: ${readerColors.title};
+          }
+          
+          /* CJK-specific drop cap adjustments */
+          .lang-zh p.drop-cap::first-letter,
+          .lang-ja p.drop-cap::first-letter,
+          .lang-ko p.drop-cap::first-letter {
+            padding-right: 0.1em;
+            padding-bottom: 0.1em;
+          }
+          
+          /* First letter improvements for different font weights */
+          .reader-content p.drop-cap::first-letter {
+            text-shadow: 0 0 1px rgba(0,0,0,0.05);
+            ${settings.theme === 'dark' ? 'text-shadow: 0 0 1px rgba(255,255,255,0.1);' : ''}
+          }
+          
+          /* Improve reading flow with hyphenation for Latin languages */
+          .lang-en .reader-content p,
+          .lang-fr .reader-content p,
+          .lang-es .reader-content p,
+          .lang-de .reader-content p,
+          .lang-it .reader-content p {
+            hyphens: auto;
           }
         `}</style>
         

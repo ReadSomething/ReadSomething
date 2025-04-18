@@ -4,7 +4,10 @@
  */
 
 // Define supported theme types
-export type ThemeType = 'light' | 'dark' | 'sepia' | 'paper';
+export type ThemeType = 'light' | 'dark' | 'paper' | 'eyecare';
+
+// Define centralized list of available themes
+export const AVAILABLE_THEMES: ThemeType[] = ['light', 'dark', 'paper', 'eyecare'];
 
 // Agent UI colors interface
 export interface AgentColors {
@@ -95,8 +98,8 @@ interface ColorTokens {
   };
 }
 
-// Define color tokens for each theme
-const themeTokens: Record<ThemeType, ColorTokens> = {
+// Set of color tokens for each theme
+export const themeTokens: Record<ThemeType, ColorTokens> = {
   light: {
     bg: {
       primary: '#ffffff',
@@ -159,37 +162,6 @@ const themeTokens: Record<ThemeType, ColorTokens> = {
     }
   },
   
-  sepia: {
-    bg: {
-      primary: '#fbf8f2',
-      secondary: '#f8f1e3',
-      tertiary: '#e8ddcb', 
-      user: '#eee4d3',
-      agent: '#fbf8f2',
-      input: '#fbf8f2'
-    },
-    text: {
-      primary: '#422006',
-      secondary: '#7c5e2c',
-      user: '#422006',
-      agent: '#422006',
-      accent: '#854d0e'
-    },
-    border: '#f0e6d7',
-    accent: '#9a7c59',
-    error: '#b91c1c',
-    scrollbar: {
-      track: '#f0e6d7',
-      thumb: '#e0d5bf'
-    },
-    link: {
-      normal: '#854d0e',
-      visited: '#713f12',
-      hover: '#92400e',
-      active: '#7c2d12'
-    }
-  },
-  
   paper: {
     bg: {
       primary: '#f8fafc',
@@ -218,6 +190,38 @@ const themeTokens: Record<ThemeType, ColorTokens> = {
       visited: '#4b5563',
       hover: '#1e293b',
       active: '#0f172a'
+    }
+  },
+  
+  // Eye Care theme - warm background with reduced blue light
+  eyecare: {
+    bg: {
+      primary: '#f8f3e8',        // Warm cream background
+      secondary: '#f5f0e5',
+      tertiary: '#f0ebe0',
+      user: '#f5f0e5',
+      agent: '#f8f3e8',
+      input: '#ffffff'
+    },
+    text: {
+      primary: '#3b2e1e',        // Warm brown text, reduced contrast
+      secondary: '#5c4d3b',
+      user: '#3b2e1e',
+      agent: '#3b2e1e',
+      accent: '#7e6e56'
+    },
+    border: '#e8e0d0',
+    accent: '#7e6e56',
+    error: '#b54a35',            // Warmer red
+    scrollbar: {
+      track: '#e8e0d0',
+      thumb: '#d5cabb'
+    },
+    link: {
+      normal: '#6b593f',         // Warm brown links
+      visited: '#82725f',
+      hover: '#4a3a25',
+      active: '#3b2e1e'
     }
   }
 };
@@ -429,7 +433,7 @@ export function applyTheme(theme: ThemeType, root: HTMLElement | ShadowRoot = do
   // Set theme class names
   if (root === document.documentElement) {
     // Remove all theme classes
-    document.documentElement.classList.remove('light', 'dark', 'sepia', 'paper');
+    document.documentElement.classList.remove(...AVAILABLE_THEMES);
     // Add current theme class
     document.documentElement.classList.add(theme);
   } else if (root instanceof ShadowRoot) {
@@ -437,7 +441,8 @@ export function applyTheme(theme: ThemeType, root: HTMLElement | ShadowRoot = do
     const container = root.querySelector('[class*="readlite"]');
     if (container instanceof HTMLElement) {
       // Remove all theme classes
-      container.classList.remove('readlite-light', 'readlite-dark', 'readlite-sepia', 'readlite-paper', 'light', 'dark', 'sepia', 'paper');
+      const themePrefixedClasses = AVAILABLE_THEMES.map(t => `readlite-${t}`);
+      container.classList.remove(...themePrefixedClasses, ...AVAILABLE_THEMES);
       // Add current theme classes
       container.classList.add(`readlite-${theme}`, theme);
     }

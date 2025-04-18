@@ -11,11 +11,60 @@ import ReaderDivider from "~/components/reader/ReaderDivider"
 import ThemeStyles from "~/components/reader/ThemeStyles"
 import { ThemeProvider } from "../context/ThemeContext"
 import { ThemeType, cssVarNames } from "../config/theme"
-import { createLogger } from "../utils/logger"
+import { createLogger } from "~/utils/logger"
 
 // Create a logger for this module
 const logger = createLogger('main-reader');
 
+/**
+ * Reading Progress Indicator Component
+ * Shows a progress bar at the top of the reader
+ */
+const ReadingProgress: React.FC<{ scrollContainer?: HTMLElement | null }> = ({ scrollContainer }) => {
+  const [progress, setProgress] = useState(0);
+  
+  // Update progress as user scrolls
+  useEffect(() => {
+    if (!scrollContainer) return;
+    
+    const handleScroll = () => {
+      // Get scroll position, account for container height and content scroll height
+      const scrollPosition = scrollContainer.scrollTop;
+      const containerHeight = scrollContainer.clientHeight;
+      const scrollHeight = scrollContainer.scrollHeight - containerHeight;
+      
+      // Calculate progress as percentage
+      const currentProgress = Math.min(100, Math.max(0, (scrollPosition / scrollHeight) * 100));
+      setProgress(currentProgress);
+    };
+    
+    // Set initial progress
+    handleScroll();
+    
+    // Add scroll listener
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, [scrollContainer]);
+  
+  // Don't render if no valid scroll container
+  if (!scrollContainer) return null;
+  
+  return (
+    <div 
+      className="fixed top-0 left-0 w-full h-1 z-50"
+      style={{ backgroundColor: 'rgba(0,0,0,0.05)' }}
+    >
+      <div 
+        className="h-full transition-all duration-150 ease-out"
+        style={{ 
+          width: `${progress}%`, 
+          backgroundColor: 'var(--rl-accent)',
+          opacity: 0.8
+        }}
+      />
+    </div>
+  );
+};
 
 /**
  * Main Reader component
@@ -37,6 +86,9 @@ const Reader = () => {
   
   // Get translations function
   const { t } = useI18n()
+  
+  // Reader column ref for progress indicator
+  const readerColumnRef = useRef<HTMLDivElement>(null);
   
   // 引用StyleIsolator创建的shadowRoot
   const readerContainerRef = useRef<HTMLDivElement>(null);
@@ -435,6 +487,9 @@ const Reader = () => {
       {/* Inject theme-specific styles globally */}
       <ThemeStyles theme={theme} />
 
+      {/* Reading Progress Indicator */}
+      <ReadingProgress scrollContainer={readerColumnRef.current} />
+
       {/* Main Container - the entire screen */}
       <div 
         ref={readerContainerRef}
@@ -446,6 +501,7 @@ const Reader = () => {
         <div className="flex flex-row flex-grow overflow-hidden h-full">
           {/* Reader Column (left side) */}
           <div 
+            ref={readerColumnRef}
             className={`h-full overflow-y-auto relative box-border ${
               showAgent ? "" : "w-full"
             }`}

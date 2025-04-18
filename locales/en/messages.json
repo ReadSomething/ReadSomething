@@ -19,10 +19,6 @@
     "message": "Light",
     "description": "Light theme option."
   },
-  "sepia": {
-    "message": "Sepia",
-    "description": "Sepia theme option."
-  },
   "dark": {
     "message": "Dark",
     "description": "Dark theme option."
@@ -30,6 +26,14 @@
   "paper": {
     "message": "Paper",
     "description": "Paper theme option."
+  },
+  "eyecare": {
+    "message": "Eyecare",
+    "description": "Eyecare theme option."
+  },
+  "highcontrast": {
+    "message": "High Contrast",
+    "description": "High Contrast theme option."
   },
   "fontSize": {
     "message": "Font Size",

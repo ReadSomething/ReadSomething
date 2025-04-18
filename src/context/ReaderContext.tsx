@@ -2,7 +2,8 @@ import React, { createContext, useState, useEffect, ReactNode, useContext, useCa
 import { LanguageCode } from "../utils/language"
 import { useArticle } from "../hooks/useArticle"
 import { useStoredSettings } from "../hooks/useStoredSettings"
-import { createLogger } from "../utils/logger"
+import { createLogger } from "~/utils/logger"
+import { ThemeType } from "../config/theme"
 
 // Create a logger for this module
 const logger = createLogger('reader-context');
@@ -13,7 +14,7 @@ const logger = createLogger('reader-context');
 // Main settings type
 // Removed LanguageSettings and LanguageSettingsMap as per-language overrides are currently not implemented in setters.
 export interface ReaderSettings {
-  theme: "light" | "dark" | "sepia" | "paper";
+  theme: ThemeType;
   fontFamily: string;
   fontSize: number;
   lineHeight: number;

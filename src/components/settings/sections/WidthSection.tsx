@@ -1,5 +1,5 @@
 import React from 'react';
-import { widthOptions } from '../../../config/ui';
+import { widthOptions } from '~/config/ui';
 
 interface WidthSectionProps {
   sectionClassName: string;

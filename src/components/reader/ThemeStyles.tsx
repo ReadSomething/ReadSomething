@@ -1,7 +1,8 @@
 import React from 'react';
+import { ThemeType } from '../../config/theme';
 
 interface ThemeStylesProps {
-  theme: 'light' | 'dark' | 'sepia' | 'paper';
+  theme: ThemeType;
   lineHeight?: number;
 }
 
@@ -76,22 +77,6 @@ const ThemeStyles: React.FC<ThemeStylesProps> = ({ theme, lineHeight }) => {
           }
         `;
         break;
-      case "sepia":
-        css += `
-          [data-theme="sepia"] a { color: rgba(157, 99, 60, 0.85); }
-          [data-theme="sepia"] a:visited { color: rgba(122, 88, 47, 0.8); }
-          [data-theme="sepia"] a:hover { color: rgba(179, 117, 68, 0.95); }
-          [data-theme="sepia"] a:active { color: rgba(134, 83, 47, 0.95); }
-          
-          [data-theme="sepia"] h1, [data-theme="sepia"] h2, [data-theme="sepia"] h3 {
-            color: rgba(89, 74, 56, 0.95);
-          }
-          
-          [data-theme="sepia"] p, [data-theme="sepia"] li {
-            color: rgba(89, 74, 56, 0.85);
-          }
-        `;
-        break;
       case "paper":
         css += `
           [data-theme="paper"] a { color: rgba(80, 80, 80, 0.85); }
@@ -105,6 +90,22 @@ const ThemeStyles: React.FC<ThemeStylesProps> = ({ theme, lineHeight }) => {
           
           [data-theme="paper"] p, [data-theme="paper"] li {
             color: rgba(51, 51, 51, 0.85);
+          }
+        `;
+        break;
+      case "eyecare":
+        css += `
+          [data-theme="eyecare"] a { color: rgba(107, 89, 63, 0.85); }
+          [data-theme="eyecare"] a:visited { color: rgba(130, 114, 95, 0.8); }
+          [data-theme="eyecare"] a:hover { color: rgba(74, 58, 37, 0.95); }
+          [data-theme="eyecare"] a:active { color: rgba(59, 46, 30, 0.95); }
+          
+          [data-theme="eyecare"] h1, [data-theme="eyecare"] h2, [data-theme="eyecare"] h3 {
+            color: rgba(59, 46, 30, 0.95);
+          }
+          
+          [data-theme="eyecare"] p, [data-theme="eyecare"] li {
+            color: rgba(59, 46, 30, 0.85);
           }
         `;
         break;
@@ -199,11 +200,9 @@ const ThemeStyles: React.FC<ThemeStylesProps> = ({ theme, lineHeight }) => {
       .reader-content blockquote {
         border-left: 3px solid ${theme === 'dark' 
           ? 'rgba(100, 181, 246, 0.5)' 
-          : theme === 'sepia'
-            ? 'rgba(157, 99, 60, 0.5)'
-            : theme === 'paper'
-              ? 'rgba(80, 80, 80, 0.3)'
-              : 'rgba(0, 119, 204, 0.3)'};
+          : theme === 'paper'
+            ? 'rgba(80, 80, 80, 0.3)'
+            : 'rgba(0, 119, 204, 0.3)'};
         margin: 1em 0;
         padding: 0.5em 0 0.5em 1em;
         background-color: ${theme === 'dark' 
@@ -237,7 +236,7 @@ const ThemeStyles: React.FC<ThemeStylesProps> = ({ theme, lineHeight }) => {
       .reader-highlight {
         background-color: ${
           theme === 'dark' ? 'rgba(255, 255, 0, 0.25)' : 
-          theme === 'sepia' ? 'rgba(255, 222, 173, 0.5)' : 
+          theme === 'eyecare' ? 'rgba(255, 222, 173, 0.5)' : 
           theme === 'paper' ? 'rgba(255, 204, 0, 0.3)' : 
           'rgba(255, 255, 0, 0.4)'
         };
@@ -249,7 +248,7 @@ const ThemeStyles: React.FC<ThemeStylesProps> = ({ theme, lineHeight }) => {
       .reader-highlight:hover {
         background-color: ${
           theme === 'dark' ? 'rgba(255, 255, 0, 0.35)' : 
-          theme === 'sepia' ? 'rgba(255, 222, 173, 0.6)' : 
+          theme === 'eyecare' ? 'rgba(255, 222, 173, 0.6)' : 
           theme === 'paper' ? 'rgba(255, 204, 0, 0.4)' : 
           'rgba(255, 255, 0, 0.5)'
         };

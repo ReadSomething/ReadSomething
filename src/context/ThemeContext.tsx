@@ -7,15 +7,14 @@ import {
   getAgentColors, 
   getSettingsColors, 
   getReaderColors, 
-  applyTheme 
+  applyTheme,
+  AVAILABLE_THEMES
 } from '../config/theme';
 
 import { createLogger } from "~/utils/logger";
 
-// Create a logger for this module
 const logger = createLogger('context');
 
-// 主题上下文类型
 interface ThemeContextType {
   theme: ThemeType;
   setTheme: (theme: ThemeType) => void;
@@ -24,10 +23,8 @@ interface ThemeContextType {
   getReaderColors: () => ReaderColors;
 }
 
-// 创建上下文
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// 主题提供者属性
 interface ThemeProviderProps {
   children: ReactNode;
   initialTheme?: ThemeType;
@@ -35,22 +32,22 @@ interface ThemeProviderProps {
 }
 
 /**
- * 主题提供者组件
- * 管理应用的主题状态并提供主题颜色给子组件
+ * ThemeProvider is a component that provides the theme context to the application.
+ * It manages the application's theme state and provides theme colors to child components.
  */
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ 
   children, 
   initialTheme = 'light',
   currentTheme
 }) => {
-  // 主题状态 - 如果提供了currentTheme就使用它，否则使用内部状态
+  // The theme state - if currentTheme is provided, use it, otherwise use the internal state
   const [internalTheme, setInternalTheme] = useState<ThemeType>(initialTheme);
   
-  // 使用外部主题或内部状态
+  // Use the external theme or the internal state
   const theme = currentTheme || internalTheme;
   const setTheme = (newTheme: ThemeType) => {
-    // 如果提供了currentTheme prop，则内部状态变更不应生效
-    // 因为主题由外部控制
+    // If the currentTheme prop is provided, the internal state change should not be applied
+    // because the theme is controlled externally
     if (!currentTheme) {
       setInternalTheme(newTheme);
     } else {
@@ -58,19 +55,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     }
   };
   
-  // 当外部主题变化时更新内部状态(仅日志记录用)
+  // When the external theme changes, update the internal state (only for logging purposes)
   useEffect(() => {
     if (currentTheme) {
       logger.info(`[ThemeProvider] External theme update: ${currentTheme}`);
     }
   }, [currentTheme]);
   
-  // 应用主题 - 当主题变化时更新CSS变量和类名
+  // Apply the theme - when the theme changes, update the CSS variables and class names
   useEffect(() => {
-    // 应用主题颜色到CSS变量
+    // Apply the theme colors to the CSS variables
     applyTheme(theme);
     
-    // 保存主题偏好到本地存储
+    // Save the theme preference to local storage
     try {
       localStorage.setItem('readlite-theme', theme);
     } catch (e) {
@@ -78,13 +75,13 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     }
   }, [theme]);
   
-  // 在初始渲染时加载保存的主题(仅当未提供currentTheme时)
+  // Load the saved theme on initial render (only if currentTheme is not provided)
   useEffect(() => {
     if (!currentTheme) {
       try {
         const savedTheme = localStorage.getItem('readlite-theme') as ThemeType | null;
-        if (savedTheme && ['light', 'dark', 'sepia', 'paper'].includes(savedTheme)) {
-          setInternalTheme(savedTheme);
+        if (savedTheme && AVAILABLE_THEMES.includes(savedTheme as ThemeType)) {
+          setInternalTheme(savedTheme as ThemeType);
         }
       } catch (e) {
         logger.error('[ThemeProvider] Error loading theme preference:', e);
@@ -92,22 +89,22 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     }
   }, [currentTheme]);
   
-  // 为Agent UI获取颜色 - 使用useMemo优化性能
+  // Get the Agent UI colors - use useMemo to optimize performance
   const getAgentThemeColors = useMemo(() => {
     return () => getAgentColors(theme);
   }, [theme]);
   
-  // 为设置面板获取颜色
+  // Get the UI colors for the settings panel
   const getUIColors = useMemo(() => {
     return () => getSettingsColors(theme);
   }, [theme]);
   
-  // 为阅读器获取颜色
+  // Get the colors for the reader
   const getReaderThemeColors = useMemo(() => {
     return () => getReaderColors(theme);
   }, [theme]);
   
-  // 构建上下文值对象，当任何依赖项变化时才会重新创建
+  // Build the context value object, only re-create when any dependencies change
   const contextValue = useMemo(() => ({
     theme,
     setTheme,
@@ -124,8 +121,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 };
 
 /**
- * 使用主题的自定义钩子
- * 提供对主题状态和颜色的访问
+ * Use the theme custom hook
+ * Provides access to the theme state and colors
  */
 export const useTheme = (): ThemeContextType => {
   const context = useContext(ThemeContext);

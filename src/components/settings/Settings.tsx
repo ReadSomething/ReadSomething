@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react"
-import { useReader } from "../../context/ReaderContext"
-import { useI18n } from "../../hooks/useI18n"
-import { LanguageCode } from "../../utils/language"
-import { getSettingsColors } from "../../config/theme"
+import { useReader } from "~/context/ReaderContext"
+import { useI18n } from "~/hooks/useI18n"
+import { LanguageCode } from "~/utils/language"
+import { getSettingsColors, ThemeType } from "~/config/theme"
 import ThemeSection from "./sections/ThemeSection"
 import FontSizeSection from "./sections/FontSizeSection"
 import FontFamilySection from "./sections/FontFamilySection"
 import WidthSection from "./sections/WidthSection"
 import AlignmentSection from "./sections/AlignmentSection"
 import SpacingSection from "./sections/SpacingSection"
-import { createLogger } from "../../utils/logger"
+import { createLogger } from "~/utils/logger"
 
 // Create a logger for this module
 const logger = createLogger('settings');
@@ -134,7 +134,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
         <div style={{ borderColor: subtleBorderColor }}>
           {/* Theme Section */}
           <ThemeSection 
-            sectionClassName="p-3 border-b"
+            sectionClassName="py-4 px-3 border-b"
             titleClassName="m-0 mb-2.5 text-sm sm:text-xs font-medium text-opacity-90"
             colors={colors}
             settings={settings}
@@ -144,7 +144,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
 
           {/* Font Size Section */}
           <FontSizeSection
-            sectionClassName="p-3 border-b"
+            sectionClassName="py-4 px-3 border-b"
             titleClassName="m-0 mb-2.5 text-sm sm:text-xs font-medium text-opacity-90"
             colors={colors}
             settings={settings}
@@ -154,7 +154,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
 
           {/* Font Family Section */}
           <FontFamilySection
-            sectionClassName="p-3 border-b"
+            sectionClassName="py-4 px-3 border-b"
             titleClassName="m-0 mb-2.5 text-sm sm:text-xs font-medium text-opacity-90"
             colors={colors}
             settings={settings}
@@ -166,7 +166,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
 
           {/* Width Section */}
           <WidthSection
-            sectionClassName="p-3 border-b"
+            sectionClassName="py-4 px-3 border-b"
             titleClassName="m-0 mb-2.5 text-sm sm:text-xs font-medium text-opacity-90"
             colors={colors}
             settings={settings}
@@ -176,7 +176,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
 
           {/* Text Alignment Section */}
           <AlignmentSection
-            sectionClassName="p-3 border-b"
+            sectionClassName="py-4 px-3 border-b"
             titleClassName="m-0 mb-2.5 text-sm sm:text-xs font-medium text-opacity-90"
             colors={colors}
             settings={settings}
@@ -187,7 +187,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
 
           {/* Line Spacing Section */}
           <SpacingSection
-            sectionClassName="p-3 border-b sm:border-b-0"
+            sectionClassName="py-4 px-3 border-b sm:border-b-0"
             titleClassName="m-0 mb-2.5 text-sm sm:text-xs font-medium text-opacity-90"
             colors={colors}
             settings={settings}
