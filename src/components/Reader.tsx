@@ -11,6 +11,11 @@ import ReaderDivider from "~/components/reader/ReaderDivider"
 import ThemeStyles from "~/components/reader/ThemeStyles"
 import { ThemeProvider } from "../context/ThemeContext"
 import { ThemeType, cssVarNames } from "../config/theme"
+import { createLogger } from "../utils/logger"
+
+// Create a logger for this module
+const logger = createLogger('main-reader');
+
 
 /**
  * Main Reader component
@@ -29,7 +34,6 @@ const Reader = () => {
   const initialWidthRef = useRef(0)
   const settingsButtonRef = useRef<HTMLButtonElement>(null) as React.RefObject<HTMLButtonElement>
   const [detectedLanguage, setDetectedLanguage] = useState<LanguageCode>('en')
-  const LOG_PREFIX = "[Reader]"
   
   // Get translations function
   const { t } = useI18n()
@@ -64,7 +68,7 @@ const Reader = () => {
         setShowAgent(savedShowAI === 'true');
       }
     } catch (e) {
-      console.error(`${LOG_PREFIX} Error loading preferences:`, e);
+      logger.error(`Error loading preferences:`, e);
     }
   }, []);
   
@@ -75,7 +79,7 @@ const Reader = () => {
       localStorage.setItem('readerPanelWidth', leftPanelWidth.toString());
       localStorage.setItem('showAIPanel', showAgent.toString());
     } catch (e) {
-      console.error(`${LOG_PREFIX} Error saving preferences:`, e);
+      logger.error(`Error saving preferences:`, e);
     }
   }, [leftPanelWidth, showAgent]);
   
@@ -336,7 +340,7 @@ const Reader = () => {
     chrome.runtime.sendMessage({
       type: "READER_MODE_CHANGED",
       isActive: false
-    }).catch(error => console.warn("Failed to send READER_MODE_CHANGED message:", error))
+    }).catch(error => logger.warn("Failed to send READER_MODE_CHANGED message:", error))
     
     // Dispatch the internal event to trigger removal in content.tsx
     document.dispatchEvent(new CustomEvent('READLITE_TOGGLE_INTERNAL'))
@@ -351,7 +355,7 @@ const Reader = () => {
       try {
         exportAsMarkdown(article.title, article.content);
       } catch (error) {
-        console.error(`${LOG_PREFIX} Export to Markdown failed:`, error);
+        logger.error(`Export to Markdown failed:`, error);
       }
     }
   }, [article]);

@@ -5,13 +5,16 @@
 
 import { getAuthToken } from './auth';
 
-// --- Constants & Configuration ---
+import { createLogger } from "./logger";
 
-const LOG_PREFIX = "[LLMUtil]";
+// Create a logger for this module
+const logger = createLogger('llm');
+
+// --- Constants & Configuration ---
 
 // Updated API endpoint
 const API_ENDPOINT = 'https://api.readlite.app/api/openrouter/chat/completions';
-const DEFAULT_MAX_TOKENS = 256;
+const DEFAULT_MAX_TOKENS = 10000;
 const API_TIMEOUT_MS = 120000; // 120 seconds
 // Default model ID to use as fallback when none specified
 const FALLBACK_MODEL_ID = 'deepseek/deepseek-chat-v3-0324:free';
@@ -53,9 +56,7 @@ async function callLLMAPI(
     stream?: boolean;
   }
 ): Promise<any> { // Returns Response for stream, JSON object otherwise
-  const FN_LOG_PREFIX = `${LOG_PREFIX}:callLLMAPI`;
-  
-  console.debug(`${FN_LOG_PREFIX} Calling API with model: ${options.model}, stream: ${!!options.stream}`);
+  logger.debug(`Calling API with model: ${options.model}, stream: ${!!options.stream}`);
   
   const requestBody = {
     model: options.model,
@@ -79,37 +80,37 @@ async function callLLMAPI(
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    console.debug(`${FN_LOG_PREFIX} Requesting ${API_ENDPOINT}`);
+    logger.debug(`Requesting ${API_ENDPOINT}`);
     const response = await fetch(API_ENDPOINT, {
       method: 'POST',
       headers: headers,
       body: JSON.stringify(requestBody)
     });
     
-    console.debug(`${FN_LOG_PREFIX} Response status: ${response.status}`);
+    logger.debug(`Response status: ${response.status}`);
     
     if (!response.ok) {
       let errorBody = 'Unknown error';
       try {
           errorBody = await response.text();
       } catch (e) { /* Ignore if reading body fails */ }
-      console.error(`${FN_LOG_PREFIX} API request failed: ${response.status} ${response.statusText}. Body: ${errorBody}`);
+      logger.error(`API request failed: ${response.status} ${response.statusText}. Body: ${errorBody}`);
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
     
     // Return the raw Response for streaming, caller must handle body
     if (options.stream) {
-      console.debug(`${FN_LOG_PREFIX} Returning raw Response object for stream.`);
+      logger.debug(`Returning raw Response object for stream.`);
       return response;
     }
     
     // Parse and return JSON for non-streaming requests
     const responseData = await response.json();
-    console.debug(`${FN_LOG_PREFIX} API call successful (non-stream).`);
+    logger.debug(`API call successful (non-stream).`);
     return responseData;
 
   } catch (error) {
-    console.error(`${FN_LOG_PREFIX} Network or fetch error:`, error);
+    logger.error(`Network or fetch error:`, error);
     // Re-throw original error or a new standardized error
     throw error instanceof Error ? error : new Error('LLM API request failed.');
   }
@@ -164,14 +165,14 @@ async function processStreamInternal(streamResponse: Response, onChunk: (text: s
             completeResponse += content;
           }
         } catch (e) {
-          console.warn("Error parsing stream chunk:", e, "Line:", line);
+          logger.warn("Error parsing stream chunk:", e, "Line:", line);
         }
       }
     }
     
     return completeResponse;
   } catch (error) {
-    console.error("Error processing stream:", error);
+    logger.error("Error processing stream:", error);
     throw error;
   }
 }
@@ -185,8 +186,7 @@ async function processStreamInternal(streamResponse: Response, onChunk: (text: s
  * @returns A Promise resolving to the generated text string.
  */
 async function generateTextInternal(prompt: string, options: LLMRequestOptions = {}): Promise<string> {
-  const FN_LOG_PREFIX = `${LOG_PREFIX}:generateText`;
-  console.debug(`${FN_LOG_PREFIX} Request: "${prompt.substring(0, 50)}..."`, options);
+  logger.debug(`Request: "${prompt.substring(0, 50)}..."`, options);
   
   try {
     const messages: ChatMessage[] = [];
@@ -203,24 +203,24 @@ async function generateTextInternal(prompt: string, options: LLMRequestOptions =
     let timeoutId: NodeJS.Timeout | null = null;
     const timeoutPromise = new Promise((_, reject) => {
       timeoutId = setTimeout(() => {
-        console.error(`${FN_LOG_PREFIX} API request timed out after ${API_TIMEOUT_MS}ms`);
+        logger.error(`API request timed out after ${API_TIMEOUT_MS}ms`);
         reject(new Error(`LLM API request timed out after ${API_TIMEOUT_MS / 1000} seconds`));
       }, API_TIMEOUT_MS);
     });
 
     // Make the direct API call (non-streaming)
-    console.debug(`${FN_LOG_PREFIX} Calling callLLMAPI (non-stream)`);
+    logger.debug(`Calling callLLMAPI (non-stream)`);
     const apiCallPromise = callLLMAPI(messages, { model, maxTokens, temperature, stream: false });
 
     const response = await Promise.race([apiCallPromise, timeoutPromise]) as any; // Result is JSON object
     if (timeoutId) clearTimeout(timeoutId);
     
     const content = response?.choices?.[0]?.message?.content || '';
-    console.debug(`${FN_LOG_PREFIX} Success. Response text: "${content.substring(0, 50)}..."`);
+    logger.debug(`Success. Response text: "${content.substring(0, 50)}..."`);
     return content;
 
   } catch (error: unknown) {
-    console.error(`${FN_LOG_PREFIX} Failed:`, error);
+    logger.error(`Failed:`, error);
     throw error instanceof Error ? error : new Error('Failed to generate text.');
   }
 }
@@ -237,8 +237,7 @@ async function generateTextStreamInternal(
   onChunk: (text: string) => void,
   options: LLMRequestOptions = {}
 ): Promise<string> {
-  const FN_LOG_PREFIX = `${LOG_PREFIX}:generateTextStream`;
-  console.debug(`${FN_LOG_PREFIX} Stream request: "${prompt.substring(0, 50)}..."`, options);
+  logger.debug(`Stream request: "${prompt.substring(0, 50)}..."`, options);
   
   try {
     const messages: ChatMessage[] = [];
@@ -252,16 +251,16 @@ async function generateTextStreamInternal(
     const temperature = options.temperature ?? 0.7;
 
     // Make the direct API call (streaming)
-    console.debug(`${FN_LOG_PREFIX} Calling callLLMAPI (stream)`);
+    logger.debug(`Calling callLLMAPI (stream)`);
     const streamResponse = await callLLMAPI(messages, { model, maxTokens, temperature, stream: true });
 
     // Process the stream
     const fullText = await processStreamInternal(streamResponse, onChunk);
-    console.debug(`${FN_LOG_PREFIX} Stream completed. Full text length: ${fullText.length}`);
+    logger.debug(`Stream completed. Full text length: ${fullText.length}`);
     return fullText;
 
   } catch (error: unknown) {
-    console.error(`${FN_LOG_PREFIX} Stream failed:`, error);
+    logger.error(`Stream failed:`, error);
     throw error instanceof Error ? error : new Error('Failed to generate streaming text.');
   }
 }
@@ -288,8 +287,7 @@ function createSummarizationMessages(maxLength: number = 3): ChatMessage[] {
  * @returns A Promise resolving to the summary string.
  */
 async function summarizeTextInternal(text: string, maxLength: number = 3): Promise<string> {
-  const FN_LOG_PREFIX = `${LOG_PREFIX}:summarizeText`;
-  console.debug(`${FN_LOG_PREFIX} Called with text length: ${text.length}, max length: ${maxLength}`);
+  logger.debug(`Called with text length: ${text.length}, max length: ${maxLength}`);
   
   try {
     // Prepare summary-specific instructions
@@ -302,15 +300,15 @@ async function summarizeTextInternal(text: string, maxLength: number = 3): Promi
     const temperature = 0.5; // Less creative
     
     // Call the API directly
-    console.debug(`${FN_LOG_PREFIX} Calling API`);
+    logger.debug(`Calling API`);
     const response = await callLLMAPI(messages, { model, maxTokens, temperature, stream: false });
     
     const summary = response?.choices?.[0]?.message?.content || '';
-    console.debug(`${FN_LOG_PREFIX} Generated summary: "${summary.substring(0, 50)}${summary.length > 50 ? '...' : ''}"`);
+    logger.debug(`Generated summary: "${summary.substring(0, 50)}${summary.length > 50 ? '...' : ''}"`);
     return summary;
     
   } catch (error) {
-    console.error(`${FN_LOG_PREFIX} Error generating summary:`, error);
+    logger.error(`Error generating summary:`, error);
     throw error instanceof Error ? error : new Error('Failed to generate summary.');
   }
 }
@@ -338,8 +336,7 @@ function createExtractionMessages(question: string): ChatMessage[] {
  * @returns A Promise resolving to extracted information
  */
 async function extractKeyInfoInternal(text: string, question: string): Promise<string> {
-  const FN_LOG_PREFIX = `${LOG_PREFIX}:extractKeyInfo`;
-  console.debug(`${FN_LOG_PREFIX} Called with question: "${question}", text length: ${text.length}`);
+  logger.debug(`Called with question: "${question}", text length: ${text.length}`);
   
   try {
     // Prepare extraction-specific instructions
@@ -352,15 +349,15 @@ async function extractKeyInfoInternal(text: string, question: string): Promise<s
     const temperature = 0.3; // More factual
     
     // Call the API directly
-    console.debug(`${FN_LOG_PREFIX} Calling API`);
+    logger.debug(`Calling API`);
     const response = await callLLMAPI(messages, { model, maxTokens, temperature, stream: false });
     
     const extraction = response?.choices?.[0]?.message?.content || '';
-    console.debug(`${FN_LOG_PREFIX} Extracted info: "${extraction.substring(0, 50)}${extraction.length > 50 ? '...' : ''}"`);
+    logger.debug(`Extracted info: "${extraction.substring(0, 50)}${extraction.length > 50 ? '...' : ''}"`);
     return extraction;
     
   } catch (error) {
-    console.error(`${FN_LOG_PREFIX} Error extracting information:`, error);
+    logger.error(`Error extracting information:`, error);
     throw error instanceof Error ? error : new Error('Failed to extract information.');
   }
 }
@@ -387,8 +384,7 @@ function createQAMessages(question: string): ChatMessage[] {
  * @returns A Promise resolving to the answer
  */
 async function answerQuestionInternal(text: string, question: string): Promise<string> {
-  const FN_LOG_PREFIX = `${LOG_PREFIX}:answerQuestion`;
-  console.debug(`${FN_LOG_PREFIX} Called with question: "${question}", text length: ${text.length}`);
+  logger.debug(`Called with question: "${question}", text length: ${text.length}`);
   
   try {
     // Prepare Q&A-specific instructions
@@ -401,15 +397,15 @@ async function answerQuestionInternal(text: string, question: string): Promise<s
     const temperature = 0.3; // More factual
     
     // Call the API directly
-    console.debug(`${FN_LOG_PREFIX} Calling API`);
+    logger.debug(`Calling API`);
     const response = await callLLMAPI(messages, { model, maxTokens, temperature, stream: false });
     
     const answer = response?.choices?.[0]?.message?.content || '';
-    console.debug(`${FN_LOG_PREFIX} Answer: "${answer.substring(0, 50)}${answer.length > 50 ? '...' : ''}"`);
+    logger.debug(`Answer: "${answer.substring(0, 50)}${answer.length > 50 ? '...' : ''}"`);
     return answer;
     
   } catch (error) {
-    console.error(`${FN_LOG_PREFIX} Error answering question:`, error);
+    logger.error(`Error answering question:`, error);
     throw error instanceof Error ? error : new Error('Failed to answer question.');
   }
 }

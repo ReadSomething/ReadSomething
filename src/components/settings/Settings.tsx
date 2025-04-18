@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { useReader } from "../../context/ReaderContext"
 import { useI18n } from "../../hooks/useI18n"
-import { FontOption, fontOptions, widthOptions, spacingOptions, alignmentOptions } from "../../config/ui"
 import { LanguageCode } from "../../utils/language"
-import { getLanguageDisplayName } from "../../utils/i18n"
 import { getSettingsColors } from "../../config/theme"
 import ThemeSection from "./sections/ThemeSection"
 import FontSizeSection from "./sections/FontSizeSection"
@@ -11,6 +9,11 @@ import FontFamilySection from "./sections/FontFamilySection"
 import WidthSection from "./sections/WidthSection"
 import AlignmentSection from "./sections/AlignmentSection"
 import SpacingSection from "./sections/SpacingSection"
+import { createLogger } from "../../utils/logger"
+
+// Create a logger for this module
+const logger = createLogger('settings');
+
 
 interface SettingsProps {
   onClose: () => void;
@@ -26,7 +29,6 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
   const { settings, updateSettings, article } = useReader()
   const { t, uiLanguage } = useI18n()
   const [detectedLanguage, setDetectedLanguage] = useState<LanguageCode | null>(null)
-  const LOG_PREFIX = "[SettingsPanel]";
   
   // Get button position for panel positioning
   const [buttonPosition, setButtonPosition] = useState<{ top: number; right: number } | null>(null);
@@ -64,7 +66,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
   useEffect(() => {
     if (article?.language) {
       const lang = article.language as LanguageCode;
-      console.log(`${LOG_PREFIX} Detected content language: ${lang}`);
+      logger.info(`Detected content language: ${lang}`);
       setDetectedLanguage(lang);
     }
   }, [article]);

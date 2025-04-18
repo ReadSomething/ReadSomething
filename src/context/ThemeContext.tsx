@@ -10,6 +10,11 @@ import {
   applyTheme 
 } from '../config/theme';
 
+import { createLogger } from "~/utils/logger";
+
+// Create a logger for this module
+const logger = createLogger('context');
+
 // 主题上下文类型
 interface ThemeContextType {
   theme: ThemeType;
@@ -49,14 +54,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     if (!currentTheme) {
       setInternalTheme(newTheme);
     } else {
-      console.log('[ThemeProvider] External theme control active - internal state change ignored');
+      logger.info('[ThemeProvider] External theme control active - internal state change ignored');
     }
   };
   
   // 当外部主题变化时更新内部状态(仅日志记录用)
   useEffect(() => {
     if (currentTheme) {
-      console.log(`[ThemeProvider] External theme update: ${currentTheme}`);
+      logger.info(`[ThemeProvider] External theme update: ${currentTheme}`);
     }
   }, [currentTheme]);
   
@@ -69,7 +74,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     try {
       localStorage.setItem('readlite-theme', theme);
     } catch (e) {
-      console.error('[ThemeProvider] Error saving theme preference:', e);
+      logger.error('[ThemeProvider] Error saving theme preference:', e);
     }
   }, [theme]);
   
@@ -82,7 +87,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
           setInternalTheme(savedTheme);
         }
       } catch (e) {
-        console.error('[ThemeProvider] Error loading theme preference:', e);
+        logger.error('[ThemeProvider] Error loading theme preference:', e);
       }
     }
   }, [currentTheme]);

@@ -1,3 +1,8 @@
+import { createLogger } from "./logger";
+
+// Create a logger for this module
+const logger = createLogger('utils');
+
 /**
  * Authentication utilities for ReadLite
  * Handles token management, authentication status, and login functionality
@@ -32,7 +37,7 @@ export async function isAuthenticated(): Promise<boolean> {
     
     return true;
   } catch (error) {
-    console.error("[Auth] Error checking authentication status:", error);
+    logger.error("[Auth] Error checking authentication status:", error);
     return false;
   }
 }
@@ -102,7 +107,7 @@ function determineUserLocale(): string {
       return browserLang.startsWith('zh') ? 'zh' : 'en';
     }
   } catch (error) {
-    console.error("[Auth] Error determining user locale:", error);
+    logger.error("[Auth] Error determining user locale:", error);
     return 'en'; // Default to English on error
   }
 }
@@ -127,7 +132,7 @@ export function setupAuthListener(): void {
           [AUTH_TOKEN_KEY]: token,
           [AUTH_TIMESTAMP_KEY]: Date.now()
         }, function() {
-          console.log('[Auth] Token saved to extension storage');
+          logger.info('[Auth] Token saved to extension storage');
           
           // Send confirmation message back to web app
           window.postMessage({

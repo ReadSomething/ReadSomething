@@ -1,6 +1,10 @@
 import { Storage } from "@plasmohq/storage"
 import { useCallback, useEffect, useState } from "react"
 import { defaultSettings } from "../context/ReaderContext"
+import { createLogger } from "../utils/logger"
+
+// Create a logger for this module
+const logger = createLogger('settings');
 
 // Create storage instance
 const storage = new Storage({
@@ -57,7 +61,7 @@ export const useStoredSettings = () => {
           })
         }
       } catch (error) {
-        console.error("Error loading settings from storage:", error)
+        logger.error("Error loading settings from storage:", error)
       } finally {
         setIsLoaded(true)
       }
@@ -82,13 +86,13 @@ export const useStoredSettings = () => {
             return storage.get(SETTINGS_KEY)
           })
           .catch(err => {
-            console.error("Failed to save settings to storage:", err)
+            logger.error("Failed to save settings to storage:", err)
           })
         
         return updated
       })
     } catch (error) {
-      console.error("Failed to update settings:", error)
+      logger.error("Failed to update settings:", error)
     }
   }, [])
 
@@ -103,7 +107,7 @@ export const useStoredSettings = () => {
       await storage.set(SETTINGS_KEY, resetValues)
       setSettings(resetValues)
           } catch (error) {
-      console.error("Failed to reset settings:", error)
+      logger.error("Failed to reset settings:", error)
     }
   }, [])
 

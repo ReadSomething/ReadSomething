@@ -1,7 +1,7 @@
 {
   "name": "read-lite",
   "displayName": "ReadLite - Simple Reading Mode",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A simple reading mode extension to make web reading more comfortable",
   "author": "ReadLite Team",
   "license": "MIT",

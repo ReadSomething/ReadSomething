@@ -1,4 +1,9 @@
 import React from 'react';
+import { createLogger } from "../../../utils/logger";
+
+// Create a logger for this module
+const logger = createLogger('settings');
+
 
 interface ThemeSectionProps {
   sectionClassName: string;
@@ -29,7 +34,7 @@ const ThemeSection: React.FC<ThemeSectionProps> = ({
 }) => {
   // Change the theme
   const changeTheme = (theme: "light" | "dark" | "sepia" | "paper") => {
-    console.log(`[Settings] Changing theme to: ${theme}`);
+    logger.info(`[Settings] Changing theme to: ${theme}`);
     updateSettings({ theme });
   };
 

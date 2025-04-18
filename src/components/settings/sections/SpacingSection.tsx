@@ -1,5 +1,10 @@
 import React from 'react';
 import { spacingOptions } from '../../../config/ui';
+import { createLogger } from "../../../utils/logger";
+
+// Create a logger for this module
+const logger = createLogger('settings');
+
 
 interface SpacingSectionProps {
   sectionClassName: string;
@@ -32,7 +37,7 @@ const SpacingSection: React.FC<SpacingSectionProps> = ({
   const changeSpacing = (spacing: string) => {
     const option = spacingOptions.find(opt => opt.value === spacing);
     if (option) {
-      console.log(`[Settings] Changing spacing to: ${spacing} (lineHeight: ${option.lineHeight})`);
+      logger.info(`[Settings] Changing spacing to: ${spacing} (lineHeight: ${option.lineHeight})`);
       updateSettings({ 
         spacing,
         lineHeight: option.lineHeight

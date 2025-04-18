@@ -3,7 +3,11 @@
  * Implements strategies for maintaining relevant context while respecting token limits
  */
 
-import { LLMRequestOptions } from './llm';
+import { createLogger } from "~/utils/logger";
+
+// Create a logger for this module
+const logger = createLogger('utils');
+
 
 // Default token limits
 const DEFAULT_MAX_TOKENS = 4000;  // Reduced from 6000 to 4000
@@ -230,7 +234,7 @@ export class SessionManager {
       return; // No pruning needed
     }
     
-    console.log(`[SessionManager] Token limit exceeded: ${currentTokenCount}/${this.maxTokens}. Pruning context...`);
+    logger.info(`[SessionManager] Token limit exceeded: ${currentTokenCount}/${this.maxTokens}. Pruning context...`);
     
     // First approach: Optimize article context if present
     if (this.articleContext && this.articleContext.tokenCount && 
@@ -241,7 +245,7 @@ export class SessionManager {
     // Second approach: Prune conversation history if still needed
     this.pruneMessageHistory();
     
-    console.log(`[SessionManager] After pruning: ${this.getEstimatedTokenCount()}/${this.maxTokens} tokens.`);
+    logger.info(`[SessionManager] After pruning: ${this.getEstimatedTokenCount()}/${this.maxTokens} tokens.`);
   }
   
   /**
@@ -329,7 +333,7 @@ ${end}
     this.articleContext.content = optimizedContent;
     this.articleContext.tokenCount = this.estimateTokens(optimizedContent);
     
-    console.log(`[SessionManager] Optimized article context: ${this.articleContext.tokenCount} tokens.`);
+    logger.info(`[SessionManager] Optimized article context: ${this.articleContext.tokenCount} tokens.`);
   }
   
   /**
@@ -420,7 +424,7 @@ ${end}
     // Update the message list
     this.messages = keptMessages;
     
-    console.log(`[SessionManager] Pruned message history: Kept ${keptMessages.length} messages with ${keptTokens} tokens.`);
+    logger.info(`[SessionManager] Pruned message history: Kept ${keptMessages.length} messages with ${keptTokens} tokens.`);
   }
   
   /**
@@ -428,7 +432,7 @@ ${end}
    */
   clearConversation(): void {
     this.messages = [];
-    console.log(`[SessionManager] Conversation history cleared.`);
+    logger.info(`[SessionManager] Conversation history cleared.`);
   }
   
   /**
@@ -437,7 +441,7 @@ ${end}
   resetSession(): void {
     this.messages = [];
     this.articleContext = null;
-    console.log(`[SessionManager] Session fully reset.`);
+    logger.info(`[SessionManager] Session fully reset.`);
   }
 }
 

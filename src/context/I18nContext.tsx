@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useMemo, ReactNode } from 'react'
-import { getBrowserLanguage, getMessage, SupportedLanguage } from '../utils/i18n'
+import { getBrowserLanguage, getMessage } from '../utils/i18n'
 
 // --- Types ---
 
 interface I18nContextType {
-  uiLanguage: SupportedLanguage; // The language used for the extension's UI
+  uiLanguage: string; // The language used for the extension's UI
   t: (key: string) => string; // Translation function
 }
 
@@ -22,11 +22,8 @@ interface I18nProviderProps {
  * Provides internationalization context (UI language and translation function).
  */
 export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
-  const LOG_PREFIX = "[I18nProvider]";
-
   // Determine the UI language based on browser/OS settings
   const uiLanguage = getBrowserLanguage();
-  console.log(`${LOG_PREFIX} Determined UI language: ${uiLanguage}`);
 
   // Memoize the translation function `t` to optimize performance.
   // It depends only on the `uiLanguage`.
@@ -38,7 +35,6 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
         
         // 2. If not found and language is not English, try English as a fallback
         if (!message && uiLanguage !== 'en') {
-          console.warn(`${LOG_PREFIX} Translation not found for key "${key}" in language "${uiLanguage}". Falling back to English.`);
           const fallbackMessage = getMessage(key, 'en');
           // 3. If English fallback also fails, return the key itself
           return fallbackMessage || key; 
@@ -47,12 +43,11 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
         // 4. If found in original language, or if English was the original language and failed, return message or key
         return message || key; 
       } catch (error) {
-        console.error(`${LOG_PREFIX} Translation error for key "${key}" (lang: ${uiLanguage}):`, error);
         // 5. Return the key in case of any unexpected errors during translation
         return key; 
       }
     };
-  }, [uiLanguage, LOG_PREFIX]); // Added LOG_PREFIX to dependency array although it's constant
+  }, [uiLanguage]);
 
   // Memoize the context value object
   const value = useMemo(() => ({

@@ -1,20 +1,17 @@
 /**
  * i18n Utility Functions
  * 
- * Provides functions for browser language detection, translation retrieval (via chrome.i18n),
+ * Provides functions for browser language detection, translation retrieval,
  * and getting language display names.
  */
 
 import {
   LanguageCode,
   normalizeLanguageCode,
-  SUPPORTED_LANGUAGES as ALL_SUPPORTED_LANGUAGES, // Import the comprehensive list
-  isLanguageSupported // Import the checker function
+  SUPPORTED_LANGUAGES as ALL_SUPPORTED_LANGUAGES,
+  isLanguageSupported
 } from './language';
-// Keep config import for display names/titles, assuming this data isn't in _locales
 import { languageDisplayConfigs } from '../config/ui'; 
-
-const LOG_PREFIX = "[i18nUtil]";
 
 // --- Functions --- 
 
@@ -37,7 +34,6 @@ export function getLanguageDisplayName(langCode: LanguageCode, uiLanguage: Langu
   }
   
   // If no config found, return the language code
-  console.warn(`${LOG_PREFIX} No display name config found for language code: ${langCode}`);
   return langCode;
 }
 
@@ -60,7 +56,6 @@ export function getFontSectionTitle(contentLanguage: LanguageCode, uiLanguage: L
   
   // If no specific title found, construct one from the language name
   const defaultTitle = `${getLanguageDisplayName(contentLanguage, uiLanguage)} Fonts`;
-  console.warn(`${LOG_PREFIX} No specific font section title found for language: ${contentLanguage}. Using default: "${defaultTitle}"`);
   return defaultTitle;
 }
 
@@ -88,37 +83,101 @@ export function getBrowserLanguage(): LanguageCode {
       }
     }
   } catch (e) {
-    console.warn(`${LOG_PREFIX} Error detecting browser language:`, e);
+    // Silent error, use default
   }
-  console.log(`${LOG_PREFIX} Using UI language: ${detectedLang}`);
   return detectedLang;
 }
 
 /**
- * Get a translated string using the standard chrome.i18n API.
- * Requires the key to be defined in `public/_locales/[lang]/messages.json`.
+ * Get a translated string from locales files.
+ * Uses locales/{lang}/messages.json files or falls back to English.
  * 
  * @param key The translation key (must match messages.json).
+ * @param lang Optional language code (defaults to browser language).
  * @returns The translated string, or the key itself if not found.
  */
-export function getMessage(key: string): string {
+export function getMessage(key: string, lang?: LanguageCode): string {
+  // Use provided language or get browser language
+  const language = lang || getBrowserLanguage();
+  
   try {
-    if (typeof chrome !== 'undefined' && chrome?.i18n?.getMessage) {
-      const message = chrome.i18n.getMessage(key);
-      // chrome.i18n.getMessage returns empty string if key not found
-      if (message) {
-        return message;
-      } else {
-        console.warn(`${LOG_PREFIX} Translation key "${key}" not found in messages.json.`);
-        return key; // Return key if Chrome API returns empty string
+    // If chrome.i18n not available or key not found, use local translations
+    try {
+      // Dynamic import of JSON files won't work in production 
+      // so we need to use a cache of translations instead
+      return getLocalTranslation(key, language);
+    } catch (localError) {
+      // Try English as fallback if needed and not already using English
+      if (language !== 'en') {
+        try {
+          return getLocalTranslation(key, 'en');
+        } catch (fallbackError) {
+          // Silent fallback error
+        }
       }
-    } else {
-      // Fallback if chrome.i18n is not available (e.g., testing environment)
-      console.warn(`${LOG_PREFIX} chrome.i18n.getMessage not available. Returning key "${key}".`);
-      return key;
     }
+    
+    // If all else fails, return the key
+    return key;
   } catch (e) {
-    console.error(`${LOG_PREFIX} Error calling chrome.i18n.getMessage for key "${key}":`, e);
-    return key; // Return key on error
+    // Silent error, return key
+    return key;
   }
+}
+
+// Cache for loaded translations
+const translationsCache: Record<string, any> = {};
+
+/**
+ * Get translation from local files based on language
+ */
+function getLocalTranslation(key: string, lang: LanguageCode): string {
+  // Load and cache translations if not already loaded
+  if (!translationsCache[lang]) {
+    try {
+      // In a real implementation, you'd have a mechanism to load these JSON files
+      // Here we're directly importing or requiring common translations
+      if (lang === 'zh') {
+        translationsCache.zh = require('../../locales/zh/messages.json');
+      } else if (lang === 'en') {
+        translationsCache.en = require('../../locales/en/messages.json');
+      } else {
+        // For other languages, try loading if available or fall back to English
+        try {
+          translationsCache[lang] = require(`../../locales/${lang}/messages.json`);
+        } catch (e) {
+          if (!translationsCache.en) {
+            translationsCache.en = require('../../locales/en/messages.json');
+          }
+          return getLocalTranslation(key, 'en');
+        }
+      }
+    } catch (e) {
+      throw e;
+    }
+  }
+  
+  // Return the translation if it exists
+  const translation = translationsCache[lang]?.[key]?.message;
+  if (translation) {
+    return translation;
+  }
+  
+  // Try fallback to English if not found and not already English
+  if (lang !== 'en') {
+    if (!translationsCache.en) {
+      try {
+        translationsCache.en = require('../../locales/en/messages.json');
+      } catch (e) {
+        throw e;
+      }
+    }
+    const enTranslation = translationsCache.en?.[key]?.message;
+    if (enTranslation) {
+      return enTranslation;
+    }
+  }
+  
+  // If still not found, return the key
+  throw new Error(`Translation not found for key: ${key}`);
 } 
