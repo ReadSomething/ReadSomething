@@ -5,14 +5,6 @@ import { LanguageCode } from '../../../utils/language';
 interface FontFamilySectionProps {
   sectionClassName: string;
   titleClassName: string;
-  colors: {
-    bg: string;
-    text: string;
-    border: string;
-    highlight: string;
-    buttonBg: string;
-    buttonText: string;
-  };
   settings: any;
   t: (key: string) => string;
   uiLanguage: LanguageCode;
@@ -26,7 +18,6 @@ interface FontFamilySectionProps {
 const FontFamilySection: React.FC<FontFamilySectionProps> = ({
   sectionClassName,
   titleClassName,
-  colors,
   settings,
   t,
   uiLanguage,
@@ -55,14 +46,6 @@ const FontFamilySection: React.FC<FontFamilySectionProps> = ({
     updateSettings({ fontFamily });
   };
 
-  // Get button class based on active state
-  const getButtonClass = (isActive: boolean) => {
-    return `border rounded cursor-pointer p-1.5 transition-all text-xs
-            ${isActive ? 
-              `border-[${colors.highlight}] bg-[${settings.theme === "dark" ? "rgba(76,139,245,0.1)" : "rgba(0,119,255,0.05)"}] text-[${colors.highlight}]` : 
-              `border-[${colors.border}] bg-transparent text-[${colors.text}]`}`;
-  };
-
   // Split fonts into two columns
   const midPoint = Math.ceil(fontOptions.length / 2);
   const firstColumnFonts = fontOptions.slice(0, midPoint);
@@ -76,17 +59,24 @@ const FontFamilySection: React.FC<FontFamilySectionProps> = ({
       font.compatibleLanguages && 
       font.compatibleLanguages.includes(detectedLanguage);
     
+    const fontFamily = font.value.split(',')[0];
+    
     return (
-      <div 
+      <button 
         key={font.value}
         onClick={() => changeFontFamily(font.value)}
-        className={`mb-1 ${getButtonClass(isActive)} flex items-center justify-between`}
+        className={`w-full mb-1 border rounded p-1.5 transition-all text-xs
+                   flex items-center justify-between
+                   ${isActive ? 
+                     'border-accent bg-accent/5 text-accent' : 
+                     'border-border bg-transparent text-primary'}`}
+        aria-pressed={isActive}
       >
         <div className="flex items-center overflow-hidden">
-          {/* Font preview */}
+          {/* Font preview with dynamic font family */}
           <span 
             className="text-sm mr-2 min-w-[24px] flex-shrink-0"
-            style={{ fontFamily: font.value.split(',')[0] }}
+            style={{ fontFamily }}
           >
             Aa
           </span>
@@ -99,10 +89,7 @@ const FontFamilySection: React.FC<FontFamilySectionProps> = ({
             
             {/* Star icon for recommended fonts */}
             {isRecommended && (
-              <span 
-                className="ml-1 text-xs flex-shrink-0"
-                style={{ color: isActive ? colors.highlight : 'rgba(255, 180, 0, 0.8)' }}
-              >
+              <span className={`ml-1 text-xs flex-shrink-0 ${isActive ? 'text-accent' : 'text-amber-400/80'}`}>
                 ★
               </span>
             )}
@@ -111,9 +98,9 @@ const FontFamilySection: React.FC<FontFamilySectionProps> = ({
         
         {/* Checkmark for active option */}
         {isActive && (
-          <span className="text-xs flex-shrink-0" style={{ color: colors.highlight }}>✓</span>
+          <span className="text-xs flex-shrink-0 text-accent">✓</span>
         )}
-      </div>
+      </button>
     );
   };
 
@@ -123,7 +110,7 @@ const FontFamilySection: React.FC<FontFamilySectionProps> = ({
       
       {/* Font section description with explanation */}
       {detectedLanguage && (
-        <div className="text-[10px] mb-2 opacity-70">
+        <div className="text-[10px] mb-2 text-primary/70">
           {uiLanguage === 'zh' ? 
             `★ 表示适合${getLanguageDisplayName(detectedLanguage, uiLanguage)}内容的字体` : 
             `★ indicates fonts optimized for ${getLanguageDisplayName(detectedLanguage, uiLanguage)} content`}

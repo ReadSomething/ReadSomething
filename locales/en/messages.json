@@ -350,5 +350,57 @@
   "collapseToolbar": {
     "message": "Collapse Toolbar",
     "description": "Label for the collapse toolbar button"
+  },
+  "custom": {
+    "message": "Custom",
+    "description": "Custom theme option."
+  },
+  "customTheme": {
+    "message": "Custom Theme",
+    "description": "Label for custom theme section."
+  },
+  "background": {
+    "message": "Background",
+    "description": "Label for background color setting."
+  },
+  "text": {
+    "message": "Text",
+    "description": "Label for text color setting."
+  },
+  "accent": {
+    "message": "Accent",
+    "description": "Label for accent color setting."
+  },
+  "border": {
+    "message": "Border",
+    "description": "Label for border color setting."
+  },
+  "select": {
+    "message": "Select",
+    "description": "Label for color select button."
+  },
+  "lightBackgrounds": {
+    "message": "Light backgrounds",
+    "description": "Label for light background color presets."
+  },
+  "darkBackgrounds": {
+    "message": "Dark backgrounds",
+    "description": "Label for dark background color presets."
+  },
+  "eyecareBackgrounds": {
+    "message": "Eye-care backgrounds",
+    "description": "Label for eye-care background color presets."
+  },
+  "darkText": {
+    "message": "Dark text",
+    "description": "Label for dark text color presets."
+  },
+  "lightText": {
+    "message": "Light text",
+    "description": "Label for light text color presets."
+  },
+  "accentColors": {
+    "message": "Accent colors",
+    "description": "Label for accent color presets."
   }
 }

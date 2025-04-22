@@ -350,5 +350,57 @@
   "collapseToolbar": {
     "message": "折叠工具栏",
     "description": "折叠工具栏按钮的标签"
+  },
+  "custom": {
+    "message": "自定义",
+    "description": "Custom theme option."
+  },
+  "customTheme": {
+    "message": "自定义主题",
+    "description": "Label for custom theme section."
+  },
+  "background": {
+    "message": "背景",
+    "description": "Label for background color setting."
+  },
+  "text": {
+    "message": "文本",
+    "description": "Label for text color setting."
+  },
+  "accent": {
+    "message": "强调",
+    "description": "Label for accent color setting."
+  },
+  "border": {
+    "message": "边框",
+    "description": "Label for border color setting."
+  },
+  "select": {
+    "message": "选择",
+    "description": "Label for color select button."
+  },
+  "lightBackgrounds": {
+    "message": "浅色背景",
+    "description": "Label for light background color presets."
+  },
+  "darkBackgrounds": {
+    "message": "深色背景",
+    "description": "Label for dark background color presets."
+  },
+  "eyecareBackgrounds": {
+    "message": "护眼背景",
+    "description": "Label for eye-care background color presets."
+  },
+  "darkText": {
+    "message": "深色文本",
+    "description": "Label for dark text color presets."
+  },
+  "lightText": {
+    "message": "浅色文本",
+    "description": "Label for light text color presets."
+  },
+  "accentColors": {
+    "message": "强调色",
+    "description": "Label for accent color presets."
   }
 }

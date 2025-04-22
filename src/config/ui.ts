@@ -33,7 +33,7 @@ export interface FontOption {
  * All font-related UI elements should reference this array
  */
 export const fontOptions: FontOption[] = [
-  // Chinese fonts - 优化和扩展中文字体选项
+  // Chinese fonts - Optimized and expanded Chinese font options
   { 
     value: '"Source Han Sans SC", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif',
     label: { zh: '思源黑体', en: 'Source Han Sans' },
@@ -64,7 +64,7 @@ export const fontOptions: FontOption[] = [
     compatibleLanguages: ['zh', 'cmn', 'wuu', 'yue'],
     available: true
   },
-  // 添加新的中文字体选项
+  // Add new Chinese font options
   { 
     value: '"Songti SC", "STSong", serif',
     label: { zh: '宋体', en: 'Songti' },

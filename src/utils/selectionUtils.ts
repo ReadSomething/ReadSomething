@@ -69,7 +69,7 @@ export const getSelectedText = (): string => {
  * @param highlightClass Optional CSS class to apply to the highlight
  * @returns HTML string with the highlighted text
  */
-export const createHighlightedText = (text: string, highlightClass: string = 'reader-highlight'): string => {
+export const createHighlightedText = (text: string, highlightClass: string = 'readlite-highlight'): string => {
   return `<mark class="${highlightClass}">${text}</mark>`;
 };
 

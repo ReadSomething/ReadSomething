@@ -3,7 +3,7 @@
  * Provides direct fetch implementation to interact with OpenRouter via ReadLite API.
  */
 
-import { getAuthToken } from './auth';
+import { getAuthToken, handleTokenExpiry } from './auth';
 
 import { createLogger } from "./logger";
 
@@ -14,7 +14,7 @@ const logger = createLogger('llm');
 
 // Updated API endpoint
 const API_ENDPOINT = 'https://api.readlite.app/api/openrouter/chat/completions';
-const DEFAULT_MAX_TOKENS = 10000;
+const DEFAULT_MAX_TOKENS = 4000;
 const API_TIMEOUT_MS = 120000; // 120 seconds
 // Default model ID to use as fallback when none specified
 const FALLBACK_MODEL_ID = 'deepseek/deepseek-chat-v3-0324:free';
@@ -94,6 +94,15 @@ async function callLLMAPI(
       try {
           errorBody = await response.text();
       } catch (e) { /* Ignore if reading body fails */ }
+      
+      // Check for 401 Unauthorized error specifically
+      if (response.status === 401) {
+        logger.error(`API request failed with 401 Unauthorized. Body: ${errorBody}`);
+        // Handle token expiry and relogin
+        await handleTokenExpiry(response);
+        throw new Error(`Authentication failed: Your session has expired. Please log in again.`);
+      }
+      
       logger.error(`API request failed: ${response.status} ${response.statusText}. Body: ${errorBody}`);
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
@@ -111,6 +120,13 @@ async function callLLMAPI(
 
   } catch (error) {
     logger.error(`Network or fetch error:`, error);
+    
+    // Handle token expiry if it's an auth-related error
+    const wasHandled = await handleTokenExpiry(error);
+    if (wasHandled) {
+      throw new Error('Authentication failed: Your session has expired. Please log in again.');
+    }
+    
     // Re-throw original error or a new standardized error
     throw error instanceof Error ? error : new Error('LLM API request failed.');
   }

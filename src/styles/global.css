@@ -6,7 +6,7 @@
 
 /* 自定义滚动条样式 */
 .scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .scrollbar::-webkit-scrollbar-track {
@@ -22,7 +22,6 @@
   background-color: rgba(156, 163, 175, 0.5);
 }
 
-/* 暗色模式下的滚动条 */
 .dark .scrollbar::-webkit-scrollbar-thumb {
   background-color: rgba(75, 85, 99, 0.5);
 }

@@ -107,26 +107,33 @@ const InputArea: React.FC<InputAreaProps> = ({
   const handleFocus = () => setIsFocused(true);
   const handleBlur = () => setIsFocused(false);
 
+  // Common classes for menu items
+  const menuItemClass = "px-3 py-2 hover:bg-bg-tertiary cursor-pointer transition-colors duration-150 text-xs";
+  
+  // Common classes for toolbar buttons
+  const toolbarButtonClass = "p-1 rounded text-text-secondary/70 hover:text-accent hover:bg-accent/10 transition-colors";
+
   return (
-    <div className="readlite-input-area w-full pt-2 pb-2 px-4">
-      <div className="readlite-input-container-wrapper relative">
-        {/* Input box with flexible height for multi-line input */}
+    <div className="w-full pt-2 pb-2 px-4">
+      <div className="relative">
+        {/* Input container with focus state styling */}
         <div 
-          className={`readlite-input-container flex flex-col bg-[var(--readlite-surface)] border border-[var(--readlite-border)]/50 hover:border-[var(--readlite-border)] rounded-2xl transition-all duration-200 shadow-sm ${
-            isFocused ? 'border-[var(--readlite-accent)]/50 shadow-[0_0_0_2px_var(--readlite-accent)]/10' : ''
-          }`}
+          className={`flex flex-col bg-bg-secondary border border-border/50 hover:border-border rounded-2xl 
+                      transition-all duration-200 shadow-sm ${
+                        isFocused ? 'border-accent/50 shadow-[0_0_0_2px_var(--readlite-accent)]/10' : ''
+                      }`}
         >
-          {/* Top line: Context and model selectors in compact form */}
-          <div className="readlite-selectors-compact flex justify-between px-4 pt-2 pb-0 text-[9px] text-[var(--readlite-text-secondary)] h-[24px]">
-            <div className="readlite-context-selector-compact relative">
-              {isToolbarExpanded && (
+          {/* Top toolbar with context and model selectors */}
+          <div className="flex justify-between px-4 pt-2 pb-0 text-[9px] text-text-secondary h-[24px]">
+            <div className="relative">
+              {isToolbarExpanded ? (
                 <button
-                  className="readlite-context-button flex items-center gap-1 p-1 hover:bg-[var(--readlite-hover)] rounded transition-colors duration-150"
+                  className="flex items-center gap-1 p-1 hover:bg-bg-tertiary rounded transition-colors duration-150"
                   onClick={() => setShowContextMenu(!showContextMenu)}
                   aria-label="Select context"
                 >
                   <span className="flex items-center">
-                    <span className="text-[var(--readlite-text-secondary)]/10">@</span>
+                    <span className="text-text-secondary/10">@</span>
                     <span className="ml-0.5 opacity-90 text-[10px]">
                       {contextType ? getContextLabel() : (t('agentContext') || 'Context')}
                     </span>
@@ -137,9 +144,7 @@ const InputArea: React.FC<InputAreaProps> = ({
                     viewBox="0 0 24 24"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
-                    className={`transition-transform duration-200 ${
-                      showContextMenu ? 'rotate-180' : ''
-                    }`}
+                    className={`transition-transform duration-200 ${showContextMenu ? 'rotate-180' : ''}`}
                   >
                     <path
                       d="M6 9L12 15L18 9"
@@ -150,10 +155,9 @@ const InputArea: React.FC<InputAreaProps> = ({
                     />
                   </svg>
                 </button>
-              )}
-              {!isToolbarExpanded && (
+              ) : (
                 <button
-                  className="p-1 rounded text-[var(--readlite-text-secondary)]/70 hover:text-[var(--readlite-accent)] hover:bg-[var(--readlite-accent)]/10 transition-colors"
+                  className={toolbarButtonClass}
                   onClick={() => setIsToolbarExpanded(true)}
                   title={t('expandToolbar') || "Expand toolbar"}
                 >
@@ -162,14 +166,15 @@ const InputArea: React.FC<InputAreaProps> = ({
                   </svg>
                 </button>
               )}
+              
+              {/* Context menu dropdown */}
               {showContextMenu && contextOptions && Array.isArray(contextOptions) && (
-                <div className="readlite-context-menu absolute left-0 bottom-full mb-1 z-10 bg-[var(--readlite-surface)] shadow-lg rounded-lg border border-[var(--readlite-border)] py-1 min-w-[150px] overflow-hidden transform origin-bottom-left animate-fadeIn">
+                <div className="absolute left-0 bottom-full mb-1 z-10 bg-bg-secondary shadow-lg rounded-lg 
+                               border border-border py-1 min-w-[150px] overflow-hidden animate-fadeIn">
                   {contextOptions.map((option) => (
                     <div
                       key={option.value}
-                      className={`readlite-context-item px-3 py-2 hover:bg-[var(--readlite-hover)] cursor-pointer transition-colors duration-150 text-xs ${
-                        contextType === option.value ? 'bg-[var(--readlite-hover)]' : ''
-                      }`}
+                      className={`${menuItemClass} ${contextType === option.value ? 'bg-bg-tertiary' : ''}`}
                       onClick={() => handleSelectContext(option.value)}
                     >
                       {option.label}
@@ -179,25 +184,26 @@ const InputArea: React.FC<InputAreaProps> = ({
               )}
             </div>
 
-            <div className="readlite-model-selector-compact relative flex items-center gap-2">
+            <div className="relative flex items-center gap-2">
               {isToolbarExpanded && (
                 <>
                   {/* Login button - only shown when not authenticated */}
                   {!isAuth && onLogin && (
                     <button
                       onClick={onLogin}
-                      className="text-[9px] py-0.5 px-2 rounded-full bg-[var(--readlite-accent)]/10 text-[var(--readlite-accent)] hover:bg-[var(--readlite-accent)]/20 transition-colors text-[10px]"
+                      className="text-[10px] py-0.5 px-2 rounded-full bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
                     >
                       {t('login') || "Login"}
                     </button>
                   )}
                   
+                  {/* Model selector */}
                   <button
-                    className="readlite-model-button flex items-center gap-1 p-1 hover:bg-[var(--readlite-hover)] rounded transition-colors duration-150"
+                    className="flex items-center gap-1 p-1 hover:bg-bg-tertiary rounded transition-colors duration-150"
                     onClick={() => setShowModelMenu(!showModelMenu)}
                     aria-label="Select model"
                   >
-                    <span className="opacity-90 text-[10px] text-[9px]">
+                    <span className="opacity-90 text-[10px]">
                       {selectedModel ? selectedModel.label : (t('agentDefaultModel') || 'Default')}
                     </span>
                     <svg
@@ -222,10 +228,10 @@ const InputArea: React.FC<InputAreaProps> = ({
                 </>
               )}
               
-              {/* Toolbar collapse/expand button */}
+              {/* Toolbar collapse button */}
               {isToolbarExpanded && (
                 <button
-                  className="p-1 rounded text-[var(--readlite-text-secondary)]/70 hover:text-[var(--readlite-text)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                  className={toolbarButtonClass}
                   onClick={() => setIsToolbarExpanded(false)}
                   title={t('collapseToolbar') || "Collapse toolbar"}
                 >
@@ -239,7 +245,7 @@ const InputArea: React.FC<InputAreaProps> = ({
               {isAuth && onClearConversation && (
                 <button
                   onClick={onClearConversation}
-                  className="p-1 rounded text-[var(--readlite-text-secondary)]/70 hover:text-[var(--readlite-accent)] hover:bg-[var(--readlite-accent)]/10 transition-colors"
+                  className={toolbarButtonClass}
                   title={t('clearChat') || "Clear chat"}
                 >
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -250,11 +256,11 @@ const InputArea: React.FC<InputAreaProps> = ({
                 </button>
               )}
               
-              {/* Close button - now integrated in toolbar */}
+              {/* Close button */}
               {onClose && (
                 <button 
                   onClick={onClose}
-                  className="p-1 rounded text-[var(--readlite-text-secondary)]/70 hover:text-[var(--readlite-text)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                  className={toolbarButtonClass}
                   title={t('minimize') || "Close"}
                 >
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -263,14 +269,14 @@ const InputArea: React.FC<InputAreaProps> = ({
                 </button>
               )}
               
+              {/* Model selection menu */}
               {showModelMenu && availableModels && Array.isArray(availableModels) && (
-                <div className="readlite-model-menu absolute right-0 bottom-full mb-1 z-10 bg-[var(--readlite-surface)] shadow-lg rounded-lg border border-[var(--readlite-border)] py-1 min-w-[150px] overflow-hidden transform origin-bottom-right animate-fadeIn">
+                <div className="absolute right-0 bottom-full mb-1 z-10 bg-bg-secondary shadow-lg rounded-lg 
+                               border border-border py-1 min-w-[150px] overflow-hidden animate-fadeIn">
                   {availableModels.map((model) => (
                     <div
                       key={model.value}
-                      className={`readlite-model-item px-3 py-2 hover:bg-[var(--readlite-hover)] cursor-pointer transition-colors duration-150 text-xs ${
-                        selectedModel?.value === model.value ? 'bg-[var(--readlite-hover)]' : ''
-                      }`}
+                      className={`${menuItemClass} ${selectedModel?.value === model.value ? 'bg-bg-tertiary' : ''}`}
                       onClick={() => handleSelectModel(model)}
                     >
                       {model.label}
@@ -281,8 +287,8 @@ const InputArea: React.FC<InputAreaProps> = ({
             </div>
           </div>
 
-          {/* Middle and bottom lines*/}
-          <div className="readlite-input-wrapper flex px-4 pt-0.5 pb-1 relative flex-grow">
+          {/* Text input area */}
+          <div className="flex px-4 pt-0.5 pb-1 relative flex-grow">
             <textarea
               ref={textareaRef}
               value={inputText}
@@ -293,17 +299,21 @@ const InputArea: React.FC<InputAreaProps> = ({
               placeholder={t('agentInputPlaceholder') || 'Type your message...'}
               disabled={isLoading}
               rows={3}
-              className="readlite-input w-full bg-transparent py-2.5 resize-none outline-none placeholder:text-[var(--readlite-text-secondary)]/50 text-sm pr-10 overflow-y-auto min-h-[60px]"
-              style={{ lineHeight: '20px' }}
+              className="w-full bg-transparent py-2.5 resize-none outline-none 
+                        placeholder:text-text-secondary/50 text-sm pr-10 overflow-y-auto 
+                        min-h-[60px] leading-5"
             />
+            
+            {/* Send button */}
             <button
               onClick={onSendMessage}
               disabled={disableSend || isLoading || inputText.trim() === ''}
-              className={`readlite-send-button absolute bottom-2 right-4 p-1.5 rounded-lg text-xs text-[10px] transition-all duration-200 flex items-center gap-1 ${
-                disableSend || isLoading || inputText.trim() === ''
-                  ? 'opacity-50 cursor-not-allowed bg-[var(--readlite-border)]/30'
-                  : 'bg-[var(--readlite-accent)] text-[var(--readlite-background)] hover:bg-[var(--readlite-accent)]/90 shadow-sm hover:shadow'
-              }`}
+              className={`absolute bottom-2 right-4 p-1.5 rounded-lg text-[10px] transition-all duration-200 
+                          flex items-center gap-1 ${
+                            disableSend || isLoading || inputText.trim() === ''
+                              ? 'opacity-50 cursor-not-allowed bg-border/30'
+                              : 'bg-accent text-bg-primary hover:bg-accent/90 shadow-sm hover:shadow'
+                          }`}
               title={disableSend ? t('agentSendMessage') || 'Send message' : ''}
             >
               {isProcessing ? (
@@ -311,18 +321,16 @@ const InputArea: React.FC<InputAreaProps> = ({
                   <span className="text-xs">{t('agentSending') || 'Sending...'}</span>
                 </span>
               ) : (
-                <>
-                  {t('agentSend') || 'Send'}
-                </>
+                t('agentSend') || 'Send'
               )}
             </button>
           </div>
         </div>
       </div>
       
-      {/* Additional context hint */}
+      {/* Context selection hint */}
       {!contextType && (
-        <div className="text-[10px] text-[var(--readlite-text-secondary)]/60 mt-1.5 ml-3">
+        <div className="text-[10px] text-text-secondary/60 mt-1.5 ml-3">
           {t('agentContextHint') || 'Pro tip: Select a context type for more relevant responses'}
         </div>
       )}

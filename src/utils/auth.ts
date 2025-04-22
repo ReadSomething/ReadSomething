@@ -1,7 +1,7 @@
 import { createLogger } from "./logger";
 
 // Create a logger for this module
-const logger = createLogger('utils');
+const logger = createLogger('auth');
 
 /**
  * Authentication utilities for ReadLite
@@ -73,21 +73,59 @@ export async function getAuthTimestamp(): Promise<number | null> {
 export async function clearAuthData(): Promise<void> {
   return new Promise((resolve) => {
     chrome.storage.local.remove([AUTH_TOKEN_KEY, AUTH_TIMESTAMP_KEY], () => {
+      // Notify about authentication status change
+      chrome.runtime.sendMessage({
+        type: 'AUTH_STATUS_CHANGED',
+        isAuthenticated: false
+      });
       resolve();
     });
   });
 }
 
 /**
+ * Handle token expiry or authorization errors
+ * @param error The error object or response
+ * @returns Promise<boolean> indicating whether token expiry was handled
+ */
+export async function handleTokenExpiry(error: any): Promise<boolean> {
+  // Check various error conditions that indicate auth problems
+  const isAuthError = 
+    (error && error.status === 401) || 
+    (error && typeof error.message === 'string' && 
+      (error.message.includes('401') || 
+       error.message.toLowerCase().includes('unauthorized') ||
+       error.message.toLowerCase().includes('unauthenticated')));
+  
+  if (isAuthError) {
+    logger.warn("[Auth] Authentication error detected:", error.status || error.message);
+    
+    // Clear existing token data (which will notify about auth change)
+    await clearAuthData();
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * Open the authentication page in a new tab
  * Uses the browser's language to determine which locale to use
+ * Works in both content script and background script contexts
  */
 export function openAuthPage(): void {
   // Determine correct locale
   const locale = determineUserLocale();
+  const authUrl = `https://readlite.app/${locale}/auth/sync`;
   
-  // Use window.open which is available in content scripts
-  window.open(`https://readlite.app/${locale}/auth/sync`, '_blank');
+  // Check if we're in a background script context (no window)
+  if (typeof window === 'undefined') {
+    // Use chrome.tabs API for background scripts
+    chrome.tabs.create({ url: authUrl });
+  } else {
+    // Use window.open for content scripts
+    window.open(authUrl, '_blank');
+  }
 }
 
 /**

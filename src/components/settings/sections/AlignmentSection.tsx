@@ -5,14 +5,6 @@ import { LanguageCode } from '../../../utils/language';
 interface AlignmentSectionProps {
   sectionClassName: string;
   titleClassName: string;
-  colors: {
-    bg: string;
-    text: string;
-    border: string;
-    highlight: string;
-    buttonBg: string;
-    buttonText: string;
-  };
   settings: any;
   t: (key: string) => string;
   uiLanguage: LanguageCode;
@@ -25,7 +17,6 @@ interface AlignmentSectionProps {
 const AlignmentSection: React.FC<AlignmentSectionProps> = ({
   sectionClassName,
   titleClassName,
-  colors,
   settings,
   t,
   uiLanguage,
@@ -40,8 +31,8 @@ const AlignmentSection: React.FC<AlignmentSectionProps> = ({
   const getButtonClass = (isActive: boolean) => {
     return `p-1.5 flex flex-col items-center border rounded transition-all flex-1 cursor-pointer text-xs
             ${isActive ? 
-              `border-[${colors.highlight}] bg-[rgba(0,119,255,0.05)] text-[${colors.highlight}]` : 
-              `border-[${colors.border}] bg-transparent text-[${colors.text}]`}`;
+              'border-accent bg-accent/5 text-accent' : 
+              'border-border bg-transparent text-primary'}`;
   };
 
   return (
@@ -58,13 +49,14 @@ const AlignmentSection: React.FC<AlignmentSectionProps> = ({
               key={option.value}
               onClick={() => changeAlignment(option.value)}
               className={getButtonClass(isActive)}
+              aria-pressed={isActive}
             >
               {/* Alignment icon */}
               <div className="flex w-full mb-1 justify-center">
                 {/* Left alignment icon */}
                 {option.value === 'left' && (
                   <div className="flex flex-col items-start">
-                    <div className="w-10 h-[3px] bg-current mb-[px] rounded-sm" />
+                    <div className="w-10 h-[3px] bg-current mb-[3px] rounded-sm" />
                     <div className="w-6 h-[3px] bg-current mb-[3px] rounded-sm" />
                     <div className="w-8 h-[3px] bg-current rounded-sm" />
                   </div>

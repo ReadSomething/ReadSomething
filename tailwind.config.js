@@ -1,94 +1,236 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    "./src/**/*.{js,jsx,ts,tsx}",
+  content: ['./src/**/*.{js,jsx,ts,tsx}', './public/index.html'],
+  darkMode: 'class', // Use class names to toggle dark mode
+  safelist: [
+    // Make sure these theme-specific classes are included
+    'dark:bg-amber-900/40',
+    'dark:bg-cyan-900/40',
+    'dark:bg-purple-900/40',
+    'dark:bg-lime-900/40', 
+    'dark:bg-rose-900/40',
+    // Eyecare theme classes
+    'eyecare:bg-amber-200/50',
+    'eyecare:bg-cyan-200/50',
+    'eyecare:bg-purple-200/50',
+    'eyecare:bg-lime-200/50',
+    'eyecare:bg-rose-200/50'
   ],
-  darkMode: 'class', // 使用类名切换深色模式
   theme: {
     extend: {
       colors: {
-        // 背景色
-        'bg-primary': 'var(--rl-bg-primary)',
-        'bg-secondary': 'var(--rl-bg-secondary)',
-        'bg-tertiary': 'var(--rl-bg-tertiary)',
-        'bg-user': 'var(--rl-bg-user)',
-        'bg-agent': 'var(--rl-bg-agent)',
-        'bg-input': 'var(--rl-bg-input)',
+        // Background colors
+        'bg-primary': 'var(--readlite-bg-primary)',
+        'bg-secondary': 'var(--readlite-bg-secondary)',
+        'bg-tertiary': 'var(--readlite-bg-tertiary)',
+        'bg-user': 'var(--readlite-bg-user)',
+        'bg-agent': 'var(--readlite-bg-agent)',
+        'bg-input': 'var(--readlite-bg-input)',
         
-        // 文本色
-        'text-primary': 'var(--rl-text-primary)',
-        'text-secondary': 'var(--rl-text-secondary)',
-        'text-user': 'var(--rl-text-user)',
-        'text-agent': 'var(--rl-text-agent)',
-        'text-accent': 'var(--rl-text-accent)',
+        // Text colors
+        'text-primary': 'var(--readlite-text-primary)',
+        'text-secondary': 'var(--readlite-text-secondary)',
+        'text-user': 'var(--readlite-text-user)',
+        'text-agent': 'var(--readlite-text-agent)',
+        'text-accent': 'var(--readlite-text-accent)',
         
-        // UI元素
-        'border': 'var(--rl-border)',
-        'accent': 'var(--rl-accent)',
-        'error': 'var(--rl-error)',
+        // UI elements
+        'border': 'var(--readlite-border)',
+        'accent': 'var(--readlite-accent)',
+        'error': 'var(--readlite-error)',
         
-        // 兼容旧的命名
-        'readlite': {
-          'bg': 'var(--readlite-background)',
-          'message': 'var(--readlite-message-bg)',
-          'user': 'var(--readlite-user-bubble)',
-          'agent': 'var(--readlite-agent-bubble)',
-          'input': 'var(--readlite-input-bg)',
-          'text': 'var(--readlite-text)',
-          'text-user': 'var(--readlite-text-user)',
-          'text-agent': 'var(--readlite-text-agent)',
-          'text-secondary': 'var(--readlite-text-secondary)',
-          'accent': 'var(--readlite-accent)',
-          'border': 'var(--readlite-border)',
-          'error': 'var(--readlite-error)',
-        }
+        // Highlight colors
+        'highlight-beige': 'var(--readlite-highlight-beige)',
+        'highlight-cyan': 'var(--readlite-highlight-cyan)',
+        'highlight-lavender': 'var(--readlite-highlight-lavender)', 
+        'highlight-olive': 'var(--readlite-highlight-olive)',
+        'highlight-peach': 'var(--readlite-highlight-peach)',
+        'highlight-selection': 'var(--readlite-highlight-selection)',
+        'highlight-selection-hover': 'var(--readlite-highlight-selection-hover)',
       },
       backgroundColor: {
-        'primary': 'var(--rl-bg-primary)',
-        'secondary': 'var(--rl-bg-secondary)',
-        'tertiary': 'var(--rl-bg-tertiary)',
+        'primary': 'var(--readlite-bg-primary)',
+        'secondary': 'var(--readlite-bg-secondary)',
+        'tertiary': 'var(--readlite-bg-tertiary)',
+        
+        // Highlight background colors
+        'highlight-beige': 'var(--readlite-highlight-beige)',
+        'highlight-cyan': 'var(--readlite-highlight-cyan)',
+        'highlight-lavender': 'var(--readlite-highlight-lavender)', 
+        'highlight-olive': 'var(--readlite-highlight-olive)',
+        'highlight-peach': 'var(--readlite-highlight-peach)',
+        'highlight-selection': 'var(--readlite-highlight-selection)',
+        'highlight-selection-hover': 'var(--readlite-highlight-selection-hover)',
       },
       textColor: {
-        'primary': 'var(--rl-text-primary)',
-        'secondary': 'var(--rl-text-secondary)',
-        'accent': 'var(--rl-text-accent)',
+        'primary': 'var(--readlite-text-primary)',
+        'secondary': 'var(--readlite-text-secondary)',
+        'accent': 'var(--readlite-text-accent)',
       },
       borderColor: {
-        'default': 'var(--rl-border)',
-        'accent': 'var(--rl-accent)',
+        'default': 'var(--readlite-border)',
+        'accent': 'var(--readlite-accent)',
       },
-      // 自定义滚动条
+      // Custom scrollbar
       scrollbar: {
-        track: 'var(--rl-scrollbar-track)',
-        thumb: 'var(--rl-scrollbar-thumb)',
+        track: 'var(--readlite-scrollbar-track)',
+        thumb: 'var(--readlite-scrollbar-thumb)',
+      },
+      // Animation keyframes
+      keyframes: {
+        toolbarFadeIn: {
+          'from': { 
+            opacity: '0', 
+            transform: 'translateY(5px)' 
+          },
+          'to': { 
+            opacity: '1', 
+            transform: 'translateY(0)' 
+          },
+        },
+        colorPickerFadeIn: {
+          'from': { 
+            opacity: '0', 
+            transform: 'translateX(-50%) translateY(-5px)' 
+          },
+          'to': { 
+            opacity: '1', 
+            transform: 'translateX(-50%) translateY(0)' 
+          },
+        },
+        themeRefresh: {
+          '0%': { opacity: '0.9' },
+          '50%': { opacity: '0.98' },
+          '100%': { opacity: '1' },
+        },
+        loading: {
+          '0%': { transform: 'translateX(-100%)' },
+          '50%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+        blink: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.4' },
+        },
+        dots: {
+          '0%, 20%': { content: "''" },
+          '40%': { content: "'·'" },
+          '60%': { content: "'··'" },
+          '80%, 100%': { content: "'···'" },
+        },
+      },
+      // Animation utilities
+      animation: {
+        'toolbarFadeIn': 'toolbarFadeIn 0.15s ease-out',
+        'colorPickerFadeIn': 'colorPickerFadeIn 0.15s ease-out',
+        'themeRefresh': 'themeRefresh 0.3s ease',
+        'loading': 'loading 1.5s ease-in-out infinite',
+        'blink': 'blink 1s ease-in-out infinite',
+        'dots': 'dots 1.6s steps(4, end) infinite',
       },
     },
   },
   plugins: [
-    // 添加自定义滚动条插件
+    // Custom scrollbar plugin
     function({ addUtilities }) {
       const newUtilities = {
         '.scrollbar-custom': {
           'scrollbar-width': 'thin',
-          'scrollbar-color': 'var(--rl-scrollbar-thumb) var(--rl-scrollbar-track)',
+          'scrollbar-color': 'var(--readlite-scrollbar-thumb) var(--readlite-scrollbar-track)',
           '&::-webkit-scrollbar': {
-            width: '8px',
-            height: '8px',
+            width: '5px',
+            height: '5px',
           },
           '&::-webkit-scrollbar-track': {
-            background: 'var(--rl-scrollbar-track)',
+            background: 'var(--readlite-scrollbar-track)',
           },
           '&::-webkit-scrollbar-thumb': {
-            background: 'var(--rl-scrollbar-thumb)',
+            background: 'var(--readlite-scrollbar-thumb)',
             borderRadius: '4px',
             '&:hover': {
-              background: 'var(--rl-scrollbar-thumb)',
+              background: 'var(--readlite-scrollbar-thumb)',
               opacity: '0.8',
             },
           },
         },
       };
       addUtilities(newUtilities, ['responsive']);
+    },
+
+    // Simplified scrollbar styles matching global.css
+    function({ addUtilities, theme }) {
+      const scrollbarUtilities = {
+        '.scrollbar': {
+          '&::-webkit-scrollbar': {
+            width: '4px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'rgba(156, 163, 175, 0.3)',
+            borderRadius: '3px',
+            '&:hover': {
+              backgroundColor: 'rgba(156, 163, 175, 0.5)',
+            },
+          },
+        },
+        '.dark .scrollbar::-webkit-scrollbar-thumb': {
+          backgroundColor: 'rgba(75, 85, 99, 0.5)',
+          '&:hover': {
+            backgroundColor: 'rgba(75, 85, 99, 0.7)',
+          },
+        },
+      };
+      addUtilities(scrollbarUtilities);
+    },
+
+    // Add eyecare theme variant plugin
+    function({ addVariant }) {
+      addVariant('eyecare', '[data-theme="eyecare"] &');
+    },
+
+    function({ addUtilities }) {
+      const highlightUtilities = {
+        '.readlite-highlight': {
+          'display': 'inline !important',
+          'white-space': 'inherit !important',
+          'box-decoration-break': 'clone',
+          '-webkit-box-decoration-break': 'clone',
+          'border-radius': '2px',
+          'padding': '1px 0',
+          'margin': '0 -1px',
+          'cursor': 'pointer',
+          'transition': 'background-color 0.2s ease',
+          'position': 'relative',
+          'text-decoration': 'none !important',
+        },
+        '.readlite-highlight-beige': {
+          'background-color': 'var(--readlite-highlight-beige) !important',
+        },
+        '.readlite-highlight-cyan': {
+          'background-color': 'var(--readlite-highlight-cyan) !important',
+        },
+        '.readlite-highlight-lavender': {
+          'background-color': 'var(--readlite-highlight-lavender) !important',
+        },
+        '.readlite-highlight-olive': {
+          'background-color': 'var(--readlite-highlight-olive) !important',
+        },
+        '.readlite-highlight-peach': {
+          'background-color': 'var(--readlite-highlight-peach) !important',
+        },
+        '.readlite-highlight': {
+          'background-color': 'var(--readlite-highlight-selection)',
+          'padding': '1px 0',
+          'border-radius': '2px',
+          'transition': 'background-color 0.3s ease',
+        },
+        '.readlite-highlight:hover': {
+          'background-color': 'var(--readlite-highlight-selection-hover)',
+        },
+      };
+      addUtilities(highlightUtilities);
     },
   ],
 } 

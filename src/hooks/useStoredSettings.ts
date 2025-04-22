@@ -43,13 +43,22 @@ export const useStoredSettings = () => {
           const mergedSettings = {
             ...defaultSettings,
             ...parsedSettings,
-            // Ensure language-specific settings exist
-            languageSettings: {
-              ...defaultSettings.languageSettings,
-              ...(parsedSettings.languageSettings || {})
-            },
             // Update version number
             version: SETTINGS_VERSION
+          }
+          
+          // If using custom theme, check if we have saved custom theme settings
+          if (mergedSettings.theme === 'custom' && !mergedSettings.customTheme) {
+            try {
+              // Try to load from localStorage as a fallback
+              const savedCustomTheme = localStorage.getItem('readlite-custom-theme');
+              if (savedCustomTheme) {
+                logger.info('Found saved custom theme in localStorage, applying to settings');
+                mergedSettings.customTheme = savedCustomTheme;
+              }
+            } catch (e) {
+              logger.error('Failed to load custom theme from localStorage:', e);
+            }
           }
           
           setSettings(mergedSettings)
@@ -75,6 +84,16 @@ export const useStoredSettings = () => {
     try {
       const settingsToUpdate = { ...newSettings };
       
+      // Special handling for customTheme to ensure it's saved to localStorage too
+      if ('customTheme' in settingsToUpdate) {
+        try {
+          localStorage.setItem('readlite-custom-theme', settingsToUpdate.customTheme as string);
+          logger.info('Saved customTheme to localStorage from updateSettings');
+        } catch (e) {
+          logger.error('Failed to save customTheme to localStorage', e);
+        }
+      }
+      
       // Update state
       setSettings((current: typeof defaultSettings) => {
         const updated = { ...current, ...settingsToUpdate }
@@ -84,6 +103,21 @@ export const useStoredSettings = () => {
           .then(() => {
             // Verify storage
             return storage.get(SETTINGS_KEY)
+          })
+          .then((saved) => {
+            // Verify customTheme was saved if present
+            if ('customTheme' in updated && updated.theme === 'custom') {
+              // Double-check customTheme is in localStorage too
+              try {
+                const localCustomTheme = localStorage.getItem('readlite-custom-theme');
+                if (!localCustomTheme) {
+                  localStorage.setItem('readlite-custom-theme', updated.customTheme as string);
+                  logger.info('Re-saved customTheme to localStorage after verifying');
+                }
+              } catch (e) {
+                logger.error('Error checking localStorage for customTheme', e);
+              }
+            }
           })
           .catch(err => {
             logger.error("Failed to save settings to storage:", err)

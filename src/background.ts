@@ -5,7 +5,7 @@
 
 // Background service worker for the ReadLite extension
 import llmModule from './utils/llm';
-import { getAuthToken } from './utils/auth';
+import { getAuthToken, handleTokenExpiry } from './utils/auth';
 import { Model } from './types/api';
 import { createLogger } from './utils/logger';
 
@@ -15,10 +15,6 @@ const messageLogger = createLogger('background-messages');
 const llmApiLogger = createLogger('background-llm-api');
 const portLogger = createLogger('background-port');
 const streamLogger = createLogger('background-stream');
-const iconLogger = createLogger('background-icon');
-const readerLogger = createLogger('background-reader');
-const authLogger = createLogger('background-auth');
-const modelsLogger = createLogger('background-models');
 
 // --- Constants ---
 
@@ -329,7 +325,7 @@ function handleStreamingRequest(
         streamCompleted = true; 
         clearTimeout(timeoutId); // Clear the safety timeout
         streamLogger.error(`Streaming failed: ${error.message}`);
-        streamLogger.error(error); // Log the full error object
+        streamLogger.error(`Error details: ${error instanceof Error ? error.message : String(error)}`);
         if (localSendResponse) { // Check if timeout already responded
             localSendResponse({ success: false, error: error.message });
         } else {
@@ -339,7 +335,7 @@ function handleStreamingRequest(
 
   } catch (error) {
     streamLogger.error(`Error during stream setup: ${error instanceof Error ? error.message : String(error)}`);
-    streamLogger.error(error); // Log the full error object
+    streamLogger.error(`Error details: ${error instanceof Error ? error.message : String(error)}`);
     if (localSendResponse) {
         localSendResponse({ success: false, error: error instanceof Error ? error.message : String(error) });
     }
@@ -363,15 +359,27 @@ function handleRegularApiRequest(
         llmApiLogger.info(`Call to "${method}" successful.`);
         sendResponse({ success: true, data: result });
       })
-      .catch((error: Error) => {
+      .catch(async (error: Error) => {
         llmApiLogger.error(`Call to "${method}" failed: ${error.message}`);
-        llmApiLogger.error(error); // Log the full error object
+        llmApiLogger.error(`Error details: ${error.message}`); 
+        
+        // check if the error is an authentication error
+        const isAuthError = error.message.includes('401') || 
+                          error.message.toLowerCase().includes('unauthorized') ||
+                          error.message.toLowerCase().includes('authentication failed');
+        
+        if (isAuthError) {
+          llmApiLogger.warn(`Authentication error detected in "${method}", handling token expiry`);
+          await handleTokenExpiry(error as any);
+        }
+        
         sendResponse({ success: false, error: error.message });
       });
   } catch (error) {
-    llmApiLogger.error(`Error executing method "${method}": ${error instanceof Error ? error.message : String(error)}`);
-    llmApiLogger.error(error); // Log the full error object
-    sendResponse({ success: false, error: error instanceof Error ? error.message : String(error) });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    llmApiLogger.error(`Error executing method "${method}": ${errorMessage}`);
+    llmApiLogger.error(`Error details: ${errorMessage}`);
+    sendResponse({ success: false, error: errorMessage });
   }
 }
 
@@ -539,13 +547,11 @@ async function fetchModelsInBackground(retryCount = 0, maxRetries = 3, retryDela
 
     const response = await fetch('https://api.readlite.app/api/models', { headers });
     
-    if (response.status === 401 && retryCount < maxRetries) {
-      mainLogger.warn(`Received 401 Unauthorized, will retry in ${retryDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
-      return new Promise(resolve => {
-        setTimeout(() => {
-          resolve(fetchModelsInBackground(retryCount + 1, maxRetries, retryDelay));
-        }, retryDelay);
-      });
+    if (response.status === 401) {
+      mainLogger.warn(`Received 401 Unauthorized, token expired`);
+      // Handle token expiration and attempt to relogin
+      await handleTokenExpiry(response as any);
+      throw new Error(`Authentication failed: Your session has expired. Please log in again.`);
     }
     
     if (!response.ok) {
@@ -562,10 +568,18 @@ async function fetchModelsInBackground(retryCount = 0, maxRetries = 3, retryDela
       availableModels = []; // Reset to defaults if fetch is invalid
     }
   } catch (error) {
-    mainLogger.error(`Failed to fetch models:`, error);
+    // Convert error to string for logging
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    mainLogger.error(`Failed to fetch models: ${errorMessage}`);
     
-    // If we got an error and have retry attempts left, try again after delay
-    if (retryCount < maxRetries) {
+    // check if the error is an authentication error
+    const isAuthError = error instanceof Error && 
+      (error.message.includes('Authentication failed') || 
+       error.message.includes('401') || 
+       error.message.toLowerCase().includes('unauthorized'));
+    
+    // if the error is not an authentication error and there are retries left, retry
+    if (!isAuthError && retryCount < maxRetries) {
       mainLogger.info(`Will retry in ${retryDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
       return new Promise(resolve => {
         setTimeout(() => {

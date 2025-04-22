@@ -1,24 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { CommonProps } from './types';
 
 interface ThinkingIndicatorProps extends Pick<CommonProps, 't'> {}
 
+/**
+ * Displays a thinking animation while the AI is processing
+ */
 const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({ t }) => {
-  const [dots, setDots] = useState('.');
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDots(prev => prev.length >= 3 ? '.' : prev + '.');
-    }, 500);
-    
-    return () => clearInterval(interval);
-  }, []);
-  
   return (
-    <div className="self-start mx-3 my-3 flex">
-      <span className="text-[var(--readlite-text-secondary)] text-xl font-bold leading-none">
-        {dots}
-      </span>
+    <div className="self-start mx-3 my-3">
+      <div className="flex items-center text-text-secondary/80">
+        <span className="text-xl font-bold relative animate-blink after:content-['...'] after:absolute after:animate-dots after:overflow-hidden after:w-0">.</span>
+      </div>
     </div>
   );
 };

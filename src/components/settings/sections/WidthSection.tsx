@@ -4,14 +4,6 @@ import { widthOptions } from '~/config/ui';
 interface WidthSectionProps {
   sectionClassName: string;
   titleClassName: string;
-  colors: {
-    bg: string;
-    text: string;
-    border: string;
-    highlight: string;
-    buttonBg: string;
-    buttonText: string;
-  };
   settings: any;
   t: (key: string) => string;
   updateSettings: (settings: any) => void;
@@ -23,7 +15,6 @@ interface WidthSectionProps {
 const WidthSection: React.FC<WidthSectionProps> = ({
   sectionClassName,
   titleClassName,
-  colors,
   settings,
   t,
   updateSettings
@@ -31,6 +22,13 @@ const WidthSection: React.FC<WidthSectionProps> = ({
   // Change the content width
   const changeWidth = (width: number) => {
     updateSettings({ width });
+  };
+
+  // Get width representation based on option
+  const getWidthClass = (widthClass: string) => {
+    if (widthClass === 'narrow') return 'w-[30%]';
+    if (widthClass === 'standard') return 'w-[50%]';
+    return 'w-[70%]';
   };
 
   return (
@@ -44,18 +42,16 @@ const WidthSection: React.FC<WidthSectionProps> = ({
             <button
               key={option.value}
               onClick={() => changeWidth(option.value)}
-              className={`flex-1 border rounded p-1.5 flex flex-col items-center cursor-pointer transition-all text-xs
-                ${isActive ? 
-                  `border-[${colors.highlight}] bg-[rgba(0,119,255,0.05)] text-[${colors.highlight}] font-medium` : 
-                  `border-[${colors.border}] bg-transparent text-[${colors.text}]`}`}
+              className={`flex-1 border rounded p-1.5 flex flex-col items-center 
+                        cursor-pointer transition-all text-xs
+                        ${isActive ? 
+                          'border-accent bg-accent/5 text-accent font-medium' : 
+                          'border-border bg-transparent text-primary'}`}
+              aria-pressed={isActive}
             >
               <div className="w-full h-2.5 mb-1.5 flex justify-center">
                 <div 
-                  className={`bg-current rounded-sm ${
-                    option.widthClass === 'narrow' ? 'w-[30%]' : 
-                    option.widthClass === 'standard' ? 'w-[50%]' : 
-                    'w-[70%]'
-                  }`}
+                  className={`bg-current rounded-sm ${getWidthClass(option.widthClass)}`}
                 />
               </div>
               <span>{t(option.label.en.toLowerCase())}</span>

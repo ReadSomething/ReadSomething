@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo, memo } from "react"
 import { useReader } from "~/context/ReaderContext"
-import { useI18n } from "~/hooks/useI18n"
+import { useI18n } from "~/context/I18nContext"
 import { LanguageCode } from "~/utils/language"
-import { getSettingsColors, ThemeType } from "~/config/theme"
+import { ThemeType } from "~/config/theme"
 import ThemeSection from "./sections/ThemeSection"
 import FontSizeSection from "./sections/FontSizeSection"
 import FontFamilySection from "./sections/FontFamilySection"
@@ -14,10 +14,25 @@ import { createLogger } from "~/utils/logger"
 // Create a logger for this module
 const logger = createLogger('settings');
 
+// Common props shared by all section components
+export type SectionProps = {
+  sectionClassName: string;
+  titleClassName: string;
+  settings: any;
+  t: (key: string) => string;
+  updateSettings: (settings: any) => void;
+};
+
+// Memoize section components to prevent unnecessary re-renders
+const MemoizedThemeSection = memo(ThemeSection);
+const MemoizedFontSizeSection = memo(FontSizeSection);
+const MemoizedWidthSection = memo(WidthSection);
+const MemoizedSpacingSection = memo(SpacingSection);
 
 interface SettingsProps {
   onClose: () => void;
   buttonRef?: React.RefObject<HTMLButtonElement | null>;
+  onSettingsChanged?: (newSettings: Record<string, any>) => void;
 }
 
 /**
@@ -25,7 +40,7 @@ interface SettingsProps {
  * Allows customization of reader appearance with Kindle-style UI
  * Uses Tailwind CSS responsive classes for fully responsive design
  */
-const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
+const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef, onSettingsChanged }) => {
   const { settings, updateSettings, article } = useReader()
   const { t, uiLanguage } = useI18n()
   const [detectedLanguage, setDetectedLanguage] = useState<LanguageCode | null>(null)
@@ -71,11 +86,21 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
     }
   }, [article]);
   
-  // Get colors from theme system
-  const colors = getSettingsColors(settings.theme)
+  // Enhanced updateSettings function that also calls onSettingsChanged
+  const updateSettingsWithCallback = useMemo(() => {
+    return (newSettings: Record<string, any>) => {
+      // Call the original updateSettings
+      updateSettings(newSettings);
+      
+      // Notify parent component if callback is provided
+      if (onSettingsChanged) {
+        onSettingsChanged(newSettings);
+      }
+    };
+  }, [updateSettings, onSettingsChanged]);
   
   // Calculate panel position based on button location
-  const getPanelPositionStyle = () => {
+  const panelPositionStyle = useMemo(() => {
     // On small screens, use full screen mode
     if (window.innerWidth < 640) return {};
     
@@ -96,25 +121,32 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
       right: '20px',
       position: 'fixed' as const
     };
-  };
+  }, [buttonPosition]);
+
+  // Common classes for section and title to reduce repetition
+  const sectionClassName = "py-4 px-3 border-b border-border";
+  const titleClassName = "m-0 mb-2.5 text-sm sm:text-xs font-medium text-opacity-90";
   
-  // Create a refined border color with lower opacity for more subtle dividers
-  const subtleBorderColor = `${colors.border}40`; // Adding 40 for 25% opacity
+  // Common props for all section components
+  const commonSectionProps = useMemo(() => ({
+    sectionClassName,
+    titleClassName, 
+    settings,
+    t,
+    updateSettings: updateSettingsWithCallback
+  }), [sectionClassName, titleClassName, settings, t, updateSettingsWithCallback]);
+  
+  // Special props for last section
+  const lastSectionClassName = `py-4 px-3 border-b border-border sm:border-b-0`;
   
   return (
     <div 
       className="fixed sm:static sm:w-[320px] md:w-[350px] sm:rounded-lg sm:border sm:shadow-lg 
                 inset-0 sm:inset-auto z-[2147483646]
-                flex flex-col overflow-auto text-sm"
-      style={{
-        backgroundColor: colors.bg,
-        color: colors.text,
-        borderColor: colors.border,
-        ...getPanelPositionStyle()
-      }}
+                flex flex-col overflow-auto text-sm bg-primary text-primary border-border"
+      style={panelPositionStyle}
     >
-      <div className="flex justify-between items-center p-3 py-3 sm:py-3 border-b" 
-           style={{ borderColor: subtleBorderColor }}>
+      <div className="flex justify-between items-center p-3 py-3 sm:py-3 border-b border-border">
         <h2 className="m-0 text-base sm:text-sm font-medium">
           {t('displaySettings')}
         </h2>
@@ -122,7 +154,8 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
           <button 
             onClick={onClose}
             className="bg-transparent border-none text-xl sm:text-lg p-1.5 sm:p-1 
-                      cursor-pointer text-current ml-2 flex items-center justify-center opacity-70 hover:opacity-100"
+                      cursor-pointer text-current ml-2 flex items-center justify-center 
+                      opacity-70 hover:opacity-100 transition-opacity"
             aria-label={t('close')}
           >
             ✕
@@ -131,68 +164,33 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
       </div>
       
       <div className="max-h-[calc(100%-60px)] sm:max-h-[calc(100vh-160px)] overflow-y-auto flex-1">
-        <div style={{ borderColor: subtleBorderColor }}>
+        <div>
           {/* Theme Section */}
-          <ThemeSection 
-            sectionClassName="py-4 px-3 border-b"
-            titleClassName="m-0 mb-2.5 text-sm sm:text-xs font-medium text-opacity-90"
-            colors={colors}
-            settings={settings}
-            t={t}
-            updateSettings={updateSettings}
-          />
+          <MemoizedThemeSection {...commonSectionProps} />
 
           {/* Font Size Section */}
-          <FontSizeSection
-            sectionClassName="py-4 px-3 border-b"
-            titleClassName="m-0 mb-2.5 text-sm sm:text-xs font-medium text-opacity-90"
-            colors={colors}
-            settings={settings}
-            t={t}
-            updateSettings={updateSettings}
-          />
+          <MemoizedFontSizeSection {...commonSectionProps} />
 
           {/* Font Family Section */}
           <FontFamilySection
-            sectionClassName="py-4 px-3 border-b"
-            titleClassName="m-0 mb-2.5 text-sm sm:text-xs font-medium text-opacity-90"
-            colors={colors}
-            settings={settings}
-            t={t}
+            {...commonSectionProps}
             uiLanguage={uiLanguage}
             detectedLanguage={detectedLanguage}
-            updateSettings={updateSettings}
           />
 
           {/* Width Section */}
-          <WidthSection
-            sectionClassName="py-4 px-3 border-b"
-            titleClassName="m-0 mb-2.5 text-sm sm:text-xs font-medium text-opacity-90"
-            colors={colors}
-            settings={settings}
-            t={t}
-            updateSettings={updateSettings}
-          />
+          <MemoizedWidthSection {...commonSectionProps} />
 
           {/* Text Alignment Section */}
           <AlignmentSection
-            sectionClassName="py-4 px-3 border-b"
-            titleClassName="m-0 mb-2.5 text-sm sm:text-xs font-medium text-opacity-90"
-            colors={colors}
-            settings={settings}
-            t={t}
+            {...commonSectionProps}
             uiLanguage={uiLanguage}
-            updateSettings={updateSettings}
           />
 
           {/* Line Spacing Section */}
-          <SpacingSection
-            sectionClassName="py-4 px-3 border-b sm:border-b-0"
-            titleClassName="m-0 mb-2.5 text-sm sm:text-xs font-medium text-opacity-90"
-            colors={colors}
-            settings={settings}
-            t={t}
-            updateSettings={updateSettings}
+          <MemoizedSpacingSection
+            {...commonSectionProps}
+            sectionClassName={lastSectionClassName}
           />
         </div>
         
@@ -203,4 +201,4 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef }) => {
   )
 }
 
-export default Settings 
+export default memo(Settings) 

@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useReader } from "../context/ReaderContext"
 import Settings from "./settings/Settings"
-import { useI18n } from "../hooks/useI18n"
+import { useI18n } from "../context/I18nContext"
 import { LanguageCode } from "../utils/language"
 import { exportAsMarkdown } from "../utils/export"
 import AgentUI from "./agent"
 import ReaderToolbar from "~/components/reader/ReaderToolbar"
 import ReaderContent from "~/components/ReaderContent"
 import ReaderDivider from "~/components/reader/ReaderDivider"
-import ThemeStyles from "~/components/reader/ThemeStyles"
-import { ThemeProvider } from "../context/ThemeContext"
-import { ThemeType, cssVarNames } from "../config/theme"
+import { ThemeProvider, useTheme } from "../context/ThemeContext"
+import { ThemeType } from "../config/theme"
 import { createLogger } from "~/utils/logger"
 
 // Create a logger for this module
@@ -22,6 +21,7 @@ const logger = createLogger('main-reader');
  */
 const ReadingProgress: React.FC<{ scrollContainer?: HTMLElement | null }> = ({ scrollContainer }) => {
   const [progress, setProgress] = useState(0);
+  const { theme } = useTheme();
   
   // Update progress as user scrolls
   useEffect(() => {
@@ -50,17 +50,10 @@ const ReadingProgress: React.FC<{ scrollContainer?: HTMLElement | null }> = ({ s
   if (!scrollContainer) return null;
   
   return (
-    <div 
-      className="fixed top-0 left-0 w-full h-1 z-50"
-      style={{ backgroundColor: 'rgba(0,0,0,0.05)' }}
-    >
+    <div className="fixed top-0 left-0 w-full h-1 z-50 bg-accent/20">
       <div 
-        className="h-full transition-all duration-150 ease-out"
-        style={{ 
-          width: `${progress}%`, 
-          backgroundColor: 'var(--rl-accent)',
-          opacity: 0.8
-        }}
+        className={`h-full transition-all duration-150 ease-out bg-accent`}
+        style={{ width: `${progress}%` }}
       />
     </div>
   );
@@ -128,12 +121,21 @@ const Reader = () => {
   useEffect(() => {
     if (isDraggingRef.current) return; // Don't save during drag
     try {
-      localStorage.setItem('readerPanelWidth', leftPanelWidth.toString());
       localStorage.setItem('showAIPanel', showAgent.toString());
     } catch (e) {
       logger.error(`Error saving preferences:`, e);
     }
-  }, [leftPanelWidth, showAgent]);
+  }, [showAgent]);
+  
+  // Save panel width when it changes, but not during dragging
+  useEffect(() => {
+    if (isDraggingRef.current) return; // Don't save during drag
+    try {
+      localStorage.setItem('readerPanelWidth', leftPanelWidth.toString());
+    } catch (e) {
+      logger.error(`Error saving panel width:`, e);
+    }
+  }, [leftPanelWidth]);
   
   // Window resize handler
   useEffect(() => {
@@ -151,22 +153,6 @@ const Reader = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [showAgent, leftPanelWidth]);
-  
-  // Disable browser scrollbar when Agent panel is open
-  useEffect(() => {
-    if (showAgent) {
-      // Disable browser scrollbar when Agent is open
-      document.body.style.overflow = 'hidden';
-    } else {
-      // Re-enable browser scrollbar when Agent is closed
-      document.body.style.overflow = 'auto';
-    }
-    
-    return () => {
-      // Ensure scrollbar is re-enabled when component unmounts
-      document.body.style.overflow = 'auto';
-    };
-  }, [showAgent]);
   
   // Extract visible content when scrolling or resizing
   useEffect(() => {
@@ -328,13 +314,17 @@ const Reader = () => {
     initialXRef.current = e.clientX;
     initialWidthRef.current = leftPanelWidth;
     
-    // Add global event listeners
-    document.addEventListener('mousemove', handleDrag);
-    document.addEventListener('mouseup', handleDragEnd);
+    // Get the correct document object (iframe or parent document)
+    const eventTarget = e.target as HTMLElement;
+    const targetDoc = eventTarget?.ownerDocument || document;
+    
+    // Add global event listeners to the correct document
+    targetDoc.addEventListener('mousemove', handleDrag, { capture: true });
+    targetDoc.addEventListener('mouseup', handleDragEnd, { capture: true });
     
     // Set cursor styles during drag
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
+    targetDoc.body.style.cursor = 'col-resize';
+    targetDoc.body.style.userSelect = 'none';
   };
 
   // Handle mouse movement during drag
@@ -343,7 +333,11 @@ const Reader = () => {
     
     // Use requestAnimationFrame for smoother updates
     requestAnimationFrame(() => {
-      const containerWidth = window.innerWidth;
+      // Get the container element to calculate width
+      const containerElement = readerContainerRef.current;
+      // Fallback to window width if container not found
+      const containerWidth = containerElement?.clientWidth || window.innerWidth;
+      
       const deltaX = e.clientX - initialXRef.current;
       const percentageDelta = (deltaX / containerWidth) * 100;
       
@@ -358,14 +352,38 @@ const Reader = () => {
   const handleDragEnd = useCallback(() => {
     isDraggingRef.current = false;
     
-    // Remove global event listeners
-    document.removeEventListener('mousemove', handleDrag);
-    document.removeEventListener('mouseup', handleDragEnd);
+    // Get the correct document object (may be different when ending the drag)
+    const docs = [document]; 
     
-    // Reset cursor styles
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-  }, [handleDrag]);
+    // If we're in an iframe, also try to get the iframe document
+    try {
+      const iframe = document.getElementById('readlite-iframe-container') as HTMLIFrameElement;
+      if (iframe?.contentDocument) {
+        docs.push(iframe.contentDocument);
+      }
+    } catch (e) {
+      // Ignore errors accessing iframe document
+    }
+    
+    // Remove listeners and reset styles from all potential documents
+    docs.forEach(doc => {
+      doc.removeEventListener('mousemove', handleDrag, { capture: true });
+      doc.removeEventListener('mouseup', handleDragEnd, { capture: true });
+      
+      // Reset cursor styles
+      if (doc.body) {
+        doc.body.style.cursor = '';
+        doc.body.style.userSelect = '';
+      }
+    });
+    
+    // Now that dragging is complete, save the width setting
+    try {
+      localStorage.setItem('readerPanelWidth', leftPanelWidth.toString());
+    } catch (e) {
+      logger.error(`Error saving panel width after drag:`, e);
+    }
+  }, [handleDrag, leftPanelWidth]);
   
   // --- Event Handlers ---
 
@@ -419,22 +437,21 @@ const Reader = () => {
     return (
       <ThemeProvider currentTheme={theme}>
         <div 
-          className="flex justify-center items-center h-screen w-screen"
-          style={{ 
-            backgroundColor: `var(${cssVarNames.bg.primary})`, 
-            color: `var(${cssVarNames.text.primary})`
-          }}
+          className="flex justify-center items-center h-screen w-screen bg-primary text-primary"
           data-theme={theme}
         >
           <div className="flex flex-col items-center">
-            <div className="mb-4">
+            <div className="mb-4 animate-pulse">
               {/* Book icon SVG */}
               <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <p className="text-current">{t('extractingArticle')}</p>
+            <p className="text-current font-medium">{t('extractingArticle')}</p>
+            <div className="mt-4 w-16 h-1 bg-accent/20 rounded-full overflow-hidden">
+              <div className="h-full bg-accent w-1/2 animate-loading"></div>
+            </div>
           </div>
         </div>
       </ThemeProvider>
@@ -446,15 +463,11 @@ const Reader = () => {
     return (
       <ThemeProvider currentTheme={theme}>
         <div 
-          className="flex justify-center items-center h-screen w-screen"
-          style={{ 
-            backgroundColor: `var(${cssVarNames.bg.primary})`, 
-            color: `var(${cssVarNames.text.primary})`
-          }}
+          className="flex justify-center items-center h-screen w-screen bg-primary text-primary"
           data-theme={theme}
         >
-          <div className="flex flex-col items-center">
-            <div className="mb-4 text-red-500">
+          <div className="flex flex-col items-center max-w-md mx-auto p-4 rounded-lg">
+            <div className="mb-4 text-error">
               {/* Error icon SVG */}
               <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -462,7 +475,13 @@ const Reader = () => {
                 <path d="M9 9L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <p className="text-current">{error || t('couldNotExtract')}</p>
+            <p className="text-current text-center font-medium">{error || t('couldNotExtract')}</p>
+            <button 
+              onClick={handleClose}
+              className="mt-6 px-4 py-2 bg-accent/10 hover:bg-accent/20 text-accent rounded-md transition-colors"
+            >
+              {t('returnToPage')}
+            </button>
           </div>
         </div>
       </ThemeProvider>
@@ -471,43 +490,27 @@ const Reader = () => {
   
   // --- Main Render --- 
 
-  const getReaderContainerStyle = () => {
-    return {
-      flexDirection: 'column' as const, 
-      width: '100%',
-      height: '100%',
-      overflow: 'hidden',
-      backgroundColor: `var(${cssVarNames.bg.primary})`,
-      color: `var(${cssVarNames.text.primary})`
-    };
-  };
-
   return (
     <ThemeProvider currentTheme={theme}>
-      {/* Inject theme-specific styles globally */}
-      <ThemeStyles theme={theme} />
-
       {/* Reading Progress Indicator */}
       <ReadingProgress scrollContainer={readerColumnRef.current} />
 
       {/* Main Container - the entire screen */}
       <div 
         ref={readerContainerRef}
-        className="reader-container"
-        style={getReaderContainerStyle()}
+        className="readlite-reader-container bg-primary text-primary flex flex-col w-full h-full overflow-hidden relative"
         data-theme={theme}
       >
         {/* Content Container - holds the two columns */}
-        <div className="flex flex-row flex-grow overflow-hidden h-full">
+        <div className="flex flex-row flex-grow h-full">
           {/* Reader Column (left side) */}
           <div 
             ref={readerColumnRef}
-            className={`h-full overflow-y-auto relative box-border ${
+            className={`h-full overflow-y-auto relative box-border scrollbar-custom ${
               showAgent ? "" : "w-full"
-            }`}
+            } ${isDraggingRef.current ? '' : 'transition-all duration-200 ease-out'}`}
             style={{
-              width: showAgent ? `${leftPanelWidth}%` : '100%',
-              transition: isDraggingRef.current ? 'none' : 'width 0.2s ease-out'
+              width: showAgent ? `${leftPanelWidth}%` : undefined
             }}
           >
             {/* Reader Content Area */}
@@ -530,6 +533,7 @@ const Reader = () => {
               handleClose={handleClose}
               settingsButtonRef={settingsButtonRef}
               showSettings={showSettings}
+              isDragging={isDraggingRef.current}
               t={t}
             />
           </div>
@@ -547,14 +551,9 @@ const Reader = () => {
           {/* AI Column (right side) - only rendered when showAISidePanel is true */}
           {showAgent && (
             <div 
-              className={`h-full overflow-hidden flex flex-col relative ${
-                theme === 'dark' 
-                  ? 'border-l border-white/[0.07]' 
-                  : 'border-l border-black/[0.06]'
-              }`}
+              className={`h-full flex flex-col relative overflow-y-auto border-l border-border ${isDraggingRef.current ? '' : 'transition-all duration-200 ease-out'}`}
               style={{
-                width: `${100 - leftPanelWidth}%`,
-                transition: isDraggingRef.current ? 'none' : 'width 0.2s ease-out'
+                width: `${100 - leftPanelWidth}%`
               }}
             >
               <AgentUI

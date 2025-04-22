@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Message, ContextType } from './types';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -16,92 +16,43 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   renderMarkdown
 }) => {
   const isUser = message.sender === 'user';
-  const { getAgentColors } = useTheme();
-  const agentColors = getAgentColors();
   
-  // Get the message style using theme colors
-  const getMessageStyle = () => {
-    if (isUser) {
-      return {
-        backgroundColor: agentColors.userBubble,
-        color: agentColors.textUser,
-        borderRadius: '16px 16px 4px 16px',
-        padding: '10px 14px',
-        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
-      };
-    } else {
-      // Agent message style
-      return {
-        backgroundColor: agentColors.agentBubble,
-        color: agentColors.textAgent,
-        borderRadius: '16px 16px 16px 4px',
-        padding: '10px 14px',
-        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-        border: `1px solid ${agentColors.border}`
-      };
-    }
-  };
+  // Common prose and text styling classes
+  const markdownClasses = "readlite-agent-markdown-content prose prose-xs max-w-none text-text-primary " +
+    "prose-headings:text-text-primary prose-pre:bg-bg-primary/10 prose-pre:p-2 " +
+    "prose-pre:rounded-md prose-pre:text-xs prose-code:text-xs prose-code:bg-bg-primary/10 " +
+    "prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-a:text-accent " +
+    "prose-a:no-underline hover:prose-a:underline text-base leading-relaxed " +
+    "font-[system-ui,-apple-system,BlinkMacSystemFont,'Segoe_UI','PingFang_SC','Hiragino_Sans_GB','Microsoft_YaHei',sans-serif] antialiased";
   
   return (
-    <div 
-      className={`readlite-message-bubble flex ${isUser ? 'justify-end' : 'justify-start'} ${isUser ? 'px-2.5' : 'pl-0 pr-4'} py-1.5`}
-    >
-      <div 
-        className={`readlite-message-wrapper ${isUser ? 'items-end' : 'items-start'} flex flex-col ${isUser ? 'max-w-[85%]' : 'max-w-[92%]'}`}
-      >
-        {!isUser && message.contextType && (
-          <div className="readlite-message-content" style={getMessageStyle()}>
+    <div className={`flex py-1.5 ${isUser ? 'justify-end px-2.5' : 'justify-start pl-0 pr-4'}`}>
+      <div className={`flex flex-col ${isUser ? 'items-end max-w-[85%]' : 'items-start max-w-[92%]'}`}>
+        {!isUser && message.contextType ? (
+          <div className={`readlite-agent-message-content shadow-sm rounded-[16px_16px_16px_4px] p-[10px_14px] 
+                           bg-bg-agent text-text-agent border border-border`}>
             {/* Context badge integrated with message */}
-            <div className="readlite-context-badge text-[12px] text-[var(--readlite-text-secondary)] flex items-center mb-1">
+            <div className="text-xs text-text-secondary flex items-center mb-1">
               <span>@</span>
               <span className="ml-0.5">{getContextTypeLabel(message.contextType)}</span>
             </div>
             
             <div 
-              className="readlite-markdown-content prose prose-xs max-w-none text-[var(--readlite-text)] prose-headings:text-[var(--readlite-text)] prose-pre:bg-[var(--readlite-background)]/10 prose-pre:p-2 prose-pre:rounded-md prose-pre:text-xs prose-code:text-xs prose-code:bg-[var(--readlite-background)]/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-a:text-[var(--readlite-accent)] prose-a:no-underline hover:prose-a:underline text-base leading-relaxed font-[system-ui,-apple-system,BlinkMacSystemFont,'Segoe_UI','PingFang_SC','Hiragino_Sans_GB','Microsoft_YaHei',sans-serif]"
-              style={{ 
-                fontFeatureSettings: "'tnum' on, 'lnum' on",
-                textRendering: "optimizeLegibility",
-                WebkitFontSmoothing: "antialiased",
-                MozOsxFontSmoothing: "grayscale",
-                fontSize: "16px",
-                lineHeight: "1.5"
-              }}
+              className={markdownClasses}
               dangerouslySetInnerHTML={renderMarkdown(message.text)}
             />
           </div>
-        )}
-        
-        {!isUser && !message.contextType && (
-          <div className="readlite-message-content" style={getMessageStyle()}>
+        ) : !isUser ? (
+          <div className="readlite-agent-message-content shadow-sm rounded-[16px_16px_16px_4px] p-[10px_14px] 
+                          bg-bg-agent text-text-agent border border-border">
             <div 
-              className="readlite-markdown-content prose prose-xs max-w-none text-[var(--readlite-text)] prose-headings:text-[var(--readlite-text)] prose-pre:bg-[var(--readlite-background)]/10 prose-pre:p-2 prose-pre:rounded-md prose-pre:text-xs prose-code:text-xs prose-code:bg-[var(--readlite-background)]/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-a:text-[var(--readlite-accent)] prose-a:no-underline hover:prose-a:underline text-base leading-relaxed font-[system-ui,-apple-system,BlinkMacSystemFont,'Segoe_UI','PingFang_SC','Hiragino_Sans_GB','Microsoft_YaHei',sans-serif]"
-              style={{ 
-                fontFeatureSettings: "'tnum' on, 'lnum' on",
-                textRendering: "optimizeLegibility",
-                WebkitFontSmoothing: "antialiased",
-                MozOsxFontSmoothing: "grayscale",
-                fontSize: "16px",
-                lineHeight: "1.5"
-              }}
+              className={markdownClasses}
               dangerouslySetInnerHTML={renderMarkdown(message.text)}
             />
           </div>
-        )}
-        
-        {isUser && (
-          <div 
-            className="readlite-message-content text-[var(--readlite-text)] text-base font-[system-ui,-apple-system,BlinkMacSystemFont,'Segoe_UI','PingFang_SC','Hiragino_Sans_GB','Microsoft_YaHei',sans-serif]" 
-            style={{ 
-              ...getMessageStyle(),
-              fontFeatureSettings: "'tnum' on, 'lnum' on",
-              textRendering: "optimizeLegibility",
-              WebkitFontSmoothing: "antialiased",
-              MozOsxFontSmoothing: "grayscale",
-              fontSize: "16px",
-              lineHeight: "1.5"
-            }}
-          >
+        ) : (
+          <div className={`readlite-agent-message-content shadow-sm rounded-[16px_16px_4px_16px] p-[10px_14px] 
+                           bg-bg-user text-text-user ${markdownClasses}`}>
             {message.text}
           </div>
         )}

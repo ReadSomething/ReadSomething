@@ -4,6 +4,7 @@ import { useArticle } from "../hooks/useArticle"
 import { useStoredSettings } from "../hooks/useStoredSettings"
 import { createLogger } from "~/utils/logger"
 import { ThemeType } from "../config/theme"
+import { ThemeProvider } from "./ThemeContext"
 
 // Create a logger for this module
 const logger = createLogger('reader-context');
@@ -85,8 +86,10 @@ export const useReader = () => useContext(ReaderContext);
 
 // --- Provider Component ---
 
+// Add props interface for ReaderProvider
 interface ReaderProviderProps {
   children: ReactNode;
+  initialTheme?: ThemeType; // Add initialTheme prop here
 }
 
 // Simple loading indicator shown while settings are loading
@@ -116,7 +119,7 @@ const LoadingIndicator: React.FC = () => (
  * Manages fetching stored settings, extracting article content, and providing 
  * state and update functions to child components.
  */
-export const ReaderProvider: React.FC<ReaderProviderProps> = ({ children }) => {
+export const ReaderProvider: React.FC<ReaderProviderProps> = ({ children, initialTheme }) => {
   // --- State & Hooks ---
   
   // Settings state managed by useStoredSettings (handles loading from chrome.storage)
@@ -204,7 +207,11 @@ export const ReaderProvider: React.FC<ReaderProviderProps> = ({ children }) => {
   return (
     <ReaderContext.Provider value={value}>
       {/* Show loading indicator until settings are loaded */} 
-      {isSettingsLoaded ? children : <LoadingIndicator />}
+      {isSettingsLoaded ? (
+        <ThemeProvider initialTheme={initialTheme} currentTheme={settings.theme}>
+          {children}
+        </ThemeProvider>
+      ) : <LoadingIndicator />}
     </ReaderContext.Provider>
   );
 }; 

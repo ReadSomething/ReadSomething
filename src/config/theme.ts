@@ -4,10 +4,10 @@
  */
 
 // Define supported theme types
-export type ThemeType = 'light' | 'dark' | 'paper' | 'eyecare';
+export type ThemeType = 'light' | 'dark' | 'eyecare' | 'custom';
 
 // Define centralized list of available themes
-export const AVAILABLE_THEMES: ThemeType[] = ['light', 'dark', 'paper', 'eyecare'];
+export const AVAILABLE_THEMES: ThemeType[] = ['light', 'dark', 'eyecare', 'custom'];
 
 // Agent UI colors interface
 export interface AgentColors {
@@ -96,132 +96,193 @@ interface ColorTokens {
     hover: string;     // Hover link
     active: string;    // Active link
   };
+  
+  // Highlight colors for text highlights
+  highlight: {
+    beige: string;     // Beige highlight
+    cyan: string;      // Cyan highlight
+    lavender: string;  // Lavender highlight
+    olive: string;     // Olive highlight
+    peach: string;     // Peach highlight
+    selection: string; // Generic selection highlight
+    selectionHover: string; // Generic selection highlight when hovered
+  };
 }
 
-// Set of color tokens for each theme
+// 2025 Flagship – Reading × Minimalism Palette (OKLCH‑driven, WCAG‑compliant)
+// -------------------------------------------------------------
+// 1. Light  : "SILK"      – Daytime reading / Paper white + Cloud blue
+// 2. Dark   : "CARBON"    – Nighttime reading / Deep carbon + Mist blue
+// 3. Eyecare: "SEPIA"     – Long-term eye care / Old book rice + Bronze brown
+// 4. Custom : "PRISM"     – User-defined accent (other inherit Light)
+// -------------------------------------------------------------
+
+/**
+ * All theme token collection
+ * All color values are first determined in the OKLCH space, then converted to Hex, ensuring perceptual consistency
+ */
 export const themeTokens: Record<ThemeType, ColorTokens> = {
+  /* ------------------------------------------------ LIGHT (SILK) ------------------------------------------------ */
   light: {
     bg: {
-      primary: '#ffffff',
-      secondary: '#f9fafb',
-      tertiary: '#f1f5f9',
-      user: '#edf4ff',
-      agent: '#ffffff',
-      input: '#ffffff'
+      primary: '#FEFCFA',
+      secondary: '#F6F4F2',
+      tertiary: '#ECEAE7',
+      user: '#F1EFEC',
+      agent: '#FEFCFA',
+      input: '#FFFFFF'
     },
     text: {
-      primary: '#334155',
-      secondary: '#64748b',
-      user: '#334155',
-      agent: '#334155',
-      accent: '#2563eb'
+      primary: '#242628',
+      secondary: '#5A5F66',
+      user: '#242628',
+      agent: '#242628',
+      accent: '#3A7D7C'
     },
-    border: '#edf2f7',
-    accent: '#3B82F6',
-    error: '#f87171',
+    border: '#DFDDD9',
+    accent: '#3A7D7C',
+    error: '#D94A3A',
     scrollbar: {
-      track: '#edf2f7',
-      thumb: '#d9e2ec'
+      track: '#EAE8E4',
+      thumb: '#D4D1CC'
     },
     link: {
-      normal: '#2563eb',
-      visited: '#7c3aed',
-      hover: '#1d4ed8',
-      active: '#1e40af'
+      normal: '#2680FF',
+      visited: '#195DD1',
+      hover: '#3B8EFF',
+      active: '#1247A0'
+    },
+    highlight: {
+      beige: 'rgb(246,240,225)',
+      cyan: 'rgb(220,240,255)',
+      lavender: 'rgb(235,231,250)',
+      olive: 'rgb(232,245,225)',
+      peach: 'rgb(255,239,231)',
+      selection: 'rgb(255,204,0)',
+      selectionHover: 'rgb(255,204,0)'
     }
   },
-  
+
+  /* ------------------------------------------------ DARK (CARBON) ------------------------------------------------ */
   dark: {
     bg: {
-      primary: '#1a1a1a',
-      secondary: '#242424',
-      tertiary: '#2a2a2a',
-      user: '#2d2d2d',
-      agent: '#1a1a1a',
-      input: '#242424'
+      primary: '#161718',
+      secondary: '#1E1F20',
+      tertiary: '#262729',
+      user: '#2E2F31',
+      agent: '#161718',
+      input: '#1E1F20'
     },
     text: {
-      primary: '#e2e8f0',
-      secondary: '#94a3b8',
-      user: '#e2e8f0',
-      agent: '#e2e8f0',
-      accent: '#60a5fa'
+      primary: '#E7EBF1',
+      secondary: '#A5AEBF',
+      user: '#E7EBF1',
+      agent: '#E7EBF1',
+      accent: '#5D7BB0'
     },
-    border: '#2c2c2c',
-    accent: '#60a5fa',
-    error: '#ef4444',
+    border: '#222426',
+    accent: '#5D7BB0',
+    error: '#FF6F6F',
     scrollbar: {
-      track: '#2c2c2c',
-      thumb: '#3d3d3d'
+      track: '#2B2D2F',
+      thumb: '#3B3D40'
     },
     link: {
-      normal: '#60a5fa',
-      visited: '#a78bfa',
-      hover: '#3b82f6', 
-      active: '#2563eb'
-    }
+      normal: '#7FA6FF',
+      visited: '#AAA1FF',
+      hover: '#5E8CFF',
+      active: '#4771DB'
+    },
+    highlight: {
+      beige: 'rgb(97, 82, 61)',
+      cyan: 'rgb(53, 89, 118)',
+      lavender: 'rgb(93, 79, 134)',
+      olive: 'rgb(73, 100, 65)',
+      peach: 'rgb(117, 76, 62)',
+      selection: 'rgb(255, 255, 0)',
+      selectionHover: 'rgb(255, 255, 0)'
+    }   
   },
-  
-  paper: {
-    bg: {
-      primary: '#f8fafc',
-      secondary: '#f8fafc',
-      tertiary: '#f1f5f9',
-      user: '#f1f5f9',
-      agent: '#f8fafc',
-      input: '#ffffff'
-    },
-    text: {
-      primary: '#1e293b',
-      secondary: '#475569',
-      user: '#1e293b',
-      agent: '#1e293b',
-      accent: '#334155'
-    },
-    border: '#e9f0f7',
-    accent: '#475569',
-    error: '#dc2626',
-    scrollbar: {
-      track: '#e9f0f7',
-      thumb: '#d6e2f0'
-    },
-    link: {
-      normal: '#334155',
-      visited: '#4b5563',
-      hover: '#1e293b',
-      active: '#0f172a'
-    }
-  },
-  
-  // Eye Care theme - warm background with reduced blue light
+
+  /* ------------------------------------------------ EYECARE (SEPIA) ---------------------------------------------- */
   eyecare: {
     bg: {
-      primary: '#f8f3e8',        // Warm cream background
-      secondary: '#f5f0e5',
-      tertiary: '#f0ebe0',
-      user: '#f5f0e5',
-      agent: '#f8f3e8',
-      input: '#ffffff'
+      primary: '#F7F3E7',
+      secondary: '#EFEADF',
+      tertiary: '#E7E1D6',
+      user: '#EFEADF',
+      agent: '#F7F3E7',
+      input: '#FFFFFF'
     },
     text: {
-      primary: '#3b2e1e',        // Warm brown text, reduced contrast
-      secondary: '#5c4d3b',
-      user: '#3b2e1e',
-      agent: '#3b2e1e',
-      accent: '#7e6e56'
+      primary: '#3B3226',
+      secondary: '#6B5F51',
+      user: '#3B3226',
+      agent: '#3B3226',
+      accent: '#A05B3C'
     },
-    border: '#e8e0d0',
-    accent: '#7e6e56',
-    error: '#b54a35',            // Warmer red
+    border: '#DCD4C8',
+    accent: '#A05B3C',
+    error: '#C46A4C',
     scrollbar: {
-      track: '#e8e0d0',
-      thumb: '#d5cabb'
+      track: '#DCD4C8',
+      thumb: '#C9C0B3'
     },
     link: {
-      normal: '#6b593f',         // Warm brown links
-      visited: '#82725f',
-      hover: '#4a3a25',
-      active: '#3b2e1e'
+      normal: '#8B6C40',
+      visited: '#6B5231',
+      hover: '#A27C46',
+      active: '#5E482A'
+    },
+    highlight: {
+      beige: 'rgb(211, 185, 143)',
+      cyan: 'rgb(166, 201, 201)',
+      lavender: 'rgb(187, 180, 210)',
+      olive: 'rgb(180, 204, 160)',
+      peach: 'rgb(209, 163, 142)',
+      selection: 'rgb(173, 137, 76)',
+      selectionHover: 'rgb(173, 137, 76)'
+    }
+  },
+
+  /* ------------------------------------------------ CUSTOM (PRISM) ------------------------------------------------ */
+  custom: {
+    bg: {
+      primary: '#FEFCFA',
+      secondary: '#F6F4F2',
+      tertiary: '#ECEAE7',
+      user: '#F1EFEC',
+      agent: '#FEFCFA',
+      input: '#FFFFFF'
+    },
+    text: {
+      primary: '#242628',
+      secondary: '#5A5F66',
+      user: '#242628',
+      agent: '#242628',
+      accent: '#7C4DFF'
+    },
+    border: '#DFDDD9',
+    accent: '#7C4DFF',
+    error: '#D94A3A',
+    scrollbar: {
+      track: '#EAE8E4',
+      thumb: '#D4D1CC'
+    },
+    link: {
+      normal: '#7C4DFF',
+      visited: '#6B3ACF',
+      hover: '#9670FF',
+      active: '#5E3DBD'
+    },
+    highlight: {
+      beige: 'rgb(246, 240, 225)',
+      cyan: 'rgb(220, 240, 255)',
+      lavender: 'rgb(239, 225, 255)',
+      olive: 'rgb(232, 245, 225)',
+      peach: 'rgb(255, 234, 245)',
+      selection: 'rgb(124, 77, 255)',
+      selectionHover: 'rgb(124, 77, 255)'
     }
   }
 };
@@ -229,32 +290,41 @@ export const themeTokens: Record<ThemeType, ColorTokens> = {
 // Generate CSS variable names mapping from color tokens
 export const cssVarNames = {
   bg: {
-    primary: '--rl-bg-primary',
-    secondary: '--rl-bg-secondary',
-    tertiary: '--rl-bg-tertiary',
-    user: '--rl-bg-user',
-    agent: '--rl-bg-agent',
-    input: '--rl-bg-input'
+    primary: '--readlite-bg-primary',
+    secondary: '--readlite-bg-secondary',
+    tertiary: '--readlite-bg-tertiary',
+    user: '--readlite-bg-user',
+    agent: '--readlite-bg-agent',
+    input: '--readlite-bg-input'
   },
   text: {
-    primary: '--rl-text-primary',
-    secondary: '--rl-text-secondary',
-    user: '--rl-text-user',
-    agent: '--rl-text-agent',
-    accent: '--rl-text-accent'
+    primary: '--readlite-text-primary',
+    secondary: '--readlite-text-secondary',
+    user: '--readlite-text-user',
+    agent: '--readlite-text-agent',
+    accent: '--readlite-text-accent'
   },
-  border: '--rl-border',
-  accent: '--rl-accent',
-  error: '--rl-error',
+  border: '--readlite-border',
+  accent: '--readlite-accent',
+  error: '--readlite-error',
   scrollbar: {
-    track: '--rl-scrollbar-track',
-    thumb: '--rl-scrollbar-thumb'
+    track: '--readlite-scrollbar-track',
+    thumb: '--readlite-scrollbar-thumb'
   },
   link: {
-    normal: '--rl-link',
-    visited: '--rl-link-visited',
-    hover: '--rl-link-hover',
-    active: '--rl-link-active'
+    normal: '--readlite-link',
+    visited: '--readlite-link-visited',
+    hover: '--readlite-link-hover',
+    active: '--readlite-link-active'
+  },
+  highlight: {
+    beige: '--readlite-highlight-beige',
+    cyan: '--readlite-highlight-cyan',
+    lavender: '--readlite-highlight-lavender',
+    olive: '--readlite-highlight-olive',
+    peach: '--readlite-highlight-peach',
+    selection: '--readlite-highlight-selection',
+    selectionHover: '--readlite-highlight-selection-hover'
   }
 };
 
@@ -332,245 +402,6 @@ export function getReaderColors(theme: ThemeType): ReaderColors {
     },
     link: tokens.link
   };
-}
-
-// Apply theme colors to CSS variables
-export const applyThemeColors = (colors: AgentColors): void => {
-  // Add namespace prefix 'readlite-' to all CSS variables
-  const PREFIX = 'readlite';
-  
-  // Create variable name mappings for easier reference
-  const varMap = {
-    background: `--${PREFIX}-background`,
-    messageBg: `--${PREFIX}-message-bg`,
-    userBubble: `--${PREFIX}-user-bubble`,
-    agentBubble: `--${PREFIX}-agent-bubble`,
-    inputBg: `--${PREFIX}-input-bg`,
-    text: `--${PREFIX}-text`,
-    textUser: `--${PREFIX}-text-user`,
-    textAgent: `--${PREFIX}-text-agent`,
-    textSecondary: `--${PREFIX}-text-secondary`,
-    accent: `--${PREFIX}-accent`,
-    border: `--${PREFIX}-border`,
-    error: `--${PREFIX}-error`,
-    scrollbar: `--${PREFIX}-scrollbar`,
-    scrollbarHover: `--${PREFIX}-scrollbar-hover`,
-    chipBg: `--${PREFIX}-chip-bg`,
-    thinkingPulse: `--${PREFIX}-thinking-pulse`,
-  };
-  
-  // Generate style content
-  const styleContent = generateStyleContent(colors, PREFIX, varMap);
-  
-  // Try to find the shadow root containing our components
-  const shadowContainer = document.getElementById('readlite-shadow-container');
-  const shadow = shadowContainer?.shadowRoot || null;
-  
-  // If we're in a Shadow DOM, apply styles there
-  if (shadow) {
-    // Update styles in the shadow root
-    const styleId = `${PREFIX}-theme-variables`;
-    const existingStyle = shadow.getElementById(styleId);
-    if (existingStyle) {
-      existingStyle.textContent = styleContent;
-    } else {
-      // Create new style element if it doesn't exist
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = styleContent;
-      shadow.appendChild(style);
-    }
-    return;
-  }
-  
-  // Fallback to document-level styles if no shadow DOM found
-  const styleId = `${PREFIX}-theme-variables`;
-  let styleElement = document.getElementById(styleId);
-  
-  if (!styleElement) {
-    // Create new style element if it doesn't exist
-    styleElement = document.createElement('style');
-    styleElement.id = styleId;
-    document.head.appendChild(styleElement);
-  }
-  
-  // Update style content
-  styleElement.textContent = styleContent;
-};
-
-// Apply theme function
-export function applyTheme(theme: ThemeType, root: HTMLElement | ShadowRoot = document.documentElement): void {
-  if (!root) return;
-  
-  const tokens = themeTokens[theme];
-  
-  // Function to apply CSS variables
-  const applyCssVars = (element: HTMLElement | ShadowRoot) => {
-    // Handle different ways to set CSS variables for DOM elements and ShadowRoot
-    if (element instanceof HTMLElement) {
-      // HTMLElements have style property
-      setCssVars(element.style, tokens);
-      applyLegacyVars(getAgentColors(theme), element.style);
-    } else if (element instanceof ShadowRoot) {
-      // For ShadowRoot, need to create or use style element
-      let styleEl = element.getElementById('readlite-theme-vars');
-      
-      if (!styleEl) {
-        styleEl = document.createElement('style');
-        styleEl.id = 'readlite-theme-vars';
-        element.appendChild(styleEl);
-      }
-      
-      if (styleEl instanceof HTMLStyleElement) {
-        styleEl.textContent = generateCssVarStyles(tokens, theme);
-      }
-    }
-  };
-  
-  // Apply CSS variables
-  applyCssVars(root);
-  
-  // Set theme class names
-  if (root === document.documentElement) {
-    // Remove all theme classes
-    document.documentElement.classList.remove(...AVAILABLE_THEMES);
-    // Add current theme class
-    document.documentElement.classList.add(theme);
-  } else if (root instanceof ShadowRoot) {
-    // If shadow DOM
-    const container = root.querySelector('[class*="readlite"]');
-    if (container instanceof HTMLElement) {
-      // Remove all theme classes
-      const themePrefixedClasses = AVAILABLE_THEMES.map(t => `readlite-${t}`);
-      container.classList.remove(...themePrefixedClasses, ...AVAILABLE_THEMES);
-      // Add current theme classes
-      container.classList.add(`readlite-${theme}`, theme);
-    }
-  }
-}
-
-// Set CSS variables to CSSStyleDeclaration object
-function setCssVars(style: CSSStyleDeclaration, tokens: ColorTokens): void {
-  style.setProperty(cssVarNames.bg.primary, tokens.bg.primary);
-  style.setProperty(cssVarNames.bg.secondary, tokens.bg.secondary);
-  style.setProperty(cssVarNames.bg.tertiary, tokens.bg.tertiary);
-  style.setProperty(cssVarNames.bg.user, tokens.bg.user);
-  style.setProperty(cssVarNames.bg.agent, tokens.bg.agent);
-  style.setProperty(cssVarNames.bg.input, tokens.bg.input);
-  
-  style.setProperty(cssVarNames.text.primary, tokens.text.primary);
-  style.setProperty(cssVarNames.text.secondary, tokens.text.secondary);
-  style.setProperty(cssVarNames.text.user, tokens.text.user);
-  style.setProperty(cssVarNames.text.agent, tokens.text.agent);
-  style.setProperty(cssVarNames.text.accent, tokens.text.accent);
-  
-  style.setProperty(cssVarNames.border, tokens.border);
-  style.setProperty(cssVarNames.accent, tokens.accent);
-  style.setProperty(cssVarNames.error, tokens.error);
-  
-  style.setProperty(cssVarNames.scrollbar.track, tokens.scrollbar.track);
-  style.setProperty(cssVarNames.scrollbar.thumb, tokens.scrollbar.thumb);
-  
-  style.setProperty(cssVarNames.link.normal, tokens.link.normal);
-  style.setProperty(cssVarNames.link.visited, tokens.link.visited);
-  style.setProperty(cssVarNames.link.hover, tokens.link.hover);
-  style.setProperty(cssVarNames.link.active, tokens.link.active);
-}
-
-// Keep legacy variable names for compatibility
-function applyLegacyVars(colors: AgentColors, style: CSSStyleDeclaration): void {
-  const PREFIX = 'readlite';
-  
-  const varMap = {
-    background: `--${PREFIX}-background`,
-    messageBg: `--${PREFIX}-message-bg`,
-    userBubble: `--${PREFIX}-user-bubble`,
-    agentBubble: `--${PREFIX}-agent-bubble`,
-    inputBg: `--${PREFIX}-input-bg`,
-    text: `--${PREFIX}-text`,
-    textUser: `--${PREFIX}-text-user`,
-    textAgent: `--${PREFIX}-text-agent`,
-    textSecondary: `--${PREFIX}-text-secondary`,
-    accent: `--${PREFIX}-accent`,
-    border: `--${PREFIX}-border`,
-    error: `--${PREFIX}-error`,
-    scrollbar: `--${PREFIX}-scrollbar`,
-    scrollbarHover: `--${PREFIX}-scrollbar-hover`,
-    chipBg: `--${PREFIX}-chip-bg`,
-    thinkingPulse: `--${PREFIX}-thinking-pulse`,
-  };
-  
-  Object.entries(colors).forEach(([key, value]) => {
-    const varName = varMap[key as keyof AgentColors];
-    if (varName) {
-      style.setProperty(varName, value);
-    }
-  });
-}
-
-// Generate CSS variables stylesheet
-function generateCssVarStyles(tokens: ColorTokens, theme: ThemeType): string {
-  const agentColors = getAgentColors(theme);
-  
-  return `
-:root, :host {
-  ${cssVarNames.bg.primary}: ${tokens.bg.primary};
-  ${cssVarNames.bg.secondary}: ${tokens.bg.secondary};
-  ${cssVarNames.bg.tertiary}: ${tokens.bg.tertiary};
-  ${cssVarNames.bg.user}: ${tokens.bg.user};
-  ${cssVarNames.bg.agent}: ${tokens.bg.agent};
-  ${cssVarNames.bg.input}: ${tokens.bg.input};
-  
-  ${cssVarNames.text.primary}: ${tokens.text.primary};
-  ${cssVarNames.text.secondary}: ${tokens.text.secondary};
-  ${cssVarNames.text.user}: ${tokens.text.user};
-  ${cssVarNames.text.agent}: ${tokens.text.agent};
-  ${cssVarNames.text.accent}: ${tokens.text.accent};
-  
-  ${cssVarNames.border}: ${tokens.border};
-  ${cssVarNames.accent}: ${tokens.accent};
-  ${cssVarNames.error}: ${tokens.error};
-  
-  ${cssVarNames.scrollbar.track}: ${tokens.scrollbar.track};
-  ${cssVarNames.scrollbar.thumb}: ${tokens.scrollbar.thumb};
-  
-  ${cssVarNames.link.normal}: ${tokens.link.normal};
-  ${cssVarNames.link.visited}: ${tokens.link.visited};
-  ${cssVarNames.link.hover}: ${tokens.link.hover};
-  ${cssVarNames.link.active}: ${tokens.link.active};
-  
-  /* Legacy variables */
-  --readlite-background: ${agentColors.background};
-  --readlite-message-bg: ${agentColors.messageBg};
-  --readlite-user-bubble: ${agentColors.userBubble};
-  --readlite-agent-bubble: ${agentColors.agentBubble};
-  --readlite-input-bg: ${agentColors.inputBg};
-  --readlite-text: ${agentColors.text};
-  --readlite-text-user: ${agentColors.textUser};
-  --readlite-text-agent: ${agentColors.textAgent};
-  --readlite-text-secondary: ${agentColors.textSecondary};
-  --readlite-accent: ${agentColors.accent};
-  --readlite-border: ${agentColors.border};
-  --readlite-error: ${agentColors.error};
-  --readlite-scrollbar: ${agentColors.scrollbar};
-  --readlite-scrollbar-hover: ${agentColors.scrollbarHover};
-  --readlite-chip-bg: ${agentColors.chipBg};
-  --readlite-thinking-pulse: ${agentColors.thinkingPulse};
-}`;
-}
-
-// Generate style content with CSS variables
-function generateStyleContent(colors: AgentColors, prefix: string, varMap: Record<string, string>): string {
-  const cssVars = Object.entries(colors).map(([key, value]) => {
-    const varName = varMap[key as keyof AgentColors];
-    return varName ? `${varName}: ${value};` : '';
-  }).filter(Boolean).join('\n  ');
-
-  return `
-:root {
-  ${cssVars}
-}
-  `;
 }
 
 // Helper function to convert hex to rgb for rgba values

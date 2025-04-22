@@ -5,7 +5,7 @@
 
 // Import LLM request options type to maintain consistency with main LLM API
 import { LLMRequestOptions } from './llm';
-import { getAuthToken } from './auth';
+import { getAuthToken, handleTokenExpiry } from './auth';
 
 import { createLogger } from "~/utils/logger";
 
@@ -92,11 +92,20 @@ export async function directApiCall(messages: any[], options: any): Promise<Resp
   };
   
   // Make the API call
-  return fetch(OPENROUTER_API_ENDPOINT, {
+  const response = await fetch(OPENROUTER_API_ENDPOINT, {
     method: 'POST',
     headers,
     body: JSON.stringify(requestBody)
   });
+  
+  // Handle 401 Unauthorized (token expired)
+  if (response.status === 401) {
+    logger.warn('Received 401 Unauthorized in directApiCall, handling token expiry');
+    await handleTokenExpiry(response);
+    throw new Error('Authentication failed: Your session has expired. Please log in again.');
+  }
+  
+  return response;
 }
 
 /**

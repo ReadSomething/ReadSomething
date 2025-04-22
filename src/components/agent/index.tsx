@@ -1,23 +1,26 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useI18n } from '../../hooks/useI18n';
+import { useI18n } from '~/context/I18nContext';
 import { marked } from 'marked';
 import llmClient from '../../utils/llmClient';
 import SessionManager, { MessagePriority } from '../../utils/SessionManager';
 import { Model } from '../../types/api';
 import { isAuthenticated, openAuthPage } from '../../utils/auth';
 import { Message, ContextType } from './types';
-import { getAgentColors, applyThemeColors } from '../../config/theme';
-import { StyleIsolator } from '../../content'; // Import StyleIsolator component
+import { StyleIsolator } from '../../content';
 import { useTheme } from '../../context/ThemeContext';
 import { createLogger } from '../../utils/logger';
+import LoginPrompt from './LoginPrompt';
+import MessageList from './MessageList';
+import InputArea from './InputArea';
 
 // Create a logger instance for the agent component
 const logger = createLogger('agent');
 
-// Import components
-import LoginPrompt from './LoginPrompt';
-import MessageList from './MessageList';
-import InputArea from './InputArea';
+declare global {
+  interface Window {
+    _readliteIframeElement?: HTMLIFrameElement | null;
+  }
+}
 
 // Define component props
 interface AgentUIProps {
@@ -55,6 +58,7 @@ const AgentUI: React.FC<AgentUIProps> = ({
   const [streamingResponse, setStreamingResponse] = useState('');
   const [contextType, setContextType] = useState<ContextType>('screen'); // Default to screen context
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(true); // Initialize to true
 
   // Authentication state
   const [isAuth, setIsAuth] = useState<boolean>(false);
@@ -72,38 +76,34 @@ const AgentUI: React.FC<AgentUIProps> = ({
   
   // Hooks
   const { t } = useI18n();
-  const { theme } = useTheme();
+  const { theme, setTheme } = useTheme();
+  
+  // Check initial authentication status when the component mounts
+  useEffect(() => {
+    const checkInitialAuth = async () => {
+      try {
+        logger.info('Checking initial authentication status');
+        const authStatus = await isAuthenticated();
+        logger.info('Initial auth status:', authStatus);
+        setIsAuth(authStatus);
+        setIsAuthLoading(false);
+        setShowLoginPrompt(!authStatus);
+      } catch (error) {
+        logger.error('Error checking authentication:', error);
+        setIsAuth(false);
+        setIsAuthLoading(false);
+        setShowLoginPrompt(true);
+      }
+    };
+    
+    checkInitialAuth();
+  }, []);
   
   // Define context options after t is declared
   const contextOptions = [
     { value: 'screen' as ContextType, label: t('contextTypeScreen') || 'Screen' },
     { value: 'article' as ContextType, label: t('contextTypeArticle') || 'Article' }
   ];
-  
-  // Apply theme colors to CSS variables for Tailwind
-  useEffect(() => {
-    logger.info("Theme changed:", theme);
-    const colors = getAgentColors(theme);
-    applyThemeColors(colors);
-  }, [theme]);
-  
-  // Check authentication status on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        setIsAuthLoading(true);
-        const authenticated = await isAuthenticated();
-        setIsAuth(authenticated);
-      } catch (error) {
-        logger.error("Error checking auth status:", error);
-        setIsAuth(false);
-      } finally {
-        setIsAuthLoading(false);
-      }
-    };
-    
-    checkAuth();
-  }, []);
   
   // Request models from background script on mount and load selected model from localStorage
   useEffect(() => {
@@ -540,42 +540,21 @@ Respond directly to queries without meta-commentary like "Based on the visible c
     }
   };
   
-  // Trigger authentication flow
-  const handleLogin = () => {
-    setError(null); // Clear any previous errors
-    openAuthPage();
-  };
-  
   // Monitor for authentication status changes via runtime messages
   useEffect(() => {
     const authChangeListener = (message: any) => {
       if (message.type === 'AUTH_STATUS_CHANGED' && message.isAuthenticated !== undefined) {
         logger.info('Authentication status changed:', message.isAuthenticated);
-        setIsAuth(message.isAuthenticated);
         
-        // When authentication status changes, refresh the models list with force refresh
-        logger.info('Authentication status changed, refreshing models list');
-        chrome.runtime.sendMessage({ 
-          type: 'GET_MODELS_REQUEST',
-          forceRefresh: true
-        }, (response) => {
-          if (chrome.runtime.lastError) {
-            logger.error("Error requesting models after auth change:", chrome.runtime.lastError);
-            return;
-          }
-          
-          if (response && response.success && Array.isArray(response.data)) {
-            logger.info(`Received refreshed models after auth change (${response.data.length} models):`, response.data);
-            setModelsList(response.data);
-            
-            // Set default model if needed
-            if (response.data.length > 0 && (!selectedModel || !response.data.some((m: Model) => m.value === selectedModel.value))) {
-              logger.info(`Setting default model after auth change: ${response.data[0].label}`);
-              setSelectedModel(response.data[0]);
-              localStorage.setItem('readlite_selected_model', response.data[0].value);
-            }
-          }
-        });
+        // Update auth state
+        setIsAuth(message.isAuthenticated);
+        setIsAuthLoading(false);
+        setShowLoginPrompt(!message.isAuthenticated);
+        
+        // When authenticated, refresh the models list
+        if (message.isAuthenticated) {
+          refreshModelsList(true);
+        }
       }
     };
     
@@ -586,7 +565,41 @@ Respond directly to queries without meta-commentary like "Based on the visible c
     return () => {
       chrome.runtime.onMessage.removeListener(authChangeListener);
     };
+  }, []);
+  
+  // Refresh models list
+  const refreshModelsList = useCallback((forceRefresh = false) => {
+    logger.info(`Refreshing models list${forceRefresh ? ' (forced)' : ''}`);
+    chrome.runtime.sendMessage({ 
+      type: 'GET_MODELS_REQUEST',
+      forceRefresh
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        logger.error("Error requesting models:", chrome.runtime.lastError);
+        return;
+      }
+      
+      if (response && response.success && Array.isArray(response.data)) {
+        logger.info(`Received models (${response.data.length} models):`, response.data);
+        setModelsList(response.data);
+        
+        // Set default model if needed
+        if (response.data.length > 0 && (!selectedModel || !response.data.some((m: Model) => m.value === selectedModel.value))) {
+          logger.info(`Setting default model: ${response.data[0].label}`);
+          setSelectedModel(response.data[0]);
+          localStorage.setItem('readlite_selected_model', response.data[0].value);
+        }
+      }
+    });
   }, [selectedModel]);
+  
+  // Trigger authentication flow - simple version
+  const handleLogin = () => {
+    setError(null);
+    setIsAuthLoading(true);
+    logger.info('Starting authentication flow');
+    openAuthPage();
+  };
   
   // Use appropriate model settings for API call
   const getModelSettings = () => {
@@ -595,7 +608,7 @@ Respond directly to queries without meta-commentary like "Based on the visible c
       return {
         model: selectedModel.value,
         temperature: 0.7,
-        maxTokens: 10000
+        maxTokens: 4000
       };
     }
     
@@ -604,25 +617,25 @@ Respond directly to queries without meta-commentary like "Based on the visible c
       return {
         model: modelsList[0].value,
         temperature: 0.7,
-        maxTokens: 10000
+        maxTokens: 4000
       };
     }
     
     // Fallback - should rarely happen
     return {
       temperature: 0.7,
-      maxTokens: 10000
+      maxTokens: 4000
     };
   };
   
   // Render the AgentUI component
   const agentContent = (
-    <div className="readlite-agent-container readlite-scope flex flex-col w-full h-full bg-[var(--readlite-background)] text-[var(--readlite-text)] relative"
+    <div className="readlite-agent-container readlite-scope flex flex-col w-full h-full bg-bg-primary text-text-primary relative"
       style={{ 
         width: '100%',
         height: '100%',
         maxWidth: '100%',
-        overflow: 'hidden',
+        overflow: 'auto',
         display: 'flex',
         flexDirection: 'column',
         fontSize: `${baseFontSize}px`, 
@@ -631,18 +644,29 @@ Respond directly to queries without meta-commentary like "Based on the visible c
     >
       {/* Remove the Header component since we've integrated its functionality into InputArea */}
       
-      {/* Render login prompt if not authenticated */}
-      {!isAuth && !isAuthLoading ? (
+      {/* Show LoginPrompt if showLoginPrompt is true */} 
+      {isAuthLoading ? (
+        // Show loading indicator while checking auth status
+        <div className="flex justify-center items-center h-full">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Checking authentication status...</p>
+          </div>
+        </div>
+      ) : showLoginPrompt ? (
         <LoginPrompt onLogin={handleLogin} t={t} />
+      ) : !isAuth ? (
+        // If login attempted but failed or user logged out, show prompt again
+        <LoginPrompt onLogin={handleLogin} t={t} error={error || "Login required or failed. Please try again."} />
       ) : (
         <>
           {/* Main messages container */}
           <div 
             ref={messagesContainerRef}
-            className="readlite-messages-container flex-grow overflow-y-auto pt-2 px-4 pb-4 bg-[var(--readlite-background)]"
+            className="readlite-messages-container flex-grow overflow-y-auto pt-2 px-4 pb-4 bg-bg-primary"
             style={{
               scrollbarWidth: 'thin',
-              scrollbarColor: `var(--readlite-scrollbar-hover) var(--readlite-scrollbar)`
+              scrollbarColor: `var(--readlite-scrollbar-thumb) var(--readlite-scrollbar-track)`
             }}
           >
             <MessageList 
@@ -688,7 +712,7 @@ Respond directly to queries without meta-commentary like "Based on the visible c
   
   // Return the component, wrapped in StyleIsolator if requested
   return useStyleIsolation ? (
-    <StyleIsolator fitContent={true}>{agentContent}</StyleIsolator>
+    <StyleIsolator fitContent={true} theme={theme}>{agentContent}</StyleIsolator>
   ) : agentContent;
 };
 
