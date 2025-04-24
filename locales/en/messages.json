@@ -402,5 +402,29 @@
   "accentColors": {
     "message": "Accent colors",
     "description": "Label for accent color presets."
+  },
+  "highlight": {
+    "message": "Highlight",
+    "description": "Label for the highlight button in selection toolbar."
+  },
+  "note": {
+    "message": "Note",
+    "description": "Label for the note button in selection toolbar."
+  },
+  "copy": {
+    "message": "Copy",
+    "description": "Label for the copy button in selection toolbar."
+  },
+  "copied": {
+    "message": "Copied",
+    "description": "Label shown after text has been copied."
+  },
+  "ai": {
+    "message": "AI",
+    "description": "Short label for the AI assistant button in selection toolbar."
+  },
+  "aiAssistant": {
+    "message": "AI Assistant",
+    "description": "Tooltip for the AI assistant button in selection toolbar."
   }
 }

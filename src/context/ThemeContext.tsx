@@ -32,7 +32,7 @@ interface ThemeProviderProps {
   currentTheme?: ThemeType;
 }
 
-// 本地存储的键
+// Local storage keys
 const THEME_STORAGE_KEY = 'readlite-theme';
 const CUSTOM_THEME_STORAGE_KEY = 'readlite-custom-theme';
 

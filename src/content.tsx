@@ -316,9 +316,8 @@ function createIframe() {
 
   // Get preferred theme
   const preferredTheme = getPreferredTheme();
-  const themeColors = themeTokens[preferredTheme];
 
-  // Create iframe
+  // Create iframe with explicitly NO sandbox restrictions to allow full access
   const iframe = document.createElement('iframe');
   iframe.id = 'readlite-iframe-container';
   iframe.style.display = 'none'; // Initially hidden

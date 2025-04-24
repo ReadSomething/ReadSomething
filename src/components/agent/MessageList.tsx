@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useCallback } from 'react';
 import { CommonProps, Message, ContextType } from './types';
 import MessageBubble from './MessageBubble';
 import ThinkingIndicator from './ThinkingIndicator';
+import { ChatBubbleOvalLeftIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
 interface MessageListProps extends Pick<CommonProps, 't'> {
   messages: Message[];
@@ -98,9 +99,7 @@ const MessageList: React.FC<MessageListProps> = ({
       {messages.length === 0 && !streamingResponse && !isThinking && !error && !isLoading && !isError ? (
         <div className={`flex flex-col items-center justify-center h-full text-center p-6 ${systemFontClass}`}>
           <div className="mb-4 text-text-secondary/30">
-            <svg className="w-16 h-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
+            <ChatBubbleOvalLeftIcon className="w-16 h-16" />
           </div>
           <div className="text-base font-medium text-text-primary">
             {t('startConversation') || 'Start a new conversation'}
@@ -163,11 +162,7 @@ const MessageList: React.FC<MessageListProps> = ({
               <div className={`bg-bg-primary text-error px-4 py-3 rounded-2xl text-base max-w-[92%] 
                              shadow-sm ring-1 ring-error/20 backdrop-blur-[2px] ${systemFontClass}`}>
                 <div className="font-medium mb-2 flex items-center">
-                  <svg className="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
+                  <ExclamationCircleIcon className="w-4 h-4 mr-1.5" />
                   {t('errorOccurred') || 'An error occurred'}
                 </div>
                 <div className="text-sm text-text-secondary leading-relaxed">

@@ -3,8 +3,6 @@
 @tailwind utilities;
 
 /* Custom styles can be added below */
-
-/* 自定义滚动条样式 */
 .scrollbar::-webkit-scrollbar {
   width: 4px;
 }

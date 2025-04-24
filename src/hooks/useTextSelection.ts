@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { themeTokens } from '../config/theme';
 
 // Define highlight color type using the new palette names
 export type HighlightColor = 'beige' | 'cyan' | 'lavender' | 'olive' | 'peach';
@@ -69,12 +68,12 @@ export function useTextSelection<T extends HTMLElement>(containerRef: React.RefO
     // Determine background color based on selected color
     const bgColor = (() => {
       switch(color) {
-        case 'beige': return 'rgba(246,240,225,0.82)';
-        case 'cyan': return 'rgba(220,240,255,0.82)';
-        case 'lavender': return 'rgba(235,231,250,0.82)';
-        case 'olive': return 'rgba(232,245,225,0.82)';
-        case 'peach': return 'rgba(255,239,231,0.82)';
-        default: return 'rgba(246,240,225,0.82)';
+        case 'beige': return 'rgba(255,245,230,0.82)';
+        case 'cyan': return 'rgba(181,228,255,0.82)';
+        case 'lavender': return 'rgba(220,198,255,0.82)';
+        case 'olive': return 'rgba(222,234,181,0.82)';
+        case 'peach': return 'rgba(255,204,153,0.82)';
+        default: return 'rgba(255,245,230,0.82)';
       }
     })();
 
@@ -112,7 +111,8 @@ export function useTextSelection<T extends HTMLElement>(containerRef: React.RefO
             return true;
           }
         } catch (execError) {
-          console.log('execCommand failed, falling back to DOM manipulation', execError);
+          // Log as warning instead of debug to capture important failures
+          console.warn('execCommand failed, falling back to DOM manipulation', execError);
         }
       }
       
@@ -125,7 +125,7 @@ export function useTextSelection<T extends HTMLElement>(containerRef: React.RefO
       highlightSpan.dataset.highlightColor = color;
       highlightSpan.dataset.highlightId = generateHighlightId();
       
-      // 添加直接的内联样式，确保背景色始终有效
+      // Add inline styles to ensure background color is always effective
       highlightSpan.style.cssText = `display: inline !important; white-space: inherit !important; background-color: ${bgColor} !important;`;
       
       // Simple case: entirely within a single text node
@@ -142,7 +142,10 @@ export function useTextSelection<T extends HTMLElement>(containerRef: React.RefO
       }
       
       // Complex case: try a safer approach by finding and wrapping each text node separately
-      console.log("Complex selection detected, using safe approach");
+      // Only log in development environment
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn("Complex selection detected, using safe approach");
+      }
       
       try {
         // Get all nodes in the selection range
@@ -196,28 +199,27 @@ export function useTextSelection<T extends HTMLElement>(containerRef: React.RefO
           // Add a style tag for our highlight class if needed
           ensureHighlightStyles(doc, color);
           
-          // 注意：execCommand无法直接使用CSS变量，所以我们需要计算实际颜色
-          // 这里使用一个近似的固定颜色值
+          // Note: execCommand cannot directly use CSS variables, so we need to calculate actual colors
+          // Using fixed color values for better compatibility
           const execCommandColor = (() => {
             switch(color) {
-              case 'beige': return '#f5e9d7';
-              case 'cyan': return '#d6edff';
-              case 'lavender': return '#e6e0f3';
-              case 'olive': return '#e2efd9';
-              case 'peach': return '#ffe6dc';
-              default: return '#f5e9d7';
+              case 'beige': return '#fff5e6';
+              case 'cyan': return '#b5e4ff';
+              case 'lavender': return '#dcc6ff';
+              case 'olive': return '#deeab5';
+              case 'peach': return '#ffcc99';
+              default: return '#fff5e6';
             }
           })();
           
           // Use execCommand as a fallback (may be deprecated in some browsers)
           doc.execCommand('hiliteColor', false, execCommandColor);
           
-          // Wrap the highlighted content with our class
+          // Try to find the recently highlighted elements
           setTimeout(() => {
-            // 尝试找到刚刚高亮的元素
             const highlighted = doc.querySelectorAll(`[style*="background-color: ${execCommandColor}"]`);
             if (highlighted.length === 0) {
-              // 如果没找到精确匹配，使用不太精确的匹配
+              // If exact match not found, use a less precise match
               const allHighlighted = doc.getSelection()?.getRangeAt(0).commonAncestorContainer.parentElement?.querySelectorAll('[style*="background-color"]');
               if (allHighlighted && allHighlighted.length > 0) {
                 Array.from(allHighlighted).forEach(node => {
@@ -282,66 +284,6 @@ export function useTextSelection<T extends HTMLElement>(containerRef: React.RefO
     }
   }, [clearSelection, containerRef]);
 
-  // Remove highlight from text
-  const removeHighlight = useCallback((element: Element) => {
-    try {
-      if (!element || !element.parentNode) return false;
-      
-      const doc = containerRef.current?.ownerDocument || document;
-      const fragment = doc.createDocumentFragment();
-      
-      // Move all children out of the highlight span
-      while (element.firstChild) {
-        fragment.appendChild(element.firstChild);
-      }
-      
-      // Replace the highlight span with its contents
-      element.parentNode.replaceChild(fragment, element);
-      return true;
-    } catch (error) {
-      console.error('Failed to remove highlight:', error);
-      return false;
-    }
-  }, [containerRef]);
-
-  // Update note on an existing highlight
-  const updateHighlightNote = useCallback((element: Element, note: string) => {
-    try {
-      if (!element) return false;
-      
-      element.setAttribute('data-note', note);
-      element.setAttribute('title', note);
-      return true;
-    } catch (error) {
-      console.error('Failed to update highlight note:', error);
-      return false;
-    }
-  }, []);
-
-  // Change highlight color
-  const changeHighlightColor = useCallback((element: Element, color: HighlightColor) => {
-    try {
-      if (!element) return false;
-      
-      // Remove all color classes
-      element.classList.remove(
-        'readlite-highlight-beige',
-        'readlite-highlight-cyan',
-        'readlite-highlight-lavender',
-        'readlite-highlight-olive',
-        'readlite-highlight-peach'
-      );
-      
-      // Add the new color class
-      element.classList.add(`readlite-highlight-${color}`);
-      element.setAttribute('data-highlight-color', color);
-      return true;
-    } catch (error) {
-      console.error('Failed to change highlight color:', error);
-      return false;
-    }
-  }, []);
-
   // Generate a unique ID for each highlight
   const generateHighlightId = () => {
     return `highlight-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
@@ -405,7 +347,7 @@ export function useTextSelection<T extends HTMLElement>(containerRef: React.RefO
       const style = doc.createElement('style');
       style.id = 'readlite-highlight-styles';
       
-      // 使用硬编码颜色而不是CSS变量，确保兼容性
+      // Use hardcoded colors instead of CSS variables for compatibility
       style.textContent = `
         .readlite-highlight {
           display: inline !important;
@@ -420,20 +362,77 @@ export function useTextSelection<T extends HTMLElement>(containerRef: React.RefO
           position: relative;
           text-decoration: none !important;
         }
-        .readlite-highlight-beige { background-color: rgba(246,240,225,0.82) !important; }
-        .readlite-highlight-cyan { background-color: rgba(220,240,255,0.82) !important; }
-        .readlite-highlight-lavender { background-color: rgba(235,231,250,0.82) !important; }
-        .readlite-highlight-olive { background-color: rgba(232,245,225,0.82) !important; }
-        .readlite-highlight-peach { background-color: rgba(255,239,231,0.82) !important; }
+        .readlite-highlight-beige { background-color: rgba(255,245,230,0.82) !important; }
+        .readlite-highlight-cyan { background-color: rgba(181,228,255,0.82) !important; }
+        .readlite-highlight-lavender { background-color: rgba(220,198,255,0.82) !important; }
+        .readlite-highlight-olive { background-color: rgba(222,234,181,0.82) !important; }
+        .readlite-highlight-peach { background-color: rgba(255,204,153,0.82) !important; }
       `;
       doc.head.appendChild(style);
     }
   };
 
-  // Helper to get the color value for a highlight color (from CSS variables)
-  const getHighlightColor = (color: HighlightColor): string => {
-    return `var(--readlite-highlight-${color})`;
-  };
+
+
+  // Remove highlight from text
+  const removeHighlight = useCallback((element: Element) => {
+    try {
+      if (!element || !element.parentNode) return false;
+      
+      const doc = containerRef.current?.ownerDocument || document;
+      const fragment = doc.createDocumentFragment();
+      
+      // Move all children out of the highlight span
+      while (element.firstChild) {
+        fragment.appendChild(element.firstChild);
+      }
+      
+      // Replace the highlight span with its contents
+      element.parentNode.replaceChild(fragment, element);
+      return true;
+    } catch (error) {
+      console.error('Failed to remove highlight:', error);
+      return false;
+    }
+  }, [containerRef]);
+
+  // Update note on an existing highlight
+  const updateHighlightNote = useCallback((element: Element, note: string) => {
+    try {
+      if (!element) return false;
+      
+      element.setAttribute('data-note', note);
+      element.setAttribute('title', note);
+      return true;
+    } catch (error) {
+      console.error('Failed to update highlight note:', error);
+      return false;
+    }
+  }, []);
+
+  // Change highlight color
+  const changeHighlightColor = useCallback((element: Element, color: HighlightColor) => {
+    try {
+      if (!element) return false;
+      
+      // Remove all color classes
+      element.classList.remove(
+        'readlite-highlight-beige',
+        'readlite-highlight-cyan',
+        'readlite-highlight-lavender',
+        'readlite-highlight-olive',
+        'readlite-highlight-peach'
+      );
+      
+      // Add the new color class
+      element.classList.add(`readlite-highlight-${color}`);
+      element.setAttribute('data-highlight-color', color);
+      return true;
+    } catch (error) {
+      console.error('Failed to change highlight color:', error);
+      return false;
+    }
+  }, []);
 
   // Get all highlights in the container
   const getAllHighlights = useCallback(() => {
@@ -555,24 +554,7 @@ export function useTextSelection<T extends HTMLElement>(containerRef: React.RefO
     const toolbarHeight = 40;
     const spacing = 10;
 
-    // Get iframe position offset - not needed if running directly inside the iframe
-    // This code is only needed when positioning relative to the parent window
-    /*
-    let iframeRect = { top: 0, left: 0 };
-    try {
-      if (window !== window.parent) {
-        // If we are in an iframe
-        const iframe = window.frameElement;
-        if (iframe) {
-          const rect = iframe.getBoundingClientRect();
-          iframeRect = { top: rect.top, left: rect.left };
-        }
-      }
-    } catch (e) {
-      // Cross-origin iframe will throw security error, ignore
-      console.warn('Failed to get iframe position:', e);
-    }
-    */
+
 
     // Calculate initial position (bottom right)
     let left = selection.rect.right;

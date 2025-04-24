@@ -96,17 +96,6 @@ interface ColorTokens {
     hover: string;     // Hover link
     active: string;    // Active link
   };
-  
-  // Highlight colors for text highlights
-  highlight: {
-    beige: string;     // Beige highlight
-    cyan: string;      // Cyan highlight
-    lavender: string;  // Lavender highlight
-    olive: string;     // Olive highlight
-    peach: string;     // Peach highlight
-    selection: string; // Generic selection highlight
-    selectionHover: string; // Generic selection highlight when hovered
-  };
 }
 
 // 2025 Flagship – Reading × Minimalism Palette (OKLCH‑driven, WCAG‑compliant)
@@ -151,15 +140,6 @@ export const themeTokens: Record<ThemeType, ColorTokens> = {
       visited: '#195DD1',
       hover: '#3B8EFF',
       active: '#1247A0'
-    },
-    highlight: {
-      beige: 'rgb(246,240,225)',
-      cyan: 'rgb(220,240,255)',
-      lavender: 'rgb(235,231,250)',
-      olive: 'rgb(232,245,225)',
-      peach: 'rgb(255,239,231)',
-      selection: 'rgb(255,204,0)',
-      selectionHover: 'rgb(255,204,0)'
     }
   },
 
@@ -178,10 +158,10 @@ export const themeTokens: Record<ThemeType, ColorTokens> = {
       secondary: '#A5AEBF',
       user: '#E7EBF1',
       agent: '#E7EBF1',
-      accent: '#5D7BB0'
+      accent: '#7FA6FF'
     },
-    border: '#222426',
-    accent: '#5D7BB0',
+    border: '#1A1B1D',
+    accent: '#7FA6FF',
     error: '#FF6F6F',
     scrollbar: {
       track: '#2B2D2F',
@@ -192,16 +172,7 @@ export const themeTokens: Record<ThemeType, ColorTokens> = {
       visited: '#AAA1FF',
       hover: '#5E8CFF',
       active: '#4771DB'
-    },
-    highlight: {
-      beige: 'rgb(97, 82, 61)',
-      cyan: 'rgb(53, 89, 118)',
-      lavender: 'rgb(93, 79, 134)',
-      olive: 'rgb(73, 100, 65)',
-      peach: 'rgb(117, 76, 62)',
-      selection: 'rgb(255, 255, 0)',
-      selectionHover: 'rgb(255, 255, 0)'
-    }   
+    }
   },
 
   /* ------------------------------------------------ EYECARE (SEPIA) ---------------------------------------------- */
@@ -233,15 +204,6 @@ export const themeTokens: Record<ThemeType, ColorTokens> = {
       visited: '#6B5231',
       hover: '#A27C46',
       active: '#5E482A'
-    },
-    highlight: {
-      beige: 'rgb(211, 185, 143)',
-      cyan: 'rgb(166, 201, 201)',
-      lavender: 'rgb(187, 180, 210)',
-      olive: 'rgb(180, 204, 160)',
-      peach: 'rgb(209, 163, 142)',
-      selection: 'rgb(173, 137, 76)',
-      selectionHover: 'rgb(173, 137, 76)'
     }
   },
 
@@ -274,15 +236,6 @@ export const themeTokens: Record<ThemeType, ColorTokens> = {
       visited: '#6B3ACF',
       hover: '#9670FF',
       active: '#5E3DBD'
-    },
-    highlight: {
-      beige: 'rgb(246, 240, 225)',
-      cyan: 'rgb(220, 240, 255)',
-      lavender: 'rgb(239, 225, 255)',
-      olive: 'rgb(232, 245, 225)',
-      peach: 'rgb(255, 234, 245)',
-      selection: 'rgb(124, 77, 255)',
-      selectionHover: 'rgb(124, 77, 255)'
     }
   }
 };

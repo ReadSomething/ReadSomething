@@ -142,9 +142,9 @@ const Settings: React.FC<SettingsProps> = ({ onClose, buttonRef, onSettingsChang
   return (
     <div 
       className="fixed sm:static sm:w-[320px] md:w-[350px] sm:rounded-lg sm:border sm:shadow-lg 
-                inset-0 sm:inset-auto z-[2147483646]
+                inset-0 sm:inset-auto z-[2147483647]
                 flex flex-col overflow-auto text-sm bg-primary text-primary border-border"
-      style={panelPositionStyle}
+      style={{ ...panelPositionStyle, transform: 'translateZ(0)' }}
     >
       <div className="flex justify-between items-center p-3 py-3 sm:py-3 border-b border-border">
         <h2 className="m-0 text-base sm:text-sm font-medium">

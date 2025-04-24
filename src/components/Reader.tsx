@@ -8,9 +8,12 @@ import AgentUI from "./agent"
 import ReaderToolbar from "~/components/reader/ReaderToolbar"
 import ReaderContent from "~/components/ReaderContent"
 import ReaderDivider from "~/components/reader/ReaderDivider"
-import { ThemeProvider, useTheme } from "../context/ThemeContext"
+import { ThemeProvider } from "../context/ThemeContext"
 import { ThemeType } from "../config/theme"
 import { createLogger } from "~/utils/logger"
+import SelectionToolbar from "./reader/SelectionToolbar"
+import { HighlightColor } from "~/hooks/useTextSelection"
+import { BookOpenIcon, XCircleIcon } from '@heroicons/react/24/outline';
 
 // Create a logger for this module
 const logger = createLogger('main-reader');
@@ -21,11 +24,15 @@ const logger = createLogger('main-reader');
  */
 const ReadingProgress: React.FC<{ scrollContainer?: HTMLElement | null }> = ({ scrollContainer }) => {
   const [progress, setProgress] = useState(0);
-  const { theme } = useTheme();
   
   // Update progress as user scrolls
   useEffect(() => {
-    if (!scrollContainer) return;
+    if (!scrollContainer) {
+      console.log('No scroll container available for progress bar');
+      return;
+    }
+    
+    console.log('Progress bar attached to scroll container:', scrollContainer);
     
     const handleScroll = () => {
       // Get scroll position, account for container height and content scroll height
@@ -33,8 +40,14 @@ const ReadingProgress: React.FC<{ scrollContainer?: HTMLElement | null }> = ({ s
       const containerHeight = scrollContainer.clientHeight;
       const scrollHeight = scrollContainer.scrollHeight - containerHeight;
       
+      if (scrollHeight <= 0) {
+        console.log('Invalid scroll height detected');
+        return;
+      }
+      
       // Calculate progress as percentage
       const currentProgress = Math.min(100, Math.max(0, (scrollPosition / scrollHeight) * 100));
+      console.log(`Scroll progress: ${currentProgress.toFixed(1)}%`);
       setProgress(currentProgress);
     };
     
@@ -46,11 +59,9 @@ const ReadingProgress: React.FC<{ scrollContainer?: HTMLElement | null }> = ({ s
     return () => scrollContainer.removeEventListener('scroll', handleScroll);
   }, [scrollContainer]);
   
-  // Don't render if no valid scroll container
-  if (!scrollContainer) return null;
-  
+  // Always render a container, even without a valid scrollContainer
   return (
-    <div className="fixed top-0 left-0 w-full h-1 z-50 bg-accent/20">
+    <div className="fixed top-0 left-0 w-full h-1.5 z-[9999] bg-accent/20 pointer-events-none">
       <div 
         className={`h-full transition-all duration-150 ease-out bg-accent`}
         style={{ width: `${progress}%` }}
@@ -69,7 +80,8 @@ const Reader = () => {
   const [showAgent, setShowAgent] = useState(false)
   const [leftPanelWidth, setLeftPanelWidth] = useState(65) // Default to 65% width for reader
   const [visibleContent, setVisibleContent] = useState<string>('') // State for visible content
-  const readerContentRef = useRef<HTMLDivElement>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false); // Track fullscreen state
+  const readerContentRef = useRef<HTMLIFrameElement>(null)
   const dividerRef = useRef<HTMLDivElement>(null)
   const isDraggingRef = useRef(false)
   const initialXRef = useRef(0)
@@ -80,16 +92,313 @@ const Reader = () => {
   // Get translations function
   const { t } = useI18n()
   
-  // Reader column ref for progress indicator
+  // Reference to main reader column for scroll tracking
   const readerColumnRef = useRef<HTMLDivElement>(null);
   
-  // 引用StyleIsolator创建的shadowRoot
+  // Reference to shadowRoot created by StyleIsolator
   const readerContainerRef = useRef<HTMLDivElement>(null);
   
   // Extract current theme from settings for use with ThemeProvider
   const theme = settings.theme as ThemeType;
   
+  // Add text selection related state and handlers
+  const [selectionState, setSelectionState] = useState<{
+    isActive: boolean;
+    rect: DOMRect | null;
+  }>({
+    isActive: false,
+    rect: null
+  });
+
+  // Track scroll position for progress bar
+  const [scrollProgress, setScrollProgress] = useState(0);
+  
+  // Direct scroll handler for progress bar
+  useEffect(() => {
+    if (!readerColumnRef.current) return;
+    
+    const scrollContainer = readerColumnRef.current;
+    
+    const handleDirectScroll = () => {
+      const scrollPosition = scrollContainer.scrollTop;
+      const containerHeight = scrollContainer.clientHeight;
+      const scrollHeight = scrollContainer.scrollHeight - containerHeight;
+      
+      if (scrollHeight <= 0) return;
+      
+      const progress = Math.min(100, Math.max(0, (scrollPosition / scrollHeight) * 100));
+      setScrollProgress(progress);
+    };
+    
+    handleDirectScroll(); // Initial calculation
+    
+    scrollContainer.addEventListener('scroll', handleDirectScroll);
+    return () => scrollContainer.removeEventListener('scroll', handleDirectScroll);
+  }, [readerColumnRef.current]);
+
+  // Listen for text selection messages from ReaderContent
+  useEffect(() => {
+    const handleSelectionMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'TEXT_SELECTED') {
+        // In fullscreen mode, adjust rectangle coordinates
+        let rect = event.data.rect;
+        
+        if (rect) {
+          console.log('Selection received:', rect);
+          
+          // Ensure the selection box displays correctly in fullscreen mode
+          if (isFullscreen) {
+            // Apply any fullscreen-specific adjustments if needed
+            rect = {
+              ...rect,
+              // Make sure all properties are valid numbers
+              left: isFinite(rect.left) ? rect.left : 0,
+              top: isFinite(rect.top) ? rect.top : 0,
+              right: isFinite(rect.right) ? rect.right : 0,
+              bottom: isFinite(rect.bottom) ? rect.bottom : 0,
+              width: isFinite(rect.width) ? rect.width : 0,
+              height: isFinite(rect.height) ? rect.height : 0
+            };
+          }
+          
+          // Only show if we have valid dimensions
+          if (rect.width > 0 && rect.height > 0) {
+            setSelectionState({
+              isActive: event.data.isActive,
+              rect: rect
+            });
+            console.log('Selection state updated:', rect);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('message', handleSelectionMessage);
+    return () => {
+      window.removeEventListener('message', handleSelectionMessage);
+    };
+  }, [isFullscreen]);
+
+  // Handle text highlight
+  const handleHighlight = useCallback((color: HighlightColor) => {
+    try {
+      if (readerContentRef.current) {
+        if (typeof readerContentRef.current.contentDocument !== 'undefined') {
+          // If it's an iframe
+          const contentDocument = readerContentRef.current.contentDocument;
+          if (contentDocument) {
+            const selection = contentDocument.getSelection();
+            if (selection && !selection.isCollapsed) {
+              // Send message to iframe content
+              readerContentRef.current.contentWindow?.postMessage(
+                { type: 'HIGHLIGHT_TEXT', color }, 
+                '*'
+              );
+            }
+          }
+        } else {
+          // If it's directly embedded content (not iframe)
+          readerContentRef.current.dispatchEvent(
+            new CustomEvent('highlight-text', { detail: { color } })
+          );
+        }
+      } else {
+        // Fallback to generic message passing
+        window.postMessage({ type: 'HIGHLIGHT_TEXT', color }, '*');
+      }
+      
+      // Don't automatically clear selection state after highlighting
+      // Let the user dismiss the toolbar manually
+    } catch (err) {
+      console.error('Error in handleHighlight:', err);
+      setSelectionState({ isActive: false, rect: null });
+    }
+  }, [readerContentRef]);
+
+  // Handle direct DOM selection in fullscreen mode
+  const captureSelection = useCallback(() => {
+    if (!isFullscreen) return;
+    
+    try {
+      const selection = window.getSelection();
+      if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        
+        // Validate the selection rectangle
+        if (rect && isFinite(rect.width) && isFinite(rect.height) && 
+            rect.width > 0 && rect.height > 0) {
+          console.log('Direct DOM selection captured:', rect);
+          setSelectionState({
+            isActive: true,
+            rect: rect
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error capturing selection:', err);
+    }
+  }, [isFullscreen, setSelectionState]);
+
+  // Handle text selection events
+  const handleTextSelection = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    // Text selection handler for fullscreen mode
+    if (isFullscreen) {
+      // Use setTimeout to allow the selection to complete
+      setTimeout(() => {
+        captureSelection();
+      }, 0);
+    }
+  }, [isFullscreen, captureSelection]);
+
   // --- Effects ---
+
+  // Monitor fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  // Ensure text selection in fullscreen mode
+  useEffect(() => {
+    if (isFullscreen && readerContainerRef.current) {
+      // Small timeout to ensure styles are applied after fullscreen transition
+      setTimeout(() => {
+        if (readerContainerRef.current) {
+          readerContainerRef.current.style.userSelect = 'text'; 
+          readerContainerRef.current.style.webkitUserSelect = 'text';
+        }
+        if (readerContentRef.current) {
+          readerContentRef.current.style.userSelect = 'text';
+          readerContentRef.current.style.webkitUserSelect = 'text';
+        }
+        
+        // Also ensure the document body allows text selection
+        document.body.style.userSelect = 'text';
+        document.body.style.webkitUserSelect = 'text';
+      }, 100);
+    }
+  }, [isFullscreen]);
+  
+  // Additional useEffect specifically for handling text selection in fullscreen
+  useEffect(() => {
+    if (!isFullscreen) return;
+
+    // Add CSS to ensure selection toolbar is visible in fullscreen
+    const style = document.createElement('style');
+    style.id = 'fullscreen-selection-style';
+    style.textContent = `
+      ::selection {
+        background: rgba(0, 100, 255, 0.3) !important;
+      }
+      
+      * {
+        -webkit-user-select: text !important;
+        user-select: text !important;
+      }
+      
+      @media all {
+        :fullscreen {
+          -webkit-user-select: text !important;
+          user-select: text !important;
+        }
+      }
+      
+      /* Ensure the selection toolbar is visible in fullscreen */
+      .readlite-selection-toolbar {
+        position: fixed !important;
+        z-index: 2147483647 !important;
+        transform: translateZ(0) !important;
+        pointer-events: auto !important;
+      }
+      
+      /* Ensure the selection toolbar buttons are clickable */
+      .readlite-selection-toolbar button {
+        pointer-events: auto !important;
+      }
+      
+      /* Ensure the selection toolbar is above all other elements */
+      :fullscreen .readlite-selection-toolbar {
+        position: fixed !important;
+        z-index: 2147483647 !important;
+        pointer-events: auto !important;
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+      }
+
+      /* Force the selection toolbar to appear inside fullscreen context */
+      :root:fullscreen .readlite-selection-toolbar,
+      :root:fullscreen ~ .readlite-selection-toolbar,
+      :root:fullscreen > * .readlite-selection-toolbar {
+        display: block !important;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Special handling for fullscreen selection events
+    const handleFullscreenSelection = () => {
+      const selection = window.getSelection();
+      if (selection && !selection.isCollapsed) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        if (rect && rect.width > 0 && rect.height > 0) {
+          // Update selection state with fullscreen coordinates
+          setSelectionState({
+            isActive: true,
+            rect: rect
+          });
+        }
+      }
+    };
+
+    // Add event listeners specifically for fullscreen
+    document.addEventListener('mouseup', handleFullscreenSelection);
+    document.addEventListener('selectionchange', () => {
+      // Delay slightly to ensure selection is complete
+      setTimeout(handleFullscreenSelection, 10);
+    });
+
+    return () => {
+      const styleEl = document.getElementById('fullscreen-selection-style');
+      if (styleEl) {
+        styleEl.remove();
+      }
+      document.removeEventListener('mouseup', handleFullscreenSelection);
+      document.removeEventListener('selectionchange', handleFullscreenSelection);
+    };
+  }, [isFullscreen, setSelectionState]);
+
+  // Additional useEffect for handling selection changes in fullscreen mode
+  useEffect(() => {
+    if (!isFullscreen || !readerContainerRef.current) return;
+    
+    const handleSelectionChange = () => {
+      const selection = window.getSelection();
+      if (selection && !selection.isCollapsed) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        if (rect && rect.width > 0 && rect.height > 0) {
+          setSelectionState({
+            isActive: true,
+            rect: rect
+          });
+        }
+      }
+    };
+    
+    document.addEventListener('selectionchange', handleSelectionChange);
+    
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, [isFullscreen, setSelectionState]);
 
   // Detect article language when article data is available
   useEffect(() => {
@@ -377,6 +686,15 @@ const Reader = () => {
       }
     });
     
+    // Ensure user-select is enabled for the fullscreen element
+    if (document.fullscreenElement && readerContainerRef.current) {
+      readerContainerRef.current.style.userSelect = 'text';
+      // Also try to explicitly enable text selection on reader content
+      if (readerContentRef.current) {
+        readerContentRef.current.style.userSelect = 'text';
+      }
+    }
+    
     // Now that dragging is complete, save the width setting
     try {
       localStorage.setItem('readerPanelWidth', leftPanelWidth.toString());
@@ -386,6 +704,63 @@ const Reader = () => {
   }, [handleDrag, leftPanelWidth]);
   
   // --- Event Handlers ---
+
+  /**
+   * Sets up necessary CSS animations for UI components like tooltips and toolbars
+   */
+  useEffect(() => {
+    // Add required animation styles for selection toolbar
+    if (readerContainerRef.current) {
+      const doc = readerContainerRef.current.ownerDocument || document;
+      
+      // Only add styles if they don't already exist
+      if (!doc.getElementById('readlite-animation-styles')) {
+        try {
+          const style = doc.createElement('style');
+          style.id = 'readlite-animation-styles';
+          style.textContent = `
+            @keyframes fadeout {
+              from { opacity: 1; }
+              to { opacity: 0; }
+            }
+            
+            .animate-fadeout {
+              animation: fadeout 0.3s ease-out forwards;
+            }
+            
+            @keyframes fadein {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            
+            .animate-fadein {
+              animation: fadein 0.3s ease-in forwards;
+            }
+          `;
+          doc.head.appendChild(style);
+        } catch (e) {
+          logger.warn('Failed to add animation styles to reader document', e);
+        }
+      }
+    }
+  }, [readerContainerRef.current]);
+
+  /**
+   * Toggles fullscreen mode for the reader
+   */
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      // Enter fullscreen
+      readerContainerRef.current?.requestFullscreen().catch(err => {
+        logger.error(`Error attempting to enable fullscreen:`, err);
+      });
+    } else {
+      // Exit fullscreen
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }, []);
 
   /**
    * Toggles the visibility of the settings panel.
@@ -430,6 +805,23 @@ const Reader = () => {
     }
   }, [article]);
 
+  // Add debug logging for ReadingProgress
+  useEffect(() => {
+    console.log('Reader component mounted');
+    console.log('readerColumnRef.current:', readerColumnRef.current);
+  }, []);
+
+  useEffect(() => {
+    console.log('readerColumnRef updated:', readerColumnRef.current);
+  }, [readerColumnRef.current]);
+
+  // Update the scroll container reference for the ReadingProgress component
+  useEffect(() => {
+    if (readerColumnRef.current) {
+      console.log('Reader column reference is available for scroll tracking');
+    }
+  }, [readerColumnRef.current]);
+
   // --- Conditional Rendering --- 
 
   // Handle loading state
@@ -442,11 +834,8 @@ const Reader = () => {
         >
           <div className="flex flex-col items-center">
             <div className="mb-4 animate-pulse">
-              {/* Book icon SVG */}
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              {/* Book icon */}
+              <BookOpenIcon className="w-16 h-16 text-current" />
             </div>
             <p className="text-current font-medium">{t('extractingArticle')}</p>
             <div className="mt-4 w-16 h-1 bg-accent/20 rounded-full overflow-hidden">
@@ -468,12 +857,8 @@ const Reader = () => {
         >
           <div className="flex flex-col items-center max-w-md mx-auto p-4 rounded-lg">
             <div className="mb-4 text-error">
-              {/* Error icon SVG */}
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M15 9L9 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M9 9L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              {/* Error icon */}
+              <XCircleIcon className="w-16 h-16 text-current" />
             </div>
             <p className="text-current text-center font-medium">{error || t('couldNotExtract')}</p>
             <button 
@@ -492,14 +877,25 @@ const Reader = () => {
 
   return (
     <ThemeProvider currentTheme={theme}>
-      {/* Reading Progress Indicator */}
-      <ReadingProgress scrollContainer={readerColumnRef.current} />
+      {/* Inline Progress Bar */}
+      <div className="fixed top-0 left-0 w-full h-1.5 z-[9999] bg-accent/20 pointer-events-none">
+        <div 
+          className="h-full transition-all duration-150 ease-out bg-accent"
+          style={{ width: `${scrollProgress}%` }}
+        />
+      </div>
 
       {/* Main Container - the entire screen */}
       <div 
         ref={readerContainerRef}
         className="readlite-reader-container bg-primary text-primary flex flex-col w-full h-full overflow-hidden relative"
+        style={{
+          ...(isFullscreen ? { userSelect: 'text' } : {}),
+        }}
         data-theme={theme}
+        data-fullscreen={isFullscreen ? 'true' : 'false'}
+        onMouseUp={handleTextSelection}
+        onTouchEnd={handleTextSelection}
       >
         {/* Content Container - holds the two columns */}
         <div className="flex flex-row flex-grow h-full">
@@ -526,11 +922,12 @@ const Reader = () => {
             <ReaderToolbar 
               showAgent={showAgent}
               leftPanelWidth={leftPanelWidth}
-              settings={settings}
               toggleAgent={toggleAgent}
               handleMarkdownDownload={handleMarkdownDownload}
               toggleSettings={toggleSettings}
               handleClose={handleClose}
+              toggleFullscreen={toggleFullscreen}
+              isFullscreen={isFullscreen}
               settingsButtonRef={settingsButtonRef}
               showSettings={showSettings}
               isDragging={isDraggingRef.current}
@@ -569,15 +966,25 @@ const Reader = () => {
             </div>
           )}
         </div>
+        
+        {/* Text selection toolbar - now rendered directly for better positioning */}
+        {selectionState.isActive && selectionState.rect && (
+          <SelectionToolbar
+            isVisible={selectionState.isActive}
+            selectionRect={selectionState.rect}
+            onHighlight={handleHighlight}
+            onClose={() => setSelectionState({ isActive: false, rect: null })}
+          />
+        )}
+        
+        {/* Settings Panel (Moved inside the fullscreen container) */}
+        {showSettings && (
+          <Settings
+            onClose={() => setShowSettings(false)}
+            buttonRef={settingsButtonRef}
+          />
+        )}
       </div>
-
-      {/* Settings Panel (Overlay) */}
-      {showSettings && (
-        <Settings
-          onClose={() => setShowSettings(false)}
-          buttonRef={settingsButtonRef}
-        />
-      )}
     </ThemeProvider>
   )
 }

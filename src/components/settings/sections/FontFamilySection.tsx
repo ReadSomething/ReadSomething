@@ -35,7 +35,7 @@ const FontFamilySection: React.FC<FontFamilySectionProps> = ({
         : fontOptions.find(f => f.label.en === 'Bookerly')?.value;
       
       if (defaultFont) {
-        console.log(`Applying default font for language ${detectedLanguage}: ${defaultFont}`);
+        // Apply default font without logging to console
         updateSettings({ fontFamily: defaultFont });
       }
     }

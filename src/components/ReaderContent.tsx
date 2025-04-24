@@ -1,8 +1,7 @@
 import React, { forwardRef, useEffect, useRef, useMemo } from 'react';
 import { LanguageCode } from '~/utils/language';
 import { ThemeType } from '~/config/theme';
-import TextSelectionToolbar from './reader/TextSelectionToolbar';
-import { useTextSelection, HighlightColor } from '~/hooks/useTextSelection';
+import { useTextSelection } from '~/hooks/useTextSelection';
 import { useTheme } from '~/context/ThemeContext';
 
 import { createLogger } from "~/utils/logger";
@@ -67,7 +66,7 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
     const contentRef = useRef<HTMLDivElement | null>(null);
     
     // Use text selection hook
-    const { selection, applyHighlight, clearSelection } = useTextSelection(contentRef);
+    const { selection, applyHighlight } = useTextSelection(contentRef);
 
     // Check if language is CJK (Chinese, Japanese, Korean)
     const isCJKLanguage = useMemo(() => {
@@ -231,10 +230,47 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
       }
     }, [readerColors, ref, theme]);
 
-    // Handle highlight color selection
-    const handleHighlight = (color: HighlightColor) => {
-      applyHighlight(color);
-    };
+    // Send text selection state to parent component via messages
+    useEffect(() => {
+      if (selection.isActive && selection.rect) {
+        window.postMessage({
+          type: 'TEXT_SELECTED',
+          isActive: selection.isActive,
+          rect: selection.rect
+        }, '*');
+      }
+    }, [selection.isActive, selection.rect]);
+
+    // Listen for highlight commands from parent component
+    useEffect(() => {
+      // Handle highlight commands from messages
+      const handleHighlightMessage = (event: MessageEvent) => {
+        if (event.data && event.data.type === 'HIGHLIGHT_TEXT' && event.data.color) {
+          // Ensure highlight is applied to the correct selection
+          applyHighlight(event.data.color);
+          // Clear selection
+          window.getSelection()?.removeAllRanges();
+        }
+      };
+
+      // Handle highlight commands from custom events
+      const handleHighlightEvent = (event: CustomEvent) => {
+        if (event.detail && event.detail.color) {
+          applyHighlight(event.detail.color);
+          // Clear selection
+          window.getSelection()?.removeAllRanges();
+        }
+      };
+
+      // Add both event listeners
+      window.addEventListener('message', handleHighlightMessage);
+      contentRef.current?.addEventListener('highlight-text', handleHighlightEvent as EventListener);
+
+      return () => {
+        window.removeEventListener('message', handleHighlightMessage);
+        contentRef.current?.removeEventListener('highlight-text', handleHighlightEvent as EventListener);
+      };
+    }, [applyHighlight, contentRef]);
 
     return (
       <div 
@@ -343,18 +379,6 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
               Error loading content
             </h2>
             <p className="text-error">{error}</p>
-          </div>
-        )}
-        
-        {/* Text selection toolbar - only render when selected */}
-        {selection.isActive && selection.rect && (
-          <div className="absolute inset-0 pointer-events-none z-[999]">
-            <TextSelectionToolbar
-              isVisible={selection.isActive}
-              selectionRect={selection.rect}
-              onHighlight={handleHighlight}
-              onClose={clearSelection}
-            />
           </div>
         )}
       </div>

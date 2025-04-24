@@ -1,6 +1,13 @@
 import React, { useRef, useEffect, useState, KeyboardEvent } from 'react';
 import { ContextType } from './types';
 import { Model } from '../../types/api';
+import { 
+  ChevronDownIcon, 
+  ChevronLeftIcon, 
+  ChevronRightIcon, 
+  TrashIcon, 
+  XMarkIcon 
+} from '@heroicons/react/24/outline';
 
 interface InputAreaProps {
   inputText: string;
@@ -118,7 +125,7 @@ const InputArea: React.FC<InputAreaProps> = ({
       <div className="relative">
         {/* Input container with focus state styling */}
         <div 
-          className={`flex flex-col bg-bg-secondary border border-border/50 hover:border-border rounded-2xl 
+          className={`flex flex-col bg-bg-secondary hover:border-border rounded-2xl 
                       transition-all duration-200 shadow-sm ${
                         isFocused ? 'border-accent/50 shadow-[0_0_0_2px_var(--readlite-accent)]/10' : ''
                       }`}
@@ -138,22 +145,9 @@ const InputArea: React.FC<InputAreaProps> = ({
                       {contextType ? getContextLabel() : (t('agentContext') || 'Context')}
                     </span>
                   </span>
-                  <svg
-                    width="8"
-                    height="8"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className={`transition-transform duration-200 ${showContextMenu ? 'rotate-180' : ''}`}
-                  >
-                    <path
-                      d="M6 9L12 15L18 9"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <ChevronDownIcon
+                    className={`w-4 h-4 transition-transform duration-200 ${showContextMenu ? 'rotate-180' : ''}`}
+                  />
                 </button>
               ) : (
                 <button
@@ -161,9 +155,7 @@ const InputArea: React.FC<InputAreaProps> = ({
                   onClick={() => setIsToolbarExpanded(true)}
                   title={t('expandToolbar') || "Expand toolbar"}
                 >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 18l6-6-6-6"></path>
-                  </svg>
+                  <ChevronRightIcon className="w-3 h-3" />
                 </button>
               )}
               
@@ -206,24 +198,9 @@ const InputArea: React.FC<InputAreaProps> = ({
                     <span className="opacity-90 text-[10px]">
                       {selectedModel ? selectedModel.label : (t('agentDefaultModel') || 'Default')}
                     </span>
-                    <svg
-                      width="8"
-                      height="8"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className={`transition-transform duration-200 ${
-                        showModelMenu ? 'rotate-180' : ''
-                      }`}
-                    >
-                      <path
-                        d="M6 9L12 15L18 9"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                    <ChevronDownIcon
+                      className={`w-4 h-4 transition-transform duration-200 ${showModelMenu ? 'rotate-180' : ''}`}
+                    />
                   </button>
                 </>
               )}
@@ -235,9 +212,7 @@ const InputArea: React.FC<InputAreaProps> = ({
                   onClick={() => setIsToolbarExpanded(false)}
                   title={t('collapseToolbar') || "Collapse toolbar"}
                 >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M15 18l-6-6 6-6"></path>
-                  </svg>
+                  <ChevronLeftIcon className="w-3 h-3" />
                 </button>
               )}
               
@@ -248,11 +223,7 @@ const InputArea: React.FC<InputAreaProps> = ({
                   className={toolbarButtonClass}
                   title={t('clearChat') || "Clear chat"}
                 >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M3 6h18"></path>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  </svg>
+                  <TrashIcon className="w-3 h-3" />
                 </button>
               )}
               
@@ -263,9 +234,7 @@ const InputArea: React.FC<InputAreaProps> = ({
                   className={toolbarButtonClass}
                   title={t('minimize') || "Close"}
                 >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M18 6L6 18M6 6l12 12"></path>
-                  </svg>
+                  <XMarkIcon className="w-3 h-3" />
                 </button>
               )}
               

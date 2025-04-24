@@ -402,5 +402,29 @@
   "accentColors": {
     "message": "强调色",
     "description": "Label for accent color presets."
+  },
+  "highlight": {
+    "message": "高亮",
+    "description": "Label for the highlight button in selection toolbar."
+  },
+  "note": {
+    "message": "笔记",
+    "description": "Label for the note button in selection toolbar."
+  },
+  "copy": {
+    "message": "复制",
+    "description": "Label for the copy button in selection toolbar."
+  },
+  "copied": {
+    "message": "已复制",
+    "description": "Label shown after text has been copied."
+  },
+  "ai": {
+    "message": "AI",
+    "description": "Short label for the AI assistant button in selection toolbar."
+  },
+  "aiAssistant": {
+    "message": "AI 助手",
+    "description": "Tooltip for the AI assistant button in selection toolbar."
   }
 }
