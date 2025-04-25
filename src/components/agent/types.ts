@@ -14,6 +14,7 @@ export interface Message {
   thinking?: boolean;
   error?: boolean;
   contextType?: ContextType; // Track which context was used
+  reference?: string; // Store reference text for quotes/selections
 }
 
 // Available context types

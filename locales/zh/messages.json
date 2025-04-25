@@ -347,6 +347,14 @@
     "message": "使用整篇文章作为上下文",
     "description": "文章上下文的描述"
   },
+  "contextSelectionDesc": {
+    "message": "使用选中文本作为上下文",
+    "description": "Description for selection context"
+  },
+  "explainSelection": {
+    "message": "解释这段选中内容",
+    "description": "Default query for selected text"
+  },
   "collapseToolbar": {
     "message": "折叠工具栏",
     "description": "折叠工具栏按钮的标签"
@@ -404,11 +412,15 @@
     "description": "Label for accent color presets."
   },
   "highlight": {
-    "message": "高亮",
+    "message": "划线",
     "description": "Label for the highlight button in selection toolbar."
   },
   "note": {
-    "message": "笔记",
+    "message": "想法",
+    "description": "Label for the note button in selection toolbar."
+  },
+  "addNote": {
+    "message": "写想法",
     "description": "Label for the note button in selection toolbar."
   },
   "copy": {
@@ -426,5 +438,33 @@
   "aiAssistant": {
     "message": "AI 助手",
     "description": "Tooltip for the AI assistant button in selection toolbar."
+  },
+  "askAI": {
+    "message": "问 AI",
+    "description": "Label for the AI assistant button in selection toolbar."
+  },
+  "removeHighlight": {
+    "message": "删除划线",
+    "description": "Label for removing a highlight in selection toolbar."
+  },
+  "delete": {
+    "message": "删除",
+    "description": "Label for the delete button in selection toolbar."
+  },
+  "query": {
+    "message": "查询",
+    "description": "Label for the query button in selection toolbar."
+  },
+  "share": {
+    "message": "分享",
+    "description": "Label for the share button in selection toolbar."
+  },
+  "selectHighlightColor": {
+    "message": "选择划线颜色",
+    "description": "Label for the highlight color picker dialog."
+  },
+  "selectedText": {
+    "message": "选中文本",
+    "description": "Label for selected text reference block"
   }
 }

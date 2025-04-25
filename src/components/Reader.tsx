@@ -18,6 +18,13 @@ import { BookOpenIcon, XCircleIcon } from '@heroicons/react/24/outline';
 // Create a logger for this module
 const logger = createLogger('main-reader');
 
+// 更新类型定义，添加一个虚拟高亮元素类型
+interface VirtualHighlightElement {
+  getAttribute(name: string): string | null;
+  hasAttribute?(name: string): boolean;
+  // 添加可能需要的其他方法
+}
+
 /**
  * Reading Progress Indicator Component
  * Shows a progress bar at the top of the reader
@@ -105,9 +112,11 @@ const Reader = () => {
   const [selectionState, setSelectionState] = useState<{
     isActive: boolean;
     rect: DOMRect | null;
+    highlightElement?: Element | VirtualHighlightElement | null;
   }>({
     isActive: false,
-    rect: null
+    rect: null,
+    highlightElement: null
   });
 
   // Track scroll position for progress bar
@@ -138,8 +147,21 @@ const Reader = () => {
 
   // Listen for text selection messages from ReaderContent
   useEffect(() => {
+    // 跟踪最后一次处理的时间戳，避免在短时间内处理多次相同的事件
+    let lastProcessedTimestamp = 0;
+    
     const handleSelectionMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === 'TEXT_SELECTED') {
+        // 检查是否在短时间内重复处理相同事件
+        const now = Date.now();
+        if (now - lastProcessedTimestamp < 50) {
+          // 如果距离上次处理的时间太短，跳过这次处理
+          return;
+        }
+        
+        // 更新处理时间戳
+        lastProcessedTimestamp = now;
+        
         // In fullscreen mode, adjust rectangle coordinates
         let rect = event.data.rect;
         
@@ -163,9 +185,26 @@ const Reader = () => {
           
           // Only show if we have valid dimensions
           if (rect.width > 0 && rect.height > 0) {
+            // 创建一个虚拟的 highlight 元素以供 SelectionToolbar 使用
+            // 这将避免尝试传递实际的 DOM 元素
+            let highlightElement = null;
+            
+            // 如果有 highlightData，创建一个虚拟的元素以存储高亮信息
+            if (event.data.highlightData) {
+              // 创建一个简单对象作为虚拟的元素代表
+              highlightElement = {
+                getAttribute: (attr: string) => {
+                  if (attr === 'data-highlight-id') return event.data.highlightData.id;
+                  if (attr === 'data-highlight-color') return event.data.highlightData.color;
+                  return null;
+                }
+              };
+            }
+            
             setSelectionState({
               isActive: event.data.isActive,
-              rect: rect
+              rect: rect,
+              highlightElement: highlightElement
             });
             console.log('Selection state updated:', rect);
           }
@@ -178,6 +217,65 @@ const Reader = () => {
       window.removeEventListener('message', handleSelectionMessage);
     };
   }, [isFullscreen]);
+
+  // 跟踪最后一次移除高亮的时间戳
+  const lastRemoveHighlightRef = useRef(0);
+
+  // Handle removing a highlight
+  const handleRemoveHighlight = useCallback((element: Element | VirtualHighlightElement) => {
+    try {
+      // 防止短时间内的重复调用
+      const now = Date.now();
+      if (now - lastRemoveHighlightRef.current < 100) {
+        console.log('Ignoring duplicate remove highlight request');
+        return;
+      }
+      lastRemoveHighlightRef.current = now;
+      
+      if (!element) {
+        console.error('Cannot remove highlight: Invalid element');
+        return;
+      }
+      
+      // Get the highlight ID
+      const highlightId = element.getAttribute('data-highlight-id');
+      if (!highlightId) {
+        console.error('Cannot remove highlight: Missing highlight ID');
+        return;
+      }
+
+      if (readerContentRef.current) {
+        if (typeof readerContentRef.current.contentDocument !== 'undefined') {
+          // If it's an iframe
+          // Cannot pass element directly through postMessage, use the highlight ID instead
+          readerContentRef.current.contentWindow?.postMessage(
+            { 
+              type: 'REMOVE_HIGHLIGHT', 
+              highlightId: highlightId
+            }, 
+            '*'
+          );
+        } else {
+          // If it's directly embedded content (not iframe)
+          readerContentRef.current.dispatchEvent(
+            new CustomEvent('remove-highlight', { detail: { highlightId } })
+          );
+        }
+      } else {
+        // Fallback to generic message passing
+        window.postMessage({ 
+          type: 'REMOVE_HIGHLIGHT', 
+          highlightId: highlightId
+        }, '*');
+      }
+      
+      // Clear selection state after removing highlight
+      setSelectionState({ isActive: false, rect: null, highlightElement: null });
+    } catch (err) {
+      console.error('Error in handleRemoveHighlight:', err);
+      setSelectionState({ isActive: false, rect: null, highlightElement: null });
+    }
+  }, [readerContentRef]);
 
   // Handle text highlight
   const handleHighlight = useCallback((color: HighlightColor) => {
@@ -211,9 +309,34 @@ const Reader = () => {
       // Let the user dismiss the toolbar manually
     } catch (err) {
       console.error('Error in handleHighlight:', err);
-      setSelectionState({ isActive: false, rect: null });
+      setSelectionState({ isActive: false, rect: null, highlightElement: null });
     }
   }, [readerContentRef]);
+
+  // Handle asking AI with selected text
+  const handleAskAI = useCallback((selectedText: string) => {
+    try {
+      if (selectedText && selectedText.trim()) {
+        // First make sure the Agent panel is visible
+        if (!showAgent) {
+          setShowAgent(true);
+        }
+        
+        // Send a message to the Agent with the selected text as context
+        // We're using window.postMessage to communicate with the Agent component
+        window.postMessage({
+          type: 'ASK_AI_WITH_SELECTION',
+          selectedText: selectedText.trim()
+        }, '*');
+        
+        // Clear selection state after sending to AI
+        setSelectionState({ isActive: false, rect: null, highlightElement: null });
+      }
+    } catch (err) {
+      console.error('Error in handleAskAI:', err);
+      setSelectionState({ isActive: false, rect: null, highlightElement: null });
+    }
+  }, [showAgent, setShowAgent, setSelectionState]);
 
   // Handle direct DOM selection in fullscreen mode
   const captureSelection = useCallback(() => {
@@ -231,7 +354,8 @@ const Reader = () => {
           console.log('Direct DOM selection captured:', rect);
           setSelectionState({
             isActive: true,
-            rect: rect
+            rect: rect,
+            highlightElement: null
           });
         }
       }
@@ -352,7 +476,8 @@ const Reader = () => {
           // Update selection state with fullscreen coordinates
           setSelectionState({
             isActive: true,
-            rect: rect
+            rect: rect,
+            highlightElement: null
           });
         }
       }
@@ -387,7 +512,8 @@ const Reader = () => {
         if (rect && rect.width > 0 && rect.height > 0) {
           setSelectionState({
             isActive: true,
-            rect: rect
+            rect: rect,
+            highlightElement: null
           });
         }
       }
@@ -972,8 +1098,11 @@ const Reader = () => {
           <SelectionToolbar
             isVisible={selectionState.isActive}
             selectionRect={selectionState.rect}
+            highlightElement={selectionState.highlightElement}
             onHighlight={handleHighlight}
-            onClose={() => setSelectionState({ isActive: false, rect: null })}
+            onRemoveHighlight={handleRemoveHighlight}
+            onAskAI={handleAskAI}
+            onClose={() => setSelectionState({ isActive: false, rect: null, highlightElement: null })}
           />
         )}
         

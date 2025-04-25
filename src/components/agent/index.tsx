@@ -59,6 +59,8 @@ const AgentUI: React.FC<AgentUIProps> = ({
   const [contextType, setContextType] = useState<ContextType>('screen'); // Default to screen context
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(true); // Initialize to true
+  // New state for selected text
+  const [selectedText, setSelectedText] = useState<string>('');
 
   // Authentication state
   const [isAuth, setIsAuth] = useState<boolean>(false);
@@ -102,7 +104,8 @@ const AgentUI: React.FC<AgentUIProps> = ({
   // Define context options after t is declared
   const contextOptions = [
     { value: 'screen' as ContextType, label: t('contextTypeScreen') || 'Screen' },
-    { value: 'article' as ContextType, label: t('contextTypeArticle') || 'Article' }
+    { value: 'article' as ContextType, label: t('contextTypeArticle') || 'Article' },
+    { value: 'selection' as ContextType, label: t('contextTypeSelection') || 'Selection' }
   ];
   
   // Request models from background script on mount and load selected model from localStorage
@@ -310,11 +313,15 @@ const AgentUI: React.FC<AgentUIProps> = ({
   
   // Get context label
   const getContextTypeLabel = (type: ContextType): string => {
-    switch(type) {
-      case 'screen': return t('contextTypeScreen') || 'Screen';
-      case 'article': return t('contextTypeArticle') || 'Article';
-      case 'selection': return t('contextTypeSelection') || 'Selection';
-      default: return t('contextTypeScreen') || 'Screen';
+    switch (type) {
+      case 'screen':
+        return t('contextTypeScreen') || 'Screen';
+      case 'article':
+        return t('contextTypeArticle') || 'Article';
+      case 'selection':
+        return t('contextTypeSelection') || 'Selection';
+      default:
+        return type;
     }
   };
   
@@ -379,6 +386,10 @@ const AgentUI: React.FC<AgentUIProps> = ({
     setIsThinking(true);
     setStreamingResponse('');
     
+    // Track if using selection context
+    const isUsingSelection = contextType === 'selection' && selectedText;
+    const referenceText = isUsingSelection ? selectedText : '';
+    
     // Ensure the right context is used
     if (contextType === 'screen' && visibleContent) {
       // Update context with latest visible content before generating response
@@ -442,7 +453,9 @@ const AgentUI: React.FC<AgentUIProps> = ({
         sender: 'agent',
         text: accumulatedResponse || "I couldn't generate a response. Please try again.",
         timestamp: Date.now(),
-        contextType // Track which context was used
+        contextType, // Track which context was used
+        // Add reference text if using selection context
+        reference: isUsingSelection ? referenceText : undefined
       };
       
       // Add agent response to conversation UI
@@ -480,7 +493,9 @@ const AgentUI: React.FC<AgentUIProps> = ({
           text: accumulatedResponse + "\n\n_(Response may be incomplete due to an error)_",
           timestamp: Date.now(),
           error: true,
-          contextType
+          contextType,
+          // Add reference text if using selection context
+          reference: isUsingSelection ? referenceText : undefined
         };
         
         setMessages(prev => [...prev, errorMessage]);
@@ -498,7 +513,7 @@ const AgentUI: React.FC<AgentUIProps> = ({
       setIsLoading(false);
       setIsThinking(false);
     }
-  }, [inputText, isLoading, article, visibleContent, contextType, isAuth, modelsList]);
+  }, [inputText, isLoading, article, visibleContent, contextType, isAuth, modelsList, selectedText]);
   
   // Get summary instructions for the LLM
   const getSummaryInstructions = (): string => {
@@ -628,9 +643,66 @@ Respond directly to queries without meta-commentary like "Based on the visible c
     };
   };
   
+  // Listen for selection message from the reader
+  useEffect(() => {
+    const handleSelectionMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'ASK_AI_WITH_SELECTION') {
+        // Set the selected text
+        const text = event.data.selectedText;
+        if (text && typeof text === 'string') {
+          setSelectedText(text);
+          // Set context type to selection
+          setContextType('selection');
+          
+          // Optional: Automatically set a query about the selection
+          setInputText(`${t('explainSelection') || 'Explain this text'}`);
+          
+          // Scroll to input
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+        }
+      }
+    };
+    
+    window.addEventListener('message', handleSelectionMessage);
+    
+    return () => {
+      window.removeEventListener('message', handleSelectionMessage);
+    };
+  }, [t]);
+  
+  // Update SessionManager with the current context
+  useEffect(() => {
+    // Get access to the session manager
+    const sessionManager = sessionManagerRef.current;
+    
+    // Update the current context based on contextType
+    if (contextType === 'screen' && visibleContent) {
+      sessionManager.updateContext(
+        'visible_content',
+        visibleContent,
+        MessagePriority.VISIBLE_CONTENT
+      );
+    } else if (contextType === 'article' && article) {
+      sessionManager.updateContext(
+        'article_content',
+        article.content,
+        MessagePriority.ARTICLE_CONTENT  
+      );
+    } else if (contextType === 'selection' && selectedText) {
+      // Add the selected text as context
+      sessionManager.updateContext(
+        'selected_text',
+        selectedText,
+        MessagePriority.CURRENT_QUESTION // Give it high priority
+      );
+    }
+  }, [contextType, visibleContent, article, selectedText]);
+  
   // Render the AgentUI component
   const agentContent = (
-    <div className="readlite-agent-container readlite-scope flex flex-col w-full h-full bg-bg-primary text-text-primary relative"
+    <div className="readlite-agent-container readlite-scope flex flex-col w-full h-full bg-bg-secondary text-text-primary relative"
       style={{ 
         width: '100%',
         height: '100%',
@@ -663,7 +735,7 @@ Respond directly to queries without meta-commentary like "Based on the visible c
           {/* Main messages container */}
           <div 
             ref={messagesContainerRef}
-            className="readlite-messages-container flex-grow overflow-y-auto pt-2 px-4 pb-4 bg-bg-primary"
+            className="flex-grow overflow-y-auto pt-2 px-4 pb-4 bg-bg-secondary"
             style={{
               scrollbarWidth: 'thin',
               scrollbarColor: `var(--readlite-scrollbar-thumb) var(--readlite-scrollbar-track)`
@@ -704,6 +776,7 @@ Respond directly to queries without meta-commentary like "Based on the visible c
             onClearConversation={handleClearConversation}
             onLogin={handleLogin}
             onClose={onClose}
+            selectedText={selectedText}
           />
         </>
       )}

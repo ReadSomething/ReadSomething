@@ -289,16 +289,6 @@ export function generateThemeStyleContent(theme: ThemeType): string {
       color: var(--readlite-text-primary) !important;
     }
     
-    /* Theme-specific component styles */
-    html.${theme} .readlite-agent-bubble,
-    body.${theme} .readlite-agent-bubble,
-    html.${theme} .readlite-agent-message-content,
-    body.${theme} .readlite-agent-message-content {
-      background-color: var(--readlite-bg-secondary) !important;
-      color: var(--readlite-text-primary) !important;
-      border-color: var(--readlite-border) !important;
-    }
-    
     /* Markdown content */
     html.${theme} .readlite-agent-markdown-content *,
     body.${theme} .readlite-agent-markdown-content * {

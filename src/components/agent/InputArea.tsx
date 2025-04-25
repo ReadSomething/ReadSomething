@@ -27,7 +27,15 @@ interface InputAreaProps {
   onClearConversation?: () => void;
   onLogin?: () => void;
   onClose?: () => void;
+  selectedText?: string;
 }
+
+// QuoteIcon component for consistent use across components
+const QuoteIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M7.5 7h3.75m-3.75 3h3.75m3-6H18m-3.75 3H18m-3.75 3H18M4.5 19.5h15a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5h-15A1.5 1.5 0 0 0 3 6v12a1.5 1.5 0 0 0 1.5 1.5Z" />
+  </svg>
+);
 
 const InputArea: React.FC<InputAreaProps> = ({
   inputText,
@@ -47,12 +55,25 @@ const InputArea: React.FC<InputAreaProps> = ({
   onClearConversation,
   onLogin,
   onClose,
+  selectedText = '',
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [isToolbarExpanded, setIsToolbarExpanded] = useState(true);
+  const [isReferenceExpanded, setIsReferenceExpanded] = useState(true);
+
+  // Should show reference block
+  const shouldShowReference = 
+    contextType === 'selection' && 
+    selectedText && 
+    selectedText.trim().length > 0;
+
+  // Toggle reference visibility
+  const toggleReference = () => {
+    setIsReferenceExpanded(!isReferenceExpanded);
+  };
 
   useEffect(() => {
     // Focus the textarea when the component mounts
@@ -122,10 +143,35 @@ const InputArea: React.FC<InputAreaProps> = ({
 
   return (
     <div className="w-full pt-2 pb-2 px-4">
+      {/* Reference block for selections */}
+      {shouldShowReference && (
+        <div className="mb-2 bg-bg-secondary rounded-xl p-2 border border-border/50 shadow-sm">
+          <div 
+            className="flex items-center text-xs text-text-secondary/80 mb-1 cursor-pointer hover:text-accent group"
+            onClick={toggleReference}
+          >
+            <QuoteIcon className="w-3.5 h-3.5 mr-1 text-text-secondary/60 group-hover:text-accent" />
+            <span className="font-medium">{t('selectedText') || 'Selected Text'}</span>
+            {isReferenceExpanded ? (
+              <ChevronDownIcon className="w-3.5 h-3.5 ml-1" />
+            ) : (
+              <ChevronRightIcon className="w-3.5 h-3.5 ml-1" />
+            )}
+          </div>
+          
+          {isReferenceExpanded && (
+            <div className="pl-2 border-l-2 border-accent/30 py-1.5 pr-2 text-xs bg-bg-primary/5 rounded-r-md 
+                           text-text-secondary/60 my-1 leading-relaxed max-h-[100px] overflow-y-auto">
+              {selectedText}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="relative">
         {/* Input container with focus state styling */}
         <div 
-          className={`flex flex-col bg-bg-secondary hover:border-border rounded-2xl 
+          className={`flex flex-col bg-bg-primary hover:border-border rounded-2xl 
                       transition-all duration-200 shadow-sm ${
                         isFocused ? 'border-accent/50 shadow-[0_0_0_2px_var(--readlite-accent)]/10' : ''
                       }`}

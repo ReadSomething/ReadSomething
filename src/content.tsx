@@ -425,37 +425,9 @@ function setupIframeContent(iframe: HTMLIFrameElement, theme: ThemeType) {
           color: inherit !important;
           z-index: 2147483645 !important;
           overflow: hidden !important;
-        }
-        
-        /* Reader container */
-        .readlite-reader-container {
-          background-color: var(--readlite-bg-primary) !important;
-          color: var(--readlite-text-primary) !important;
-          transition: background-color 0.3s ease, color 0.3s ease !important;
-        }
-        
-        /* Chat bubbles */
-        .readlite-agent-bubble {
           background-color: var(--readlite-bg-secondary) !important;
           color: var(--readlite-text-primary) !important;
-        }
-        
-        /* Input area */
-        .readlite-agent-input-area {
-          position: sticky !important;
-          bottom: 0 !important;
-          background-color: var(--readlite-bg-primary) !important;
-          border-top: 1px solid var(--readlite-border) !important;
-          padding: 10px !important;
-          width: 100% !important;
-          z-index: 10 !important;
-        }
-        
-        /* Message list */
-        .readlite-agent-message-list {
-          flex: 1 !important;
-          overflow-y: auto !important;
-          padding: 16px !important;
+          transition: background-color 0.3s ease, color 0.3s ease !important;
         }
         
         /* Tailwind utility classes */

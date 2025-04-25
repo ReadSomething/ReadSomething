@@ -33,7 +33,7 @@ const TYPOGRAPHY = {
   },
   margins: {
     min: 16,
-    default: 20,
+    default: 32,
     max: 32
   }
 };
@@ -66,7 +66,7 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
     const contentRef = useRef<HTMLDivElement | null>(null);
     
     // Use text selection hook
-    const { selection, applyHighlight } = useTextSelection(contentRef);
+    const { selection, applyHighlight, removeHighlight } = useTextSelection(contentRef);
 
     // Check if language is CJK (Chinese, Japanese, Korean)
     const isCJKLanguage = useMemo(() => {
@@ -148,7 +148,7 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
         content.style.fontFamily = settings.fontFamily;
         
         // Apply classes to content elements, excluding headings
-        const contentElements = content.querySelectorAll('p, li, blockquote, div:not(.code-lang-label)');
+        const contentElements = content.querySelectorAll('p, li, blockquote, div:not(.code-lang-label):not(.readlite-byline)');
         
         contentElements.forEach((el: Element) => {
           const htmlEl = el as HTMLElement;
@@ -233,16 +233,30 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
     // Send text selection state to parent component via messages
     useEffect(() => {
       if (selection.isActive && selection.rect) {
+        // Don't pass the DOM element directly, it's not serializable
+        // If there is a highlightElement, only pass its ID
+        let highlightData = null;
+        if (selection.highlightElement) {
+          highlightData = {
+            id: selection.highlightElement.getAttribute('data-highlight-id'),
+            color: selection.highlightElement.getAttribute('data-highlight-color')
+          };
+        }
+        
         window.postMessage({
           type: 'TEXT_SELECTED',
           isActive: selection.isActive,
-          rect: selection.rect
+          rect: selection.rect,
+          highlightData: highlightData
         }, '*');
       }
-    }, [selection.isActive, selection.rect]);
+    }, [selection.isActive, selection.rect, selection.highlightElement]);
 
     // Listen for highlight commands from parent component
     useEffect(() => {
+      // Flag to prevent duplicate processing
+      let processingRemoveHighlight = false;
+      
       // Handle highlight commands from messages
       const handleHighlightMessage = (event: MessageEvent) => {
         if (event.data && event.data.type === 'HIGHLIGHT_TEXT' && event.data.color) {
@@ -250,6 +264,72 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
           applyHighlight(event.data.color);
           // Clear selection
           window.getSelection()?.removeAllRanges();
+        }
+      };
+
+      // Handle removing highlight commands from messages
+      const handleRemoveHighlightMessage = (event: MessageEvent) => {
+        try {
+          // If already processing the delete operation, skip
+          if (processingRemoveHighlight) return;
+          
+          if (event.data && event.data.type === 'REMOVE_HIGHLIGHT') {
+            if (event.data.highlightId) {
+              // Set processing flag
+              processingRemoveHighlight = true;
+              
+              // Find and remove all highlight elements with the same ID
+              const highlightElements = contentRef.current?.querySelectorAll('.readlite-highlight') || [];
+              console.log('Searching for highlight with ID:', event.data.highlightId);
+              console.log('Found highlight elements:', highlightElements.length);
+              
+              let foundCount = 0;
+              // Collect all matching elements
+              const elementsToRemove: Element[] = [];
+              
+              // Find all elements to remove
+              for (const el of Array.from(highlightElements)) {
+                const id = el.getAttribute('data-highlight-id');
+                if (id === event.data.highlightId) {
+                  elementsToRemove.push(el);
+                  foundCount++;
+                }
+              }
+              
+              // Then remove them one by one
+              console.log(`Found ${foundCount} elements with ID ${event.data.highlightId}, removing all of them`);
+              for (const el of elementsToRemove) {
+                removeHighlight(el);
+              }
+              
+              if (foundCount === 0) {
+                console.warn('Could not find highlight with ID:', event.data.highlightId);
+              }
+              
+              // Reset the processing flag after a short delay to prevent duplicate operations
+              setTimeout(() => {
+                processingRemoveHighlight = false;
+              }, 100);
+            } else if (event.data.element) {
+              // Direct element reference (non-iframe context)
+              processingRemoveHighlight = true;
+              console.log('Removing highlight by direct element reference');
+              removeHighlight(event.data.element);
+              
+              // Reset the processing flag after a short delay to prevent duplicate operations
+              setTimeout(() => {
+                processingRemoveHighlight = false;
+              }, 100);
+            } else {
+              console.error('Remove highlight message missing both highlightId and element');
+            }
+            
+            // Clear any selection
+            window.getSelection()?.removeAllRanges();
+          }
+        } catch (error) {
+          console.error("Error handling remove highlight message:", error);
+          processingRemoveHighlight = false;
         }
       };
 
@@ -262,15 +342,75 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
         }
       };
 
-      // Add both event listeners
+      // Handle removing highlight commands from custom events
+      const handleRemoveHighlightEvent = (event: CustomEvent) => {
+        try {
+          // If already processing the delete operation, skip
+          if (processingRemoveHighlight) return;
+          
+          if (event.detail) {
+            processingRemoveHighlight = true;
+            
+            if (event.detail.highlightId) {
+              // Find all matching highlight elements by ID
+              const highlightElements = contentRef.current?.querySelectorAll('.readlite-highlight') || [];
+              
+              // Collect all matching elements
+              const elementsToRemove: Element[] = [];
+              let foundCount = 0;
+              
+              // Find all elements to remove
+              for (const el of Array.from(highlightElements)) {
+                if (el.getAttribute('data-highlight-id') === event.detail.highlightId) {
+                  elementsToRemove.push(el);
+                  foundCount++;
+                }
+              }
+              
+              // Then remove them one by one
+              console.log(`Found ${foundCount} elements with ID ${event.detail.highlightId}, removing all of them`);
+              for (const el of elementsToRemove) {
+                removeHighlight(el);
+              }
+              
+              if (foundCount === 0) {
+                console.warn('Could not find highlight with ID:', event.detail.highlightId);
+              }
+            } else if (event.detail.element) {
+              // Legacy: direct element reference (backward compatibility)
+              console.log('Removing highlight by direct element reference');
+              removeHighlight(event.detail.element);
+            } else {
+              console.error('Remove highlight event missing both highlightId and element');
+            }
+            
+            // Clear any selection
+            window.getSelection()?.removeAllRanges();
+            
+            // Reset the processing flag after a short delay to prevent duplicate operations
+            setTimeout(() => {
+              processingRemoveHighlight = false;
+            }, 100);
+          }
+        } catch (error) {
+          console.error("Error removing highlight:", error);
+          processingRemoveHighlight = false;
+        }
+      };
+
+      // Add all event listeners
       window.addEventListener('message', handleHighlightMessage);
+      window.addEventListener('message', handleRemoveHighlightMessage);
       contentRef.current?.addEventListener('highlight-text', handleHighlightEvent as EventListener);
+      contentRef.current?.addEventListener('remove-highlight', handleRemoveHighlightEvent as EventListener);
 
       return () => {
         window.removeEventListener('message', handleHighlightMessage);
+        window.removeEventListener('message', handleRemoveHighlightMessage);
         contentRef.current?.removeEventListener('highlight-text', handleHighlightEvent as EventListener);
+        contentRef.current?.removeEventListener('remove-highlight', handleRemoveHighlightEvent as EventListener);
       };
-    }, [applyHighlight, contentRef]);
+    }, [applyHighlight, removeHighlight, contentRef]);
 
     return (
       <div 
@@ -286,18 +426,19 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
         className={`
           readlite-reader-content 
           lang-${detectedLanguage} 
-          mx-auto py-5 pb-[100px] 
+          mx-auto my-8 px-[48px] py-8
           relative
           ${fontFamilyClass}
           ${textAlignClass}
           bg-primary
           text-primary
           antialiased
+          shadow-md
+          rounded-md
           transition-colors duration-300
         `}
         style={{
           maxWidth: `${settings.width}px`,
-          padding: `0 ${TYPOGRAPHY.margins.default}px`,
           '--readlite-reader-font-size': `${settings.fontSize}px`,
           '--readlite-reader-line-height': getOptimalLineHeight.toString(),
         } as React.CSSProperties}
@@ -316,7 +457,7 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
           .readlite-reader-content p, 
           .readlite-reader-content li, 
           .readlite-reader-content blockquote,
-          .readlite-reader-content div:not(.code-lang-label) {
+          .readlite-reader-content div:not(.code-lang-label):not(.readlite-byline) {
             font-size: var(--readlite-reader-font-size);
             line-height: var(--readlite-reader-line-height);
             font-family: ${settings.fontFamily};
@@ -345,7 +486,7 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
           <>
             {article.title && (
               <h1 
-                className="mb-4 mt-8 font-semibold transition-colors duration-300 text-primary"
+                className="mb-4 mt-4 font-semibold transition-colors duration-300 text-primary"
                 style={{
                   letterSpacing: isCJKLanguage ? '0.02em' : '0',
                   fontFamily: settings.fontFamily
@@ -357,8 +498,7 @@ const ReaderContent = forwardRef<HTMLDivElement, ReaderContentProps>(
             
             {article.byline && (
               <div 
-                className="mb-8 text-sm opacity-75 text-primary"
-                style={{ fontFamily: settings.fontFamily }}
+                className="mb-8 opacity-75 text-secondary readlite-byline text-md"
               >
                 {article.byline}
               </div>

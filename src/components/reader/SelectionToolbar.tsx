@@ -2,13 +2,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import { HighlightColor } from '../../hooks/useTextSelection';
 import { useTheme } from '../../context/ThemeContext';
 import { useI18n } from '../../context/I18nContext';
-import { PencilIcon, DocumentTextIcon, SparklesIcon, XMarkIcon, ClipboardDocumentIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, DocumentTextIcon, SparklesIcon, XMarkIcon, ClipboardDocumentIcon, CheckIcon, TrashIcon } from '@heroicons/react/24/outline';
+
+interface VirtualHighlightElement {
+  getAttribute(name: string): string | null;
+  hasAttribute?(name: string): boolean;
+}
 
 interface TextSelectionToolbarProps {
   isVisible: boolean;
   selectionRect: DOMRect | null;
   onHighlight: (color: HighlightColor) => void;
   onClose: () => void;
+  highlightElement?: Element | VirtualHighlightElement | null;
+  onRemoveHighlight?: (element: Element | VirtualHighlightElement) => void;
+  onAskAI?: (selectedText: string) => void;
 }
 
 // Define a more extensive type for highlight colors with proper names
@@ -23,14 +31,21 @@ const SelectionToolbar: React.FC<TextSelectionToolbarProps> = ({
   isVisible,
   selectionRect,
   onHighlight,
-  onClose
+  onClose,
+  highlightElement,
+  onRemoveHighlight,
+  onAskAI
 }) => {
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   
   const { theme } = useTheme();
-  const { t } = useI18n(); // Get translation function
+  const { t, uiLanguage } = useI18n(); // Get translation function and language
+  
+  // Adjust button width based on language
+  const isChinese = uiLanguage.startsWith('zh');
 
   // Enhanced highlight color scheme with sophisticated colors
   const highlightColors: HighlightColorOption[] = [
@@ -75,8 +90,8 @@ const SelectionToolbar: React.FC<TextSelectionToolbarProps> = ({
   const calculatePosition = () => {
     if (!selectionRect) return { top: 0, left: 0 };
 
-    const toolbarWidth = 280; // Increased to accommodate wider buttons with text
-    const toolbarHeight = 80; // Increased to accommodate taller buttons with text
+    const toolbarWidth = isChinese ? 320 : 360; // Estimated toolbar width
+    const toolbarHeight = 90; // Estimated toolbar height
     const spacing = 12;
 
     const viewportWidth = window.innerWidth;
@@ -116,9 +131,6 @@ const SelectionToolbar: React.FC<TextSelectionToolbarProps> = ({
     if (top < 10) {
       top = 10;
     }
-
-    console.log('Selection rect:', rect);
-    console.log('Toolbar position:', { top, left });
     
     return { top, left };
   };
@@ -186,7 +198,7 @@ const SelectionToolbar: React.FC<TextSelectionToolbarProps> = ({
     // Use preventDefault to avoid losing selection in iframe
     e.preventDefault();
     e.stopPropagation();
-    console.log('Highlight button clicked');
+    console.log('Highlight button clicked, toggling color picker:', !showColorPicker);
     setShowColorPicker(prev => !prev);
   };
 
@@ -233,24 +245,81 @@ const SelectionToolbar: React.FC<TextSelectionToolbarProps> = ({
     }
   };
 
+  // Handle removing highlight
+  const handleRemoveHighlight = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isRemoving) {
+      return;
+    }
+    
+    if (highlightElement && onRemoveHighlight) {
+      try {
+        setIsRemoving(true);
+        
+        console.log('Removing highlight element:', highlightElement);
+        // Check if there is a highlight ID
+        const highlightId = highlightElement.getAttribute('data-highlight-id');
+        if (!highlightId) {
+          console.warn('Highlight element missing data-highlight-id attribute');
+        }
+        
+        onRemoveHighlight(highlightElement);
+      } catch (error) {
+        console.error('Error in handleRemoveHighlight:', error);
+      } finally {
+        onClose();
+        
+        setTimeout(() => {
+          setIsRemoving(false);
+        }, 300);
+      }
+    } else {
+      console.warn('Cannot remove highlight: Missing element or callback');
+      onClose();
+    }
+  };
+
+  // Handle asking AI with selected text
+  const handleAskAI = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (onAskAI) {
+      let selectedText = '';
+      let selection: Selection | null = null;
+      
+      try {
+        // Try to get selection from iframe first
+        const iframe = document.querySelector('iframe');
+        if (iframe && iframe.contentWindow) {
+          selection = iframe.contentWindow.getSelection();
+        } else {
+          selection = window.getSelection();
+        }
+        
+        if (selection && !selection.isCollapsed) {
+          selectedText = selection.toString();
+          onAskAI(selectedText);
+          onClose(); // Close the toolbar after asking
+        }
+      } catch (err) {
+        console.error('Failed to get selected text for AI:', err);
+      }
+    } else {
+      // Fallback if handler isn't provided
+      alert(t('comingSoon'));
+    }
+  };
+  
   return (
     <div 
       ref={toolbarRef}
-      className="fixed z-[2147483647] select-none readlite-selection-toolbar"
+      className="fixed z-[2147483647] select-none readlite-selection-toolbar animate-in fade-in slide-in-from-bottom-2 duration-200"
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
-        width: 'auto',
-        maxWidth: '100vw',
-        borderRadius: '8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
-        backdropFilter: 'blur(10px)',
-        background: theme === 'dark' ? 'rgba(30,30,30,0.85)' : 'rgba(255,255,255,0.9)',
-        border: `1px solid ${theme === 'dark' ? 'rgba(60,60,60,0.8)' : 'rgba(220,220,220,0.8)'}`,
-        overflow: 'visible',
-        position: 'fixed',
-        transform: 'translateZ(0)',
-        willChange: 'transform',
         pointerEvents: 'auto',
       }}
       onClick={(e) => {
@@ -259,146 +328,225 @@ const SelectionToolbar: React.FC<TextSelectionToolbarProps> = ({
         e.preventDefault();
       }}
     >
-      {/* Main Toolbar */}
-      <div className="flex items-center px-4 py-2 gap-1">
-        {/* Highlight Button and Color Picker */}
-        <div className="relative group">
-          {/* Highlight Button */}
-          <button
-            onMouseDown={handleHighlightClick}
-            className={`flex flex-col items-center justify-center cursor-pointer border-none rounded-lg transition-all duration-200 ease-in-out px-2 py-1
-                      ${showColorPicker 
-                        ? 'bg-accent/15 text-accent shadow-sm ring-1 ring-accent/30' 
-                        : 'bg-transparent text-primary/70 hover:bg-primary/10 hover:text-primary hover:scale-105 hover:shadow-sm active:scale-95'}`}
-            title={t('highlight')}
-          >
-            <div className="w-8 h-8 flex items-center justify-center">
-              <PencilIcon className="w-5 h-5" />
-            </div>
-            <span className="text-xs mt-1 font-medium">{t('highlight')}</span>
-          </button>
+      {/* Glass container with modern styling */}
+      <div className={`
+        relative overflow-hidden rounded-xl shadow-lg
+        ${theme === 'dark' 
+          ? 'bg-neutral-800/95 border border-neutral-700/50' 
+          : 'bg-white/95 border border-neutral-200/80'}
+        backdrop-blur-md p-1.5
+      `}>
+        {/* Main Toolbar */}
+        <div className="flex flex-col">
+          {/* Top row of buttons */}
+          <div className="flex items-center gap-1">
+            {/* 1. COPY BUTTON */}
+            <ToolbarButton
+              onMouseDown={handleCopy}
+              isActive={isCopied}
+              activeColor="accent"
+              icon={
+                <div className="relative w-5 h-5">
+                  <ClipboardDocumentIcon className={`absolute inset-0 w-5 h-5 transition-all ${isCopied ? 'opacity-0 scale-90' : 'opacity-100'}`} />
+                  <CheckIcon className={`absolute inset-0 w-5 h-5 transition-all ${isCopied ? 'opacity-100 text-accent' : 'opacity-0 scale-110'}`} />
+                </div>
+              }
+              label={isCopied ? t('copied') : t('copy')}
+              isDark={theme === 'dark'}
+              width={isChinese ? 48 : 56}
+            />
+            
+            {/* 2. HIGHLIGHT or DELETE HIGHLIGHT */}
+            {!highlightElement ? (
+              <ToolbarButton
+                onMouseDown={handleHighlightClick}
+                isActive={showColorPicker}
+                activeColor="accent"
+                icon={<PencilIcon className="w-5 h-5" />}
+                label={t('highlight')}
+                isDark={theme === 'dark'}
+                width={isChinese ? 48 : 56}
+              />
+            ) : (
+              highlightElement && onRemoveHighlight && (
+                <ToolbarButton
+                  onMouseDown={handleRemoveHighlight}
+                  icon={<TrashIcon className="w-5 h-5" />}
+                  label={t('delete')}
+                  isDark={theme === 'dark'}
+                  width={isChinese ? 48 : 56}
+                  warningAction
+                />
+              )
+            )}
+
+            {/* 3. NOTE BUTTON */}
+            <ToolbarButton
+              onMouseDown={() => alert(t('comingSoon'))}
+              icon={<DocumentTextIcon className="w-5 h-5" />}
+              label={t('addNote')}
+              isDark={theme === 'dark'}
+              width={isChinese ? 48 : 56}
+            />
+            
+            {/* 4. AI ASSISTANT BUTTON */}
+            <ToolbarButton
+              onMouseDown={handleAskAI}
+              icon={<SparklesIcon className="w-5 h-5" />}
+              label={t('askAI')}
+              isDark={theme === 'dark'}
+              width={isChinese ? 48 : 56}
+              specialColor="accent"
+            />
+            
+            {/* 5. QUERY BUTTON */}
+            <ToolbarButton
+              onMouseDown={() => alert(t('comingSoon'))}
+              icon={
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+              }
+              label={t('query')}
+              isDark={theme === 'dark'}
+              width={isChinese ? 48 : 56}
+            />
+            
+            {/* 6. SHARE BUTTON */}
+            <ToolbarButton
+              onMouseDown={() => alert(t('comingSoon'))}
+              icon={
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935-2.186 2.25 2.25 0 0 0-3.935 2.186Z" />
+                </svg>
+              }
+              label={t('share')}
+              isDark={theme === 'dark'}
+              width={isChinese ? 48 : 56}
+            />
+            
+            {/* 7. CLOSE BUTTON - at the end */}
+            <ToolbarButton
+              onMouseDown={onClose}
+              icon={<XMarkIcon className="w-5 h-5" />}
+              label={t('close')}
+              isDark={theme === 'dark'}
+              width={isChinese ? 48 : 56}
+              warningAction
+            />
+          </div>
           
-          {/* If color picker is open, show circular color menu above button */}
-          {showColorPicker && (
-            <div 
-              className="absolute z-[2147483647] animate-in fade-in zoom-in-90 duration-150"
-              style={{
-                top: '58px',  // Adjusted to account for taller button with text
-                left: '50%',
-                transform: 'translateX(-50%)',
-                background: theme === 'dark' ? 'rgba(30,30,30,0.95)' : 'rgba(255,255,255,0.98)',
-                backdropFilter: 'blur(12px)',
-                borderRadius: '9999px',
-                padding: '10px',
-                boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
-                border: `1px solid ${theme === 'dark' ? 'rgba(80,80,80,0.8)' : 'rgba(220,220,220,0.8)'}`,
-              }}
-            >
-              <div className="flex gap-2 items-center">
+          {/* Second row - Color picker under the highlight button */}
+          {showColorPicker && !highlightElement && (
+            <div className="flex justify-center mt-1 mb-0.5">
+              <div 
+                className={`
+                  flex items-center gap-2 px-3 py-1.5 rounded-full
+                  ${theme === 'dark' ? 'bg-neutral-700/40' : 'bg-neutral-100/80'}
+                `}
+                style={{ 
+                  marginLeft: isChinese ? "48px" : "56px" // Align under the highlight button
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+              >
                 {highlightColors.map((item) => (
                   <button
                     key={item.color}
                     onMouseDown={(e) => handleApplyHighlight(item.color, e)}
-                    className="w-8 h-8 rounded-full cursor-pointer hover:scale-110 active:scale-90 transition-all duration-150 hover:shadow-md group relative"
+                    className="w-6 h-6 rounded-full hover:scale-110 transition-transform"
                     style={{
                       backgroundColor: item.value,
-                      border: '1px solid rgba(0,0,0,0.1)',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
                     }}
                     title={item.description}
-                  >
-                  </button>
+                    aria-label={item.name}
+                  />
                 ))}
               </div>
-              
-              {/* Small triangle indicator */}
-              <div 
-                className="absolute w-3 h-3 transform rotate-45"
-                style={{
-                  top: '-6px',
-                  left: '50%',
-                  marginLeft: '-6px',
-                  background: theme === 'dark' ? 'rgba(30,30,30,0.95)' : 'rgba(255,255,255,0.98)',
-                  borderLeft: `1px solid ${theme === 'dark' ? 'rgba(80,80,80,0.8)' : 'rgba(220,220,220,0.8)'}`,
-                  borderTop: `1px solid ${theme === 'dark' ? 'rgba(80,80,80,0.8)' : 'rgba(220,220,220,0.8)'}`,
-                }}
-              />
             </div>
           )}
         </div>
-
-        {/* Note Button */}
-        <div className="group">
-          <button
-            onClick={() => {
-              alert(t('comingSoon'));
-            }}
-            className="flex flex-col items-center justify-center cursor-pointer border-none rounded-lg transition-all duration-200 ease-in-out px-2 py-1
-                      bg-transparent text-primary/70 hover:bg-primary/10 hover:text-primary hover:scale-105 hover:shadow-sm active:scale-95"
-            title={t('note')}
-          >
-            <div className="w-8 h-8 flex items-center justify-center">
-              <DocumentTextIcon className="w-5 h-5 group-hover:animate-pulse" />
-            </div>
-            <span className="text-xs mt-1 font-medium">{t('note')}</span>
-          </button>
-        </div>
-        
-        {/* Copy Button */}
-        <div className="group">
-          <button
-            onMouseDown={handleCopy}
-            className={`flex flex-col items-center justify-center cursor-pointer border-none rounded-lg transition-all duration-200 ease-in-out px-2 py-1
-                      ${isCopied
-                        ? 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400'
-                        : 'bg-transparent text-primary/70 hover:bg-primary/10 hover:text-primary hover:scale-105 hover:shadow-sm active:scale-95'}`}
-            title={t('copy')}
-          >
-            <div className="w-8 h-8 flex items-center justify-center">
-              {isCopied ? (
-                <CheckIcon className="w-5 h-5 text-green-500 animate-in zoom-in-50 duration-200" />
-              ) : (
-                <ClipboardDocumentIcon className="w-5 h-5 group-hover:animate-pulse" />
-              )}
-            </div>
-            <span className={`text-xs mt-1 font-medium ${isCopied ? 'text-green-600 dark:text-green-400' : ''}`}>
-              {isCopied ? t('copied') : t('copy')}
-            </span>
-          </button>
-        </div>
-        
-        {/* AI Assistant Button */}
-        <div className="group">
-          <button
-            onClick={() => {
-              alert(t('comingSoon'));
-            }}
-            className="flex flex-col items-center justify-center cursor-pointer border-none rounded-lg transition-all duration-200 ease-in-out px-2 py-1
-                      bg-transparent text-primary/70 hover:bg-accent/10 hover:text-accent hover:scale-105 hover:shadow-sm active:scale-95"
-            title={t('aiAssistant')}
-          >
-            <div className="w-8 h-8 flex items-center justify-center">
-              <SparklesIcon className="w-5 h-5 group-hover:animate-pulse" />
-            </div>
-            <span className="text-xs mt-1 font-medium">{t('ai')}</span>
-          </button>
-        </div>
-        
-        {/* Close Button */}
-        <div className="group">
-          <button
-            onClick={onClose}
-            className="flex flex-col items-center justify-center cursor-pointer border-none rounded-lg transition-all duration-200 ease-in-out px-2 py-1
-                      bg-transparent text-primary/70 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 hover:scale-105 hover:shadow-sm active:scale-95"
-            title={t('close')}
-          >
-            <div className="w-8 h-8 flex items-center justify-center">
-              <XMarkIcon className="w-5 h-5 group-hover:animate-pulse" />
-            </div>
-            <span className="text-xs mt-1 font-medium">{t('close')}</span>
-          </button>
-        </div>
       </div>
     </div>
+  );
+};
+
+// Reusable Button Component for Selection Toolbar
+interface ToolbarButtonProps {
+  onMouseDown: (e: React.MouseEvent) => void;
+  icon: React.ReactNode;
+  label: string;
+  isActive?: boolean;
+  activeColor?: string;
+  specialColor?: string;
+  warningAction?: boolean;
+  isDark?: boolean;
+  width: number;
+}
+
+const ToolbarButton: React.FC<ToolbarButtonProps> = ({
+  onMouseDown,
+  icon,
+  label,
+  isActive = false,
+  activeColor = 'accent',
+  specialColor,
+  warningAction = false,
+  isDark = false,
+  width
+}) => {
+  const getButtonClasses = () => {
+    const baseClasses = "group flex flex-col items-center justify-center rounded-lg transition-all duration-150 p-1.5";
+    
+    if (isActive) {
+      return `${baseClasses} ${activeColor === 'accent' ? 'bg-accent/10 text-accent' : 'bg-accent/10 text-accent'} shadow-sm`;
+    }
+    
+    // Warning actions like delete or close
+    if (warningAction) {
+      return `${baseClasses} text-neutral-500 hover:text-red-500 hover:bg-red-50/50`;
+    }
+    
+    // Special color for certain buttons (like AI)
+    if (specialColor === 'accent') {
+      return `${baseClasses} text-neutral-500 hover:text-accent hover:bg-accent/5`;
+    }
+    
+    // Default state
+    return `${baseClasses} text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100/60 dark:hover:bg-neutral-700/30`;
+  };
+  
+  const getTextClasses = () => {
+    if (isActive) {
+      return "text-xs font-medium mt-1 text-center text-current";
+    }
+    if (warningAction) {
+      return "text-xs font-medium mt-1 text-center text-neutral-500 group-hover:text-red-500";
+    }
+    if (specialColor === 'accent') {
+      return "text-xs font-medium mt-1 text-center text-neutral-500 group-hover:text-accent";
+    }
+    return "text-xs font-medium mt-1 text-center text-neutral-500 group-hover:text-neutral-700 dark:group-hover:text-neutral-200";
+  };
+  
+  return (
+    <button
+      onMouseDown={onMouseDown}
+      className={getButtonClasses()}
+      style={{ width }}
+      title={label}
+      aria-label={label}
+    >
+      <div className="w-6 h-6 flex items-center justify-center">
+        {icon}
+      </div>
+      <span className={getTextClasses()}>
+        {label}
+      </span>
+    </button>
   );
 };
 

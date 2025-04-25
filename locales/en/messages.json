@@ -245,15 +245,23 @@
   },
   "contextTypeScreen": {
     "message": "Screen",
-    "description": "Label for screen context type in Agent UI."
+    "description": "Label for screen context type"
   },
   "contextTypeArticle": {
     "message": "Article",
-    "description": "Label for article context type in Agent UI."
+    "description": "Label for article context type"
   },
   "contextTypeSelection": {
     "message": "Selection",
-    "description": "Label for selection context type in Agent UI."
+    "description": "Label for selection context type"
+  },
+  "contextSelectionDesc": {
+    "message": "Use selected text as context",
+    "description": "Description for selection context"
+  },
+  "explainSelection": {
+    "message": "Explain this selection",
+    "description": "Default query for selected text"
   },
   "loading": {
     "message": "Loading...",
@@ -411,6 +419,10 @@
     "message": "Note",
     "description": "Label for the note button in selection toolbar."
   },
+  "addNote": {
+    "message": "Add Note",
+    "description": "Label for the note button in selection toolbar."
+  },
   "copy": {
     "message": "Copy",
     "description": "Label for the copy button in selection toolbar."
@@ -426,5 +438,33 @@
   "aiAssistant": {
     "message": "AI Assistant",
     "description": "Tooltip for the AI assistant button in selection toolbar."
+  },
+  "askAI": {
+    "message": "Ask AI",
+    "description": "Label for the AI assistant button in selection toolbar."
+  },
+  "removeHighlight": {
+    "message": "Remove Highlight",
+    "description": "Label for removing a highlight in selection toolbar."
+  },
+  "delete": {
+    "message": "Delete",
+    "description": "Label for the delete button in selection toolbar."
+  },
+  "query": {
+    "message": "Query",
+    "description": "Label for the query button in selection toolbar."
+  },
+  "share": {
+    "message": "Share",
+    "description": "Label for the share button in selection toolbar."
+  },
+  "selectHighlightColor": {
+    "message": "Select highlight color",
+    "description": "Label for the highlight color picker dialog."
+  },
+  "selectedText": {
+    "message": "Selected Text",
+    "description": "Label for selected text reference block"
   }
 }

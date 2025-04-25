@@ -139,6 +139,21 @@ const MessageList: React.FC<MessageListProps> = ({
                   <span className="ml-0.5">{getContextTypeLabel(contextType)}</span>
                 </div>
                 
+                {/* Reference block for selections in streaming response */}
+                {contextType === 'selection' && messages.length > 0 && (
+                  <div className="mb-2">
+                    <div className="flex items-center text-xs text-text-secondary mb-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 mr-1">
+                        <path d="M7.5 7h3.75m-3.75 3h3.75m3-6H18m-3.75 3H18m-3.75 3H18M4.5 19.5h15a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5h-15A1.5 1.5 0 0 0 3 6v12a1.5 1.5 0 0 0 1.5 1.5Z" />
+                      </svg>
+                      <span>{t('selectedText') || 'Selected Text'}</span>
+                    </div>
+                    <div className="pl-2 border-l-2 border-accent/30 py-1 pr-2 text-sm bg-bg-primary/5 rounded-r-md italic text-text-secondary/50 my-1">
+                      {messages.length > 0 && messages[messages.length-1].sender === 'user' ? messages[messages.length-1].text : ''}
+                    </div>
+                  </div>
+                )}
+                
                 {/* Streaming response content */}
                 <div
                   className={markdownClasses}

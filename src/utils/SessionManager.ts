@@ -443,6 +443,58 @@ ${end}
     this.articleContext = null;
     logger.info(`[SessionManager] Session fully reset.`);
   }
+
+  /**
+   * Updates context with specific content based on context type
+   * @param contextType The type of context being updated (e.g., 'selected_text', 'visible_content')
+   * @param content The content to use as context
+   * @param priority The priority level for this context
+   */
+  updateContext(contextType: string, content: string, priority: number): void {
+    if (!content || content.trim().length === 0) {
+      logger.warn(`[SessionManager] Empty content provided for ${contextType}, ignoring update.`);
+      return;
+    }
+
+    let contextTitle = '';
+    switch (contextType) {
+      case 'visible_content':
+        contextTitle = 'Visible Content on Screen';
+        break;
+      case 'article_content':
+        contextTitle = 'Full Article Content';
+        break;
+      case 'selected_text':
+        contextTitle = 'Selected Text';
+        break;
+      default:
+        contextTitle = `Context: ${contextType}`;
+    }
+
+    // Clean content (remove excess whitespace and HTML)
+    const cleanContent = content
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Create formatted content with metadata
+    const formattedContent = `${contextTitle}:\n${cleanContent}`;
+    
+    // Create or update the article context
+    this.articleContext = {
+      id: `context-${contextType}`,
+      role: 'system',
+      content: formattedContent,
+      priority: priority,
+      tokenCount: this.estimateTokens(formattedContent),
+      timestamp: Date.now()
+    };
+    
+    logger.info(`[SessionManager] Updated context (${contextType}): ${this.articleContext.tokenCount} tokens.`);
+    
+    // Optimize context with new information
+    this.optimizeContext();
+  }
 }
 
 export default SessionManager; 

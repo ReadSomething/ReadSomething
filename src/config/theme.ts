@@ -114,11 +114,11 @@ export const themeTokens: Record<ThemeType, ColorTokens> = {
   /* ------------------------------------------------ LIGHT (SILK) ------------------------------------------------ */
   light: {
     bg: {
-      primary: '#FEFCFA',
-      secondary: '#F6F4F2',
+      primary: '#FFFFFF',
+      secondary: '#F9F9F9',
       tertiary: '#ECEAE7',
       user: '#F1EFEC',
-      agent: '#FEFCFA',
+      agent: '#FFFFFF',
       input: '#FFFFFF'
     },
     text: {
